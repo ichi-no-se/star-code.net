@@ -1,1 +1,43 @@
 @import "tailwindcss";
+
+.title{
+	@apply text-7xl font-bold text-center relative text-black py-10;
+}
+
+.title::after{
+	content:"";
+	display:block;
+	width:50%;
+	height: 2px;
+	background: linear-gradient(to right, #87CEEB, #EE82EE);
+	margin:8px auto 0;
+}
+
+
+.bold-under-gradation-line::after{
+	content: "";
+	display: block;
+	width: 80%;
+	height: 10px;
+	background: linear-gradient(to right, #87CEEB, #EE82EE);
+	margin: 6px auto 0;
+}
+
+header {
+	@apply flex justify-between w-full bg-gradient-to-r from-blue-800 to-purple-800 p-4 text-white items-center;
+}
+
+header h1 {
+	@apply text-3xl font-bold;
+}
+
+header nav ul {
+	@apply flex space-x-4;
+}
+
+.header-link{
+	@apply border-2 border-transparent text-white px-2 py-2 rounded-lg transition duration-300 ease-in-out;
+}
+.header-link:hover{
+	@apply text-gray-400 border-sky-100 border-2 px-2 py-2 rounded-lg transition duration-300 ease-in-out;
+}
