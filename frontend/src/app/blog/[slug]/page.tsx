@@ -19,15 +19,57 @@ export default async function BlogPost({ params }: { params: { slug: string } })
 		return { slug, title, date, order };
 	});
 	const sortedPosts = posts.sort((a, b) => b.order - a.order);
-	// TODO 一つ前と一つ後の記事を探すコードを書く
+	const currentIndex = sortedPosts.findIndex((post) => post.slug === slug);
+	const prevPost = currentIndex > 0 ? sortedPosts[currentIndex - 1] : null;
+	const nextPost = currentIndex < sortedPosts.length - 1 ? sortedPosts[currentIndex + 1] : null;
 	const { title, date, content } = getPostData(slug);
 	return (
-		<main className="article">
-			<h1 className="article-title">{title}</h1>
-			<p className="article-date">{date}</p>
-			<div className="article-content">
-			<ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} >{content}</ReactMarkdown>
-			</div>
-		</main>
+		<>
+			<main className="article">
+				<h1 className="article-title">{title}</h1>
+				<p className="article-date">{date}</p>
+				<div className="article-content">
+					<ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} >{content}</ReactMarkdown>
+				</div>
+			</main>
+			<nav className="article-navigation">
+				<div className="article-nav-tiles">
+					{prevPost && (
+						<a href={`/blog/${prevPost.slug}`}>
+							<div className="article-nav-tile-left">
+								<span className="article-nav-tile-label">前の記事</span>
+								<br />
+								<span className="article-nav-tile-date">{prevPost.date}</span>
+								<br />
+								<span className="article-nav-tile-title">{prevPost.title}</span>
+							</div>
+						</a>
+					)}
+					{nextPost && (
+						<a href={`/blog/${nextPost.slug}`}>
+							<div className="article-nav-tile-right">
+								<span className="article-nav-tile-label">次の記事</span>
+								<br />
+								<span className="article-nav-tile-date">{nextPost.date}</span>
+								<br />
+								<span className="article-nav-tile-title">{nextPost.title}</span>
+							</div>
+						</a>
+					)}
+					<a href="/blog">
+						<div className="article-nav-tile-center">
+							<span className="article-nav-tile-label">ホームに戻る</span>
+						</div>
+					</a>
+				</div>
+			</nav>
+		</>
 	);
+}
+
+export async function generateStaticParams() {
+	const slugs = getPostSlugs();
+	return slugs.map((slug) => ({
+		slug,
+	}));
 }
