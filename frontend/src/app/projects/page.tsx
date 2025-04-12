@@ -5,11 +5,11 @@ export default function ProjectsPage() {
 		<main>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
-				<Link href="/projects/30sec-chat" className="post-box">
+				<Link href="/projects/15sec-chat" className="post-box">
 					<div>
-						<h2 className="post-title">30 秒 SNS</h2>
+						<h2 className="post-title">15 秒チャット</h2>
 						<p className="post-date">2025-04-04</p>
-						<p className="post-description">30 秒でメッセージが消えるチャット</p>
+						<p className="post-description">15 秒でメッセージが消えるチャット</p>
 					</div>
 				</Link>
 			</ol>

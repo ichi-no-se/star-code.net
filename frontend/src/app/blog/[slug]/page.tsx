@@ -5,7 +5,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { notFound } from 'next/navigation';
-import '../blog.css';
+import '@styles/blog.css';
 
 
 export default async function BlogPost({ params }: { params: { slug: string } }) {

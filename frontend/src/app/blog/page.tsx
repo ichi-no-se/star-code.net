@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getPostSlugs, getPostData } from './blogLoader';
-import './blog.css';
+import '@styles/blog.css';
 
 export default function BlogPage() {
 	const slugs = getPostSlugs();
