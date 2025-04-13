@@ -1,12 +1,14 @@
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
 	cors: {
-		origin: 'http://localhost:3000',
+		origin: process.env.FRONTEND_ORIGIN ||' http://localhost:3000',
 		methods: ['GET', 'POST'],
 	}
 });
@@ -43,7 +45,7 @@ setInterval(() => {
 }, 1000);
 
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
 	console.log(`Server is running on http://localhost:${PORT}`);
 });

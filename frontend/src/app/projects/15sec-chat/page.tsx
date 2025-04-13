@@ -8,8 +8,7 @@ interface ChatMessage {
 	timestamp: number;
 }
 
-const socket = io('http://localhost:3001')
-
+const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001')
 
 export default function Chat() {
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
