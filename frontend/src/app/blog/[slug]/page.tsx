@@ -6,9 +6,13 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { notFound } from 'next/navigation';
 import '@styles/blog.css';
+import Link from 'next/link';
 
+type BlogProps = {
+	params:Promise<{ slug: string }>;	
+}
 
-export default async function BlogPost({ params }: { params: { slug: string } }) {
+export default async function BlogPost({ params }: BlogProps) {
 	const { slug } = await params;
 	const slugs = getPostSlugs();
 	if (!slugs.includes(slug)) {
@@ -35,7 +39,7 @@ export default async function BlogPost({ params }: { params: { slug: string } })
 			<nav className="article-navigation">
 				<div className="article-nav-tiles">
 					{prevPost && (
-						<a href={`/blog/${prevPost.slug}`}>
+						<Link href={`/blog/${prevPost.slug}`}>
 							<div className="article-nav-tile-left">
 								<span className="article-nav-tile-label">前の記事</span>
 								<br />
@@ -43,10 +47,10 @@ export default async function BlogPost({ params }: { params: { slug: string } })
 								<br />
 								<span className="article-nav-tile-title">{prevPost.title}</span>
 							</div>
-						</a>
+						</Link>
 					)}
 					{nextPost && (
-						<a href={`/blog/${nextPost.slug}`}>
+						<Link href={`/blog/${nextPost.slug}`}>
 							<div className="article-nav-tile-right">
 								<span className="article-nav-tile-label">次の記事</span>
 								<br />
@@ -54,13 +58,13 @@ export default async function BlogPost({ params }: { params: { slug: string } })
 								<br />
 								<span className="article-nav-tile-title">{nextPost.title}</span>
 							</div>
-						</a>
+						</Link>
 					)}
-					<a href="/blog">
+					<Link href="/blog">
 						<div className="article-nav-tile-center">
 							<span className="article-nav-tile-label">ホームに戻る</span>
 						</div>
-					</a>
+					</Link>
 				</div>
 			</nav>
 		</>
