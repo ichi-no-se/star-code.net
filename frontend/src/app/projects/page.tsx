@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import './projects.css';
+import '@styles/projects.css';
 export default function ProjectsPage() {
 	return (
 		<main>
