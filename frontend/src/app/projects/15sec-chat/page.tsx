@@ -15,22 +15,24 @@ export default function Chat() {
 	const [message, setMessage] = useState<string>('');
 	const chatContainerRef = useRef<HTMLDivElement>(null);
 	const [isAtBottom, setIsAtBottom] = useState(true);
-	const [userCount,setUserCount]= useState<number>(0);
+	// const [userCount,setUserCount]= useState<number>(0);
 
 	useEffect(() => {
 		socket.on('newMessages', (messages: ChatMessage[]) => {
 			setMessages(messages);
 		});
+		/*
 		socket.on('userCount', (count: number) => {
 			setUserCount(count);
 		});
+		*/
 
 		return () => {
 			socket.off('newMessages');
-			socket.off('userCount');
+			// socket.off('userCount');
 			socket.disconnect();
 		}
-	},[]);
+	}, []);
 
 	const sendMessage = () => {
 		if (message.trim() !== '') {
@@ -70,9 +72,9 @@ export default function Chat() {
 			<div className="introduction">
 				<p>15 秒でメッセージが消えるチャット</p>
 			</div>
-			<div className="user-count">
+			{/* <div className="user-count">
 				<p>現在のユーザー数: {userCount}</p>
-			</div>
+			</div> */}
 			<div className="chat-container" ref={chatContainerRef} onScroll={handleScroll}>
 				{messages.map((msg, i) => (
 					<div key={i} className="chat-message">
