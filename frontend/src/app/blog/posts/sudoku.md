@@ -36,4 +36,4 @@ order: 3
 今回作成したソルバー（の一部手法）を TypeScript に移植して，Web サイト上でも遊べるようにしました．
 [こちら](https://star-code.net/projects/sudoku) から試せます．
 
-後編は [こちら](https://star-code.net/projects/sudoku-2)
+後編は[こちら](https://star-code.net/blog/sudoku-2)
