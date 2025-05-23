@@ -1,0 +1,117 @@
+.introduction {
+	width: 100%;
+	padding: 0.5rem;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	text-align: center;
+	font-size: 1.5rem;
+	overflow-y: auto;
+}
+
+.sudoku-button {
+	margin: 0 4px;
+	padding: 4px 12px;
+	border: 1px solid #888;
+	background-color: #f0f0f0;
+	cursor: pointer;
+}
+
+.sudoku-button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.sudoku-controls {
+	margin: 16px 0;
+	text-align: center;
+}
+
+.sudoku-grid {
+	display: grid;
+	grid-template-columns: repeat(9, 2.5rem);
+	grid-template-rows: repeat(9, 2.5rem);
+	justify-content: center;
+	width: max-content;
+	border: 2px solid black;
+}
+
+.sudoku-cell {
+	width: 2.5rem;
+	height: 2.5rem;
+	text-align: center;
+	font-size: 1.5rem;
+	border: 1px solid #ccc;
+	box-sizing: border-box;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-family: sans-serif;
+	background-color: #fff;
+}
+
+.solved-cell {
+	font-weight: bold;
+}
+
+.sudoku-cell input {
+	width: 100%;
+	height: 100%;
+	border: none;
+	text-align: center;
+	font-size: 1.5rem;
+	background: transparent;
+}
+
+.sudoku-cell input:focus {
+	outline: none;
+}
+
+.sudoku-cell:focus-within {
+	outline: 2px solid #007bff;
+	outline-offset: -2px;
+}
+
+.sudoku-cell:nth-child(3n + 1) {
+	border-left: 1px solid black;
+}
+
+.sudoku-cell:nth-child(3n) {
+	border-right: 1px solid black;
+}
+
+.sudoku-cell:nth-child(n + 19):nth-child(-n + 27),
+.sudoku-cell:nth-child(n + 46):nth-child(-n + 54),
+.sudoku-cell:nth-child(n + 73) {
+	border-bottom: 1px solid black;
+}
+
+.sudoku-cell:nth-child(-n + 9),
+:nth-child(n + 28):nth-child(-n + 36),
+.sudoku-cell:nth-child(n + 55):nth-child(-n + 63) {
+	border-top: 1px solid black;
+}
+
+.sudoku-panel-wrapper {
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 2rem;
+	margin-top : 2rem;
+}
+
+.sudoku-panel {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1rem;
+}
+
+.label{
+	text-align: center;
+	font-size: 2rem;
+}
+
+.sudoku-message {
+	text-align: center;
+	font-size: 1.5rem;
+}
