@@ -9,7 +9,7 @@ import '@styles/blog.css';
 import Link from 'next/link';
 
 type BlogProps = {
-	params:Promise<{ slug: string }>;	
+	params:Promise<{ slug: string }>;
 }
 
 export default async function BlogPost({ params }: BlogProps) {
@@ -22,7 +22,7 @@ export default async function BlogPost({ params }: BlogProps) {
 		const { title, date, order } = getPostData(slug);
 		return { slug, title, date, order };
 	});
-	const sortedPosts = posts.sort((a, b) => b.order - a.order);
+	const sortedPosts = posts.sort((a, b) => a.order - b.order);
 	const currentIndex = sortedPosts.findIndex((post) => post.slug === slug);
 	const prevPost = currentIndex > 0 ? sortedPosts[currentIndex - 1] : null;
 	const nextPost = currentIndex < sortedPosts.length - 1 ? sortedPosts[currentIndex + 1] : null;

@@ -8,9 +8,6 @@
 	overflow-y: auto;
 }
 
-
-
-
 .sudoku-button {
 	margin: 0 4px;
 	padding: 4px 12px;
@@ -29,17 +26,13 @@
 	text-align: center;
 }
 
-.sudoku-result {
-	margin-top: 24px;
-	text-align: center;
-}
-
 .sudoku-grid {
 	display: grid;
 	grid-template-columns: repeat(9, 2.5rem);
 	grid-template-rows: repeat(9, 2.5rem);
 	justify-content: center;
-	margin: 1rem auto;
+	width: max-content;
+	border: 2px solid black;
 }
 
 .sudoku-cell {
@@ -69,20 +62,56 @@
 	background: transparent;
 }
 
-.sudoku-cell:nth-child(9n + 1) {
-	border-left: 2px solid black;
+.sudoku-cell input:focus {
+	outline: none;
+}
+
+.sudoku-cell:focus-within {
+	outline: 2px solid #007bff;
+	outline-offset: -2px;
+}
+
+.sudoku-cell:nth-child(3n + 1) {
+	border-left: 1px solid black;
 }
 
 .sudoku-cell:nth-child(3n) {
-	border-right: 2px solid black;
+	border-right: 1px solid black;
 }
 
 .sudoku-cell:nth-child(n + 19):nth-child(-n + 27),
 .sudoku-cell:nth-child(n + 46):nth-child(-n + 54),
 .sudoku-cell:nth-child(n + 73) {
-	border-bottom: 2px solid black;
+	border-bottom: 1px solid black;
 }
 
-.sudoku-cell:nth-child(-n + 9) {
-	border-top: 2px solid black;
+.sudoku-cell:nth-child(-n + 9),
+:nth-child(n + 28):nth-child(-n + 36),
+.sudoku-cell:nth-child(n + 55):nth-child(-n + 63) {
+	border-top: 1px solid black;
+}
+
+.sudoku-panel-wrapper {
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 2rem;
+	margin-top : 2rem;
+}
+
+.sudoku-panel {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1rem;
+}
+
+.label{
+	text-align: center;
+	font-size: 2rem;
+}
+
+.sudoku-message {
+	text-align: center;
+	font-size: 1.5rem;
 }
