@@ -4,7 +4,7 @@
 	white-space: pre-wrap;
 	word-wrap: break-word;
 	text-align: center;
-	font-size: 1.5rem;
+	font-size: 1.2rem;
 	overflow-y: auto;
 }
 
@@ -95,8 +95,9 @@
 	display: flex;
 	justify-content: center;
 	align-items: flex-start;
+	flex-wrap: wrap;
 	gap: 2rem;
-	margin-top : 2rem;
+	margin-top: 2rem;
 }
 
 .sudoku-panel {
@@ -106,7 +107,7 @@
 	gap: 1rem;
 }
 
-.label{
+.label {
 	text-align: center;
 	font-size: 2rem;
 }
@@ -114,4 +115,18 @@
 .sudoku-message {
 	text-align: center;
 	font-size: 1.5rem;
+}
+
+@media(max-width:360px) {
+	.sudoku-grid {
+		grid-template-columns: repeat(9, 2rem);
+		grid-template-rows: repeat(9, 2rem);
+	}
+
+	.sudoku-cell,
+	.sudoku-cell input {
+		font-size: 1.2rem;
+		width: 2rem;
+		height: 2rem;
+	}
 }

@@ -8,7 +8,7 @@ order: 2
 
 15 秒で消えるチャット機能です．
 
-[リンク](https://star-code.net/projects/15sec-chat)
+[リンク](/projects/15sec-chat)
 
 ## 使い方
 

@@ -1,6 +1,39 @@
 @import "tailwindcss";
 
-.title{
+.home-container {
+	display: flex;
+	justify-content: center;
+	padding-top: 8rem;
+}
+
+.home-content {
+	text-align: center;
+}
+
+.home-title {
+	font-size: clamp(3.5rem, 10vw, 7rem);
+	font-weight: bold;
+	margin-top: 9rem;
+	margin: 0;
+	position: relative;
+}
+
+.home-title::after {
+	content: "";
+	display: block;
+	width: 80%;
+	height: 4px;
+	background: linear-gradient(to right, #87CEEB, #EE82EE);
+	margin: 8px auto 0;
+}
+
+.home-subtitle {
+	font-size: clamp(1.5rem, 5vw, 2.5rem);
+	margin-top: 2rem;
+	color: #333;
+}
+
+.title {
 	font-size: 4.5rem;
 	font-weight: bold;
 	text-align: center;
@@ -9,17 +42,17 @@
 	padding: 2.5rem 0;
 }
 
-.title::after{
-	content:"";
-	display:block;
-	width:50%;
+.title::after {
+	content: "";
+	display: block;
+	width: 50%;
 	height: 2px;
 	background: linear-gradient(to right, #87CEEB, #EE82EE);
-	margin:8px auto 0;
+	margin: 8px auto 0;
 }
 
 
-.bold-under-gradation-line::after{
+.bold-under-gradation-line::after {
 	content: "";
 	display: block;
 	width: 80%;
@@ -40,9 +73,41 @@ header nav ul {
 	@apply flex space-x-4;
 }
 
-.header-link{
+.header-link {
 	@apply border-2 border-transparent text-white px-2 py-2 rounded-lg transition duration-300 ease-in-out;
 }
-.header-link:hover{
+
+.header-link:hover {
 	@apply text-gray-400 border-sky-100 border-2 px-2 py-2 rounded-lg transition duration-300 ease-in-out;
+}
+
+@media (max-width:640px) {
+	.home-container {
+		padding-top: 2rem;
+	}
+
+	.home-title {
+		margin-top: 0rem;
+	}
+
+	.title {
+		font-size: 2.5rem;
+		padding: 1.5rem 0;
+	}
+
+	header {
+		flex-direction: column;
+		align-items: center;
+	}
+
+	header h1 {
+		font-size: 1.5rem;
+		margin-bottom: 0.5rem;
+	}
+
+	header nav ul {
+		flex-direction: row;
+		gap: 0.5rem;
+	}
+
 }
