@@ -1,5 +1,5 @@
 .chat-container{
-	margin: 3rem auto;
+	margin: 1rem auto;
 	padding: 1.5rem;
 	border: 2px solid #ddd;
 	border-radius: 8px;
@@ -7,8 +7,8 @@
 	background-color: rgba(255, 255, 255, 0.8);
 	display: flex;
 	flex-direction:column;
-	height: 500px;
-	max-width: 800px;
+	height: 50vh;
+	max-width: 90%;
 	overflow-y: auto;
 	margin-bottom: 10px;
 }
@@ -33,7 +33,7 @@
 	white-space:pre-wrap;
 	word-wrap: break-word;
 	text-align: center;
-	font-size: 1.5rem;
+	font-size: 1.2rem;
 	overflow-y: auto;
 }
 
@@ -45,7 +45,7 @@
 	justify-content: center;
 	align-items: center;
 	margin-top: 1rem;
-	margin-bottom: 10rem;
+	margin-bottom: 2rem;
 }
 
 .chat-input{

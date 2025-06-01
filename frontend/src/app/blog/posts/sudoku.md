@@ -34,6 +34,6 @@ order: 3
 今回作成したソルバー，盤面，計測用スクリプトを [GitHub](https://github.com/ichi-no-se/ayasegawa-tech/tree/main/001-sudoku) に置いています．
 
 今回作成したソルバー（の一部手法）を TypeScript に移植して，Web サイト上でも遊べるようにしました．
-[こちら](https://star-code.net/projects/sudoku) から試せます．
+[こちら](/projects/sudoku) から試せます．
 
-後編は[こちら](https://star-code.net/blog/sudoku-2)
+後編は[こちら](/blog/sudoku-2)

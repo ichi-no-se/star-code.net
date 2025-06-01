@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<main>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/blog/minecraft-server" className="post-box">
+					<div>
+						<h2 className="post-title">Minecraft サーバー</h2>
+						<p className="post-date">2025-05-31</p>
+						<p className="post-description">72 時間でリセットされる Minecraft サーバー</p>
+					</div>
+				</Link>
 				<Link href="/projects/sudoku" className="post-box">
 					<div>
 						<h2 className="post-title">数独ソルバー</h2>

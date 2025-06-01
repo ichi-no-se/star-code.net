@@ -57,12 +57,12 @@
 }
 
 .article {
-	margin: 3rem auto;
+	margin: 2rem auto 0rem;
 	padding: 1.5rem;
 	background-color: rgba(255, 255, 255, 0.8);
 	border-radius: 20px;
 	box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1);
-	max-width: 800px;
+	max-width: 90%;
 }
 
 .article-content h2 {
@@ -197,12 +197,15 @@
 }
 
 .article-navigation {
-	margin: 3rem auto;
+	margin: 0.5rem auto;
 	padding: 1.5rem;
-	max-width: 800px;
+	max-width: 90%;
 }
 
-.article-nav-tile-left {
+.article-nav-tile-left,
+.article-nav-tile-center,
+.article-nav-tile-right {
+	display: block;
 	background-color: rgba(255, 255, 255, 0.8);
 	border: 1px solid #ddd;
 	border-radius: 8px;
@@ -211,38 +214,25 @@
 	color: inherit;
 	box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 	transition: transform 0.2s, box-shadow 0.2s;
-	float: left;
+	margin-bottom: 1rem;
 	text-align: center;
-	width: 15em;
+}
+
+
+.article-nav-tile-left {
+	float: left;
+	width: 35%;
 }
 
 .article-nav-tile-center {
-	background-color: rgba(255, 255, 255, 0.8);
-	border: 1px solid #ddd;
-	border-radius: 8px;
-	padding: 1rem;
-	text-decoration: none;
-	color: inherit;
-	box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-	transition: transform 0.2s, box-shadow 0.2s;
-	width: 12em;
-	margin-left:auto;
-	margin-right:auto;
-	text-align: center;
+	width: 25%;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 .article-nav-tile-right {
-	background-color: rgba(255, 255, 255, 0.8);
-	border: 1px solid #ddd;
-	border-radius: 8px;
-	padding: 1rem;
-	text-decoration: none;
-	color: inherit;
-	box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-	transition: transform 0.2s, box-shadow 0.2s;
 	float: right;
-	text-align: center;
-	width: 15em;
+	width: 35%;
 }
 
 .article-nav-tile:hover {
@@ -250,19 +240,99 @@
 	box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
 }
 
-.article-nav-tile-label{
+.article-nav-tile-label {
 	font-size: 1.5rem;
 	margin: 0 0 0.5rem;
 	font-weight: bold
 }
 
-.article-nav-tile-title{
+.article-nav-tile-title {
 	font-size: 1rem;
 	margin: 0;
 }
 
-.article-nav-tile-date{
+.article-nav-tile-date {
 	font-size: 0.9rem;
 	color: #666;
 	margin: 0;
+}
+
+@media (max-width:640px) {
+	.post-list {
+		grid-template-columns: 1fr;
+		gap: 0.5rem;
+	}
+
+	.post-box {
+		padding: 0.5rem;
+	}
+
+	.post-title {
+		font-size: 1rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.post-date {
+		font-size: 0.8rem;
+	}
+
+	.article-nav-tile-left,
+	.article-nav-tile-center,
+	.article-nav-tile-right {
+		width: 100%;
+		float: none;
+		margin: 0 auto 1rem;
+		padding: 0.5rem;
+	}
+
+	.article-title {
+		font-size: 2rem;
+	}
+
+	.article {
+		max-width: 96%;
+	}
+
+	.article-content h2 {
+		font-size: 1.5rem;
+	}
+
+	.article-content h3 {
+		font-size: 1.4rem;
+	}
+
+	.article-content h4 {
+		font-size: 1.3rem;
+	}
+
+	.article-content h5 {
+		font-size: 1.2rem;
+	}
+
+	.article-content h6 {
+		font-size: 1.1rem;
+	}
+
+	.article-content p,
+	.article-content ul li,
+	.article-content ol li,
+	.article-content blockquote,
+	.article-content table td,
+	.article-content table th {
+		font-size: 1rem;
+	}
+
+	.article-nav-tile-label {
+		font-size: 1.2rem;
+		margin: 0 0 0.3rem;
+	}
+
+	.article-nav-tile-title {
+		font-size: 0.9rem;
+		margin: 0;
+	}
+
+	.article-nav-tile-date {
+		font-size: 0.8rem;
+	}
 }
