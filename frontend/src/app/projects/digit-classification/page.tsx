@@ -62,12 +62,14 @@ export default function DigitClassification() {
             };
         };
         const startDrawing = (e: MouseEvent | TouchEvent) => {
+            e.preventDefault();
             isDrawing.current = true;
             const pos = getPos(e);
             ctx.beginPath();
             ctx.moveTo(pos.x, pos.y);
         }
         const draw = (e: MouseEvent | TouchEvent) => {
+            e.preventDefault();
             if (!isDrawing.current) return;
             const pos = getPos(e);
             ctx.lineTo(pos.x, pos.y);
@@ -85,8 +87,8 @@ export default function DigitClassification() {
         canvas.addEventListener("mouseup", endDrawing);
         canvas.addEventListener("mouseleave", endDrawing);
 
-        canvas.addEventListener("touchstart", startDrawing);
-        canvas.addEventListener("touchmove", draw);
+        canvas.addEventListener("touchstart", startDrawing, { passive: false });
+        canvas.addEventListener("touchmove", draw, { passive: false });
         canvas.addEventListener("touchend", endDrawing);
         canvas.addEventListener("touchcancel", endDrawing);
         return () => {
