@@ -1,0 +1,38 @@
+.chart-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: min(90vw, 50vh);
+}
+
+.bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.digit-label {
+    width: 1.2em;
+    font-size: 1.2em;
+    text-align: right;
+    font-family: monospace;
+}
+
+.bar-wrapper {
+    background-color: #ddd;
+    height: 1em;
+    flex: 1;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bar {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.prob-label {
+    width: 3.5em;
+    text-align: left;
+    font-family: monospace;
+}

@@ -39,7 +39,7 @@
 	text-align: center;
 	position: relative;
 	color: black;
-	padding: 2.5rem 0;
+	padding:1rem 0;
 }
 
 .title::after {
@@ -59,6 +59,16 @@
 	height: 10px;
 	background: linear-gradient(to right, #87CEEB, #EE82EE);
 	margin: 6px auto 0;
+}
+
+.introduction {
+	width: 100%;
+	padding: 0.5rem;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	text-align: center;
+	font-size: 1.5rem;
+	overflow-y: auto;
 }
 
 header {
