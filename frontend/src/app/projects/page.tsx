@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<main>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/digit-classification" className="post-box">
+					<div>
+						<h2 className="post-title">手書き数字分類</h2>
+						<p className="post-date">2025-06-02</p>
+						<p className="post-description">機械学習による手書き数字分類のデモ</p>
+					</div>
+				</Link>
 				<Link href="/blog/minecraft-server" className="post-box">
 					<div>
 						<h2 className="post-title">Minecraft サーバー</h2>
