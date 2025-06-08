@@ -1,5 +1,5 @@
 # star-code.net
 
-Webサイト作成
+自作ウェブサイトプロジェクト
 
-star-code.net で運用（予定）
+[star-code.net](star-code.net) で運用中

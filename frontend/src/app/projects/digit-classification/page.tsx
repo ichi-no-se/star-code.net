@@ -79,6 +79,10 @@ export default function DigitClassification() {
             isDrawing.current = false;
             ctx.closePath();
             const input = getInputFromCanvas();
+            if (input.every(row => row.every(value => value === 0))) {
+                setProbabilities(Array(10).fill(0));
+                return;
+            }
             predictDigit(input).then(setProbabilities).catch(console.error);
         }
 
