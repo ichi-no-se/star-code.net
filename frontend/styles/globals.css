@@ -71,6 +71,15 @@
 	overflow-y: auto;
 }
 
+.introduction a {
+	color: #1a73e8;
+	text-decoration: none;
+}
+
+.introduction a:hover {
+	text-decoration: underline;
+}
+
 header {
 	@apply flex justify-between w-full bg-gradient-to-r from-blue-800 to-purple-800 p-4 text-white items-center;
 }

@@ -1,4 +1,6 @@
 "use client";
+
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react'
 import io from 'socket.io-client'
 import '@styles/chat.css'
@@ -70,7 +72,7 @@ export default function Chat() {
 		<main>
 			<h1 className="title">15 秒チャット </h1>
 			<div className="introduction">
-				<p>15 秒でメッセージが消えるチャット</p>
+				15 秒でメッセージが消えるチャット，詳細は<Link href="/blog/15sec-chat">こちら</Link>から
 			</div>
 			{/* <div className="user-count">
 				<p>現在のユーザー数: {userCount}</p>

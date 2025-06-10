@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { useRef, useEffect, useState } from "react";
 import "@/components/ProbabilityChart";
 import "@styles/digit-classification.css";
@@ -134,7 +134,7 @@ export default function DigitClassification() {
     return (
         <main>
             <div className="title">手書き数字分類</div>
-            <div className="introduction">学習には MNIST データセットを用いています</div>
+            <div className="introduction">学習には MNIST データセットを用いています，技術情報は<Link href="/blog/digit-classification">こちら</Link>から</div>
             <div className="layout-container">
                 <div className="canvas-wrapper">
                     <canvas ref={canvasRef} width={28} height={28} className="digit-canvas" />
