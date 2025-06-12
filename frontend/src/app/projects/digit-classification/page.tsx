@@ -9,7 +9,7 @@ import predictDigit from "@/lib/DigitClassification";
 export default function DigitClassification() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const isDrawing = useRef(false);
-    const [lineWidth, setLineWidth] = useState(2.0);
+    const [lineWidth, setLineWidth] = useState(2);
     const [probabilities, setProbabilities] = useState<number[]>(Array(10).fill(0));
 
     const getInputFromCanvas = (): number[][] => {
@@ -143,9 +143,9 @@ export default function DigitClassification() {
                         <input
                             type="range"
                             id="lineWidth"
-                            min="0.5"
+                            min="1"
                             max="5"
-                            step="0.5"
+                            step="1"
                             value={lineWidth}
                             onChange={(e) => setLineWidth(Number(e.target.value))}
                             className="slider"
