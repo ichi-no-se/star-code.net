@@ -8,7 +8,7 @@ export default function EmojiGenerator() {
 	const lightCanvasRef = useRef<HTMLCanvasElement>(null);
 	const [text, setText] = useState<string>("");
 
-	const drawCharacter = (canvas:HTMLCanvasElement,char:string) => {
+	const drawCharacter = (canvas: HTMLCanvasElement, char: string) => {
 		const ctx = canvas.getContext("2d");
 		if (!ctx) return;
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -32,7 +32,17 @@ export default function EmojiGenerator() {
 		);
 	};
 	const handleDownload = () => {
-
+		const canvas = lightCanvasRef.current;
+		if (!canvas) return;
+		canvas.toBlob((blob) => {
+			if (!blob) return;
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = text + ".png";
+			a.click();
+			URL.revokeObjectURL(url);
+		}, "image/png");
 	};
 	return (
 		<main>
