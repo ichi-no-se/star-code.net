@@ -14,14 +14,14 @@ let cachedModel: ModelParams | null = null;
 
 async function loadModel(): Promise<ModelParams> {
     if (cachedModel) return cachedModel;
-    const weightsResponse = await fetch("/digit_classification/model_weights.bin");
+    const weightsResponse = await fetch("/digit-classification/model_weights.bin");
     if (!weightsResponse.ok) {
         throw new Error("Failed to load model weights");
     }
     const weightsBuffer = await weightsResponse.arrayBuffer();
     const weights = new Float32Array(weightsBuffer);
 
-    const shapesResponse = await fetch("/digit_classification/model_shapes.json");
+    const shapesResponse = await fetch("/digit-classification/model_shapes.json");
     if (!shapesResponse.ok) {
         throw new Error("Failed to load model shapes");
     }

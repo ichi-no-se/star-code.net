@@ -22,8 +22,8 @@ order: 1
 2. に
 3. さん
 
-[トップページへのリンク](https://star-code.net)
-![サンプル画像](/sample.png)
+[トップページへのリンク](/)
+![サンプル画像](/blog-images/sample.png)
 
 ```
 *斜体* **太字** ***斜体太字*** ~~打ち消し~~
@@ -34,8 +34,8 @@ order: 1
 2. に
 3. さん
 
-[トップページへのリンク](https://star-code.net)
-![サンプル画像](/sample.png)
+[トップページへのリンク](/)
+![サンプル画像](blog-images/sample.png)
 ```
 
 数式も書けます．`remarkMath` と `rehypeKatex` を利用しています．

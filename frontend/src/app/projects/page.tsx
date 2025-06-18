@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<main>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/emoji-generator" className="post-box">
+					<div>
+						<h2 className="post-title">絵文字ジェネレーター</h2>
+						<p className="post-date">2025-06-18</p>
+						<p className="post-description">Slack や Discord で使える絵文字を生成</p>
+					</div>
+				</Link>
 				<Link href="/projects/digit-classification" className="post-box">
 					<div>
 						<h2 className="post-title">手書き数字分類</h2>
