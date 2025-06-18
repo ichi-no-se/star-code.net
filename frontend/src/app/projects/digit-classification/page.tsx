@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { useRef, useEffect, useState } from "react";
 import "@/components/ProbabilityChart";
 import "@styles/digit-classification.css";
@@ -9,7 +9,7 @@ import predictDigit from "@/lib/DigitClassification";
 export default function DigitClassification() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const isDrawing = useRef(false);
-    const [lineWidth, setLineWidth] = useState(2.0);
+    const [lineWidth, setLineWidth] = useState(2);
     const [probabilities, setProbabilities] = useState<number[]>(Array(10).fill(0));
 
     const getInputFromCanvas = (): number[][] => {
@@ -134,7 +134,7 @@ export default function DigitClassification() {
     return (
         <main>
             <div className="title">手書き数字分類</div>
-            <div className="introduction">学習には MNIST データセットを用いています</div>
+            <div className="introduction">学習には MNIST データセットを用いています，技術情報は<Link href="/blog/digit-classification">こちら</Link>から</div>
             <div className="layout-container">
                 <div className="canvas-wrapper">
                     <canvas ref={canvasRef} width={28} height={28} className="digit-canvas" />
@@ -143,9 +143,9 @@ export default function DigitClassification() {
                         <input
                             type="range"
                             id="lineWidth"
-                            min="0.5"
+                            min="1"
                             max="5"
-                            step="0.5"
+                            step="1"
                             value={lineWidth}
                             onChange={(e) => setLineWidth(Number(e.target.value))}
                             className="slider"
