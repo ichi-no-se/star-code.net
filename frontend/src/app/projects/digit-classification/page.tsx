@@ -7,9 +7,10 @@ import ProbabilityChart from "@/components/ProbabilityChart";
 import predictDigit from "@/lib/DigitClassification";
 
 export default function DigitClassification() {
+    const LINE_WIDTH_DEFAULT = 2;
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const isDrawing = useRef(false);
-    const [lineWidth, setLineWidth] = useState(2);
+    const [lineWidth, setLineWidth] = useState(LINE_WIDTH_DEFAULT);
     const [probabilities, setProbabilities] = useState<number[]>(Array(10).fill(0));
 
     const getInputFromCanvas = (): number[][] => {
@@ -50,7 +51,7 @@ export default function DigitClassification() {
 
         ctx.lineCap = "round";
         ctx.strokeStyle = "white";
-        ctx.lineWidth = lineWidth;
+        ctx.lineWidth = LINE_WIDTH_DEFAULT;
 
         const getPos = (e: MouseEvent | TouchEvent) => {
             const rect = canvas.getBoundingClientRect();
@@ -139,7 +140,7 @@ export default function DigitClassification() {
                 <div className="canvas-wrapper">
                     <canvas ref={canvasRef} width={28} height={28} className="digit-canvas" />
                     <div className="slider-container">
-                        <label htmlFor="lineWidth">線の太さ: {lineWidth}</label>
+                        <label htmlFor="lineWidth">線の太さ：{lineWidth}</label>
                         <input
                             type="range"
                             id="lineWidth"

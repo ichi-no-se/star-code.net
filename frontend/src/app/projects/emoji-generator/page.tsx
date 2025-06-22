@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import "@styles/emoji-generator.css";
 
 const CANVAS_SIZE = 128;
@@ -163,7 +163,7 @@ function generateConfigs(text: string): CharRenderConfig[] {
 						continue;
 					}
 				}
-				if(squares[id].x + squares[id].halfSize === CANVAS_SIZE) {
+				if (squares[id].x + squares[id].halfSize === CANVAS_SIZE) {
 					let flag2 = true;
 					for (let i = 0; i < squares.length; i++) {
 						if (i === id) continue;
@@ -237,7 +237,7 @@ function generateConfigs(text: string): CharRenderConfig[] {
 	// バブルソートもどき
 	// 文字の並びがそれっぽくなるようにしたいだけなので，順序律を満たさない
 	for (let i = 0; i < squares.length; i++) {
-		for (let j = 0; j < squares.length-1; j++) {
+		for (let j = 0; j < squares.length - 1; j++) {
 			if (squares[j].y - squares[j].halfSize * 0.5 >= squares[j + 1].y + squares[j + 1].halfSize * 0.5 || squares[j].y + squares[j].halfSize * 0.5 >= squares[j + 1].y - squares[j + 1].halfSize * 0.5 && squares[j].x >= squares[j + 1].x) {
 				// j の方が下にあるかつ，x 座標が大きい場合は入れ替え
 				const temp = squares[j];
@@ -250,6 +250,9 @@ function generateConfigs(text: string): CharRenderConfig[] {
 	const fontFamilies: string[] = [
 		"serif",
 		"cursive",
+		"sans-serif",
+		"monospace",
+		"fantasy",
 	];
 	const fontFamily = randChoice(fontFamilies);
 	const fillColor = pickReadableColorHex();
@@ -277,6 +280,8 @@ export default function EmojiGenerator() {
 	const darkCanvasRef = useRef<HTMLCanvasElement>(null);
 	const lightCanvasRef = useRef<HTMLCanvasElement>(null);
 	const [text, setText] = useState<string>("");
+	const [fontScale, setFontScale] = useState<number>(100.0);
+	const [configs, setConfigs] = useState<CharRenderConfig[]>([]);
 
 	const drawCharacter = (ctx: CanvasRenderingContext2D, config: CharRenderConfig) => {
 		const { char, x, y, fontSize, fontFamily, fillColor } = config;
@@ -287,20 +292,29 @@ export default function EmojiGenerator() {
 		ctx.fillText(char, x, y);
 	};
 
+
 	const handleGenerate = () => {
-		const configs = generateConfigs(text);
-		[lightCanvasRef, darkCanvasRef].forEach((canvasRef) => {
-			const canvas = canvasRef.current;
+		setConfigs(generateConfigs(text));
+	};
+	useEffect(() => {
+		if (lightCanvasRef.current === null || darkCanvasRef.current === null) return;
+		
+		const drawCharacters = (canvas: HTMLCanvasElement, configs: CharRenderConfig[], scale: number) => {
 			if (!canvas) return;
 			const ctx = canvas.getContext("2d");
 			if (!ctx) return;
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 			for (const config of configs) {
+				const originalFontSize = config.fontSize;
+				config.fontSize = Math.floor(config.fontSize * scale / 100);
 				drawCharacter(ctx, config);
+				config.fontSize = originalFontSize;
 			}
 		}
-		);
-	};
+
+		drawCharacters(lightCanvasRef.current, configs, fontScale);
+		drawCharacters(darkCanvasRef.current, configs, fontScale);
+	}, [configs, fontScale]);
 	const handleDownload = () => {
 		const canvas = lightCanvasRef.current;
 		if (!canvas) return;
@@ -345,12 +359,25 @@ export default function EmojiGenerator() {
 					<canvas ref={lightCanvasRef} width={CANVAS_SIZE} height={CANVAS_SIZE} className="emoji-canvas" />
 				</div>
 			</div>
-			<div className="emoji-download-panel">				<button
-				onClick={handleDownload}
-				className="emoji-download-button"
-			>
-				ダウンロード
-			</button>
+			<div className="slider-container">
+				<label>文字倍率：{fontScale} %</label>
+				<input
+					type="range"
+					min="50"
+					max="250"
+					step="1"
+					value={fontScale}
+					onChange={(e) => setFontScale(parseFloat(e.target.value))}
+					className="slider"
+				/>
+			</div>
+			<div className="emoji-download-panel">
+				<button
+					onClick={handleDownload}
+					className="emoji-download-button"
+				>
+					ダウンロード
+				</button>
 			</div>
 
 		</main>
