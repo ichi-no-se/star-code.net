@@ -30,7 +30,10 @@ export default function SudokuPage() {
 	return (
 		<main>
 			<h1 className="title">数独ソルバー</h1>
-			<div className="introduction">（かなり）高速に動作する数独ソルバー，関連記事は<Link href="/blog/sudoku">こちら</Link>から．</div>
+			<div className="introduction">
+				（かなり）高速に動作する数独ソルバー，関連記事は<Link href="/blog/sudoku">こちら</Link>から．<br />
+				解が存在しない場合，全探索を行うため，非常に時間がかかることがあります．
+			</div>
 			<div className="sudoku-panel-wrapper">
 				<div className="sudoku-panel">
 					<p className="label">入力</p>
