@@ -1,0 +1,265 @@
+.layout-container {
+	display: flex;
+	gap: 2rem;
+	align-items: flex-start;
+	flex-direction: row;
+	justify-content: center;
+	align-items: stretch;
+	margin-top:2rem;
+}
+
+.side-panel,
+.main-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	align-items: center;
+	background-color: rgba(255, 255, 255, 0.8);
+	border-color: #ddd;
+	border-style: solid;
+	border-width: 1px;
+	border-radius: 1rem;
+	padding: 1rem;
+}
+
+.side-panel {
+	width: 50vw;
+}
+
+.main-panel {
+	width: 40vw;
+}
+
+.generation-panel,
+.options-panel,
+.shiny-chance-panel,
+.trial-button-panel,
+.reset-button-panel {
+	font-size: 1.2rem;
+	padding: 0rem;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.shiny-chance-panel {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin-bottom: 1rem;
+	border-top: 1px solid #ddd;
+}
+
+.shiny-chance-label {
+	padding-top: 1rem;
+	font-size: 1.3rem;
+	color: #555;
+	margin-bottom: 0.2rem;
+}
+
+.shiny-chance-value {
+	font-size: min(2.5vw,2rem);
+	font-weight: bold;
+	color: #1e293b;
+}
+
+.statistic-panel {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.statistic-label {
+	font-size: 1.3rem;
+	color: #555;
+	margin-bottom: 0.2rem;
+}
+
+.statistic-value {
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-size: min(2.5vw,2rem);
+	font-weight: bold;
+	color: #1e293b;
+	border-bottom: 2px solid #ddd;
+}
+
+.result-text {
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-size: min(4vw,3rem);
+	font-weight: bold;
+	color: #1e293b;
+	padding: 0.5rem 1rem;
+}
+
+.result-text.shiny {
+	background: linear-gradient(135deg, #D4AF37, #F5DEB3, #D4AF37);
+	color: #3b2d00;
+	font-weight: bold;
+	border-radius: 10px;
+	box-shadow: 0 0 6px rgba(212, 175, 55, 0.6);
+}
+
+.result-text.initial {
+	color: #999;
+}
+
+.options-panel {
+	flex-direction: row;
+}
+
+.reset-button-panel {
+	flex-direction: column;
+}
+
+.generation-panel label,
+.options-panel label,
+.shiny-chance-panel label {
+	font-size: 1.2rem;
+	margin-left: 0.5rem;
+	margin-right: 0.5rem;
+}
+
+.generation-panel {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+}
+
+.generation-button {
+	padding: 0.4rem 0.8rem;
+	border: 1px solid #ccc;
+	border-radius: 0.375rem;
+	background-color: #f0f0f0;
+	cursor: pointer;
+	transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.generation-button:hover {
+	background-color: #e0e0e0;
+}
+
+.generation-button.active {
+	background-color: #e0e7ff;
+	border-color: #64748b;
+	color: #1e293b;
+	font-weight: bold;
+}
+
+.options-panel {
+	display: flex;
+	flex-direction: column;
+}
+
+.options-panel label {
+	display: flex;
+	align-items: center;
+	gap: 1.5rem;
+	width: 100%;
+	font-size: 1.3rem;
+}
+
+.option-label {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.option-label input:disabled+span {
+	color: gray;
+	opacity: 0.6;
+}
+
+.trial-button,
+.reset-button {
+	cursor: pointer;
+	border-radius: 6px;
+	transition: background-color 0.2s;
+}
+
+.trial-button-panel {
+	align-items: center;
+	justify-content: center;
+	display: flex;
+}
+
+.trial-button {
+	border: none;
+	font-size: 2rem;
+	padding: 1rem 2rem;
+	background-color: #4CAF50;
+	color: white;
+
+}
+
+.reset-button-panel {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.reset-button {
+	padding: 0.5rem 1rem;
+	font-size: 1rem;
+	background-color: #fff6f6;
+	color: #c94c4c;
+	border: 2px solid #c94c4c;
+	margin-top: 0.5rem;
+}
+
+.trial-button:hover {
+	background-color: #45a049;
+}
+
+.reset-button:hover {
+	background: #c94c4c;
+	color: #ffffff;
+}
+
+.shiny-chance {
+	font-weight: bold;
+	text-align: center;
+	margin-top: 1rem;
+}
+
+.reset-button-panel {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	margin-top: 1rem;
+}
+
+.title-label {
+	font-size: 2rem;
+	font-weight: bold;
+	text-align: center;
+}
+
+@media(max-width:640px) {
+	.layout-container {
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.side-panel,
+	.main-panel {
+		width: 90vw;
+	}
+
+	.shiny-chance-value,
+	.statistic-value {
+		font-size: 7vw;
+	}
+
+	.result-text {
+		font-size: 10vw;
+	}
+}
