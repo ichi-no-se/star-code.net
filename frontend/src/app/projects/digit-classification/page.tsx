@@ -133,8 +133,8 @@ export default function DigitClassification() {
 
     return (
         <main>
-            <div className="title">手書き数字分類</div>
-            <div className="introduction">学習には MNIST データセットを用いています，技術情報は<Link href="/blog/digit-classification">こちら</Link>から</div>
+            <h1 className="title">手書き数字分類</h1>
+            <h2 className="introduction">学習には MNIST データセットを用いています．技術情報は<Link href="/blog/digit-classification">こちら</Link>から．</h2>
             <div className="layout-container">
                 <div className="canvas-wrapper">
                     <canvas ref={canvasRef} width={28} height={28} className="digit-canvas" />

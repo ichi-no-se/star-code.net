@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<main>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/shiny-pokemon" className="post-box">
+					<div>
+						<h2 className="post-title">ポケモン色違い抽選シミュレーター</h2>
+						<p className="post-date">2025-06-22</p>
+						<p className="post-description">4096 分の 1 の奇跡</p>
+					</div>
+				</Link>
 				<Link href="/projects/emoji-generator" className="post-box">
 					<div>
 						<h2 className="post-title">絵文字ジェネレーター</h2>

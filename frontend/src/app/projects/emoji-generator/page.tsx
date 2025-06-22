@@ -316,11 +316,11 @@ export default function EmojiGenerator() {
 	};
 	return (
 		<main>
-			<div className="title">絵文字ジェネレーター</div>
-			<div className="introduction">
-				Slack や Discord で使える絵文字を生成するツール<br />
-				技術情報は<Link href="/blog/emoji-generator">こちら</Link>から
-			</div>
+			<h1 className="title">絵文字ジェネレーター</h1>
+			<h2 className="introduction">
+				Slack や Discord で使える絵文字を生成するツール．<br />
+				技術情報は<Link href="/blog/emoji-generator">こちら</Link>から．
+			</h2>
 			<div className="emoji-generator-panel">
 				<input
 					type="text"
