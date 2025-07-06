@@ -28,3 +28,95 @@
 	font-weight: bold;
 	font-size : 0.9rem;
 }
+
+.word2vec-guess-container{
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 1rem;
+	margin-top:1.5rem;
+	margin-bottom: 1.5rem;
+}
+
+.guess-info,.answer-info {
+	margin-bottom:1rem;
+	font-size:1.5rem;
+	font-weight:bold;
+	text-align:center;
+}
+.answer-info {
+	margin-top:1rem;
+}
+
+.panel-grid,.result-grid {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	gap: 1rem;
+}
+
+.word-panel,.result-word-panel {
+	background-color: #fafafa;
+	border: 1px solid #ccc;
+	border-radius: 0.25rem;
+	padding: 0.5rem;
+	height: 5rem;
+	text-align: center;
+	transition: background-color 0.3s ease;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+.word-panel:not(.selected):not(.correct) {
+	cursor:pointer;
+}
+.word-panel:not(.selected):not(.correct):hover {
+	background-color: #e0e0e0;
+}
+
+.selected{
+	background-color: #fff9db;
+	border-color: #ffd600;
+}
+.correct {
+	background-color: #c8e6c9;
+	border-color: #388e3c;
+	font-weight:bold;
+}
+.panel-word{
+	font-size: 1.1rem;
+	font-weight: bold;
+	width:4em;
+}
+.panel-rank{
+	font-size:0.9rem;
+	color:#333;
+}
+.restart-button{
+	background-color: #4caf50;
+	color: white;
+	border: none;
+	border-radius: 0.25rem;
+	padding: 0.5rem 1rem;
+	cursor: pointer;
+	font-size: 1rem;
+	transition: background-color 0.3s ease;
+	font-size: 1.2rem;
+	font-weight:bold;
+}
+.restart-button:hover {
+	background-color: #45a049;
+}
+
+.hidden-result{
+	visibility: hidden;
+	opacity: 0;
+	pointer-events: none;
+}
+
+@media (max-width: 640px){
+	.panel-grid,.result-grid {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}

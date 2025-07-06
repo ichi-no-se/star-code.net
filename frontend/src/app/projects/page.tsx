@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<main>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/word2vec-guess" className="post-box">
+					<div>
+						<h2 className="post-title">Word2Vec 類似度単語当てゲーム</h2>
+						<p className="post-date">2025-07-06</p>
+						<p className="post-description">類似度の順位から単語を当てるゲーム</p>
+					</div>
+				</Link>
 				<Link href="/projects/shiny-pokemon" className="post-box">
 					<div>
 						<h2 className="post-title">ポケモン色違い抽選シミュレーター</h2>
