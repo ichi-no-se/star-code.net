@@ -5,7 +5,6 @@ type LayerParams = {
 
 type ModelParams = {
     fc1: LayerParams;
-
     fc2: LayerParams;
     fc3: LayerParams;
 }
