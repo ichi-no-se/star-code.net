@@ -59,3 +59,5 @@ Word2Vec を利用した，単語当てゲームを作ってみました．
 今回利用した [chiVe](https://github.com/WorksApplications/chiVe) の他にも Word2Vec のモデルはいくつかありまして，例えば Wikipedia の記事から作られた [Wikipedia Entity Vectors](https://github.com/singletongue/WikiEntVec) があります．
 こちらには Wikipedia の記事のタイトルのみをまとめたベクトルなどがあり，これを使ってまた別の遊び方ができそうです．
 また機会があれば試してみます．
+
+追記：[新版](/projects/word2vec-guess-v2)を作りました．語彙リストをアップデートしてゲームとして遊びやすくしました．
