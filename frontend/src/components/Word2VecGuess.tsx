@@ -26,14 +26,19 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
 	return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB) + 1e-10); // Avoid division by zero
 }
 
-async function loadData() {
-	const wordListResponse = await fetch("/word2vec-guess/word_list.txt");
+type Word2VecGuessProps = {
+	wordListURL: string;
+	wordVecURL: string;
+};
+
+async function loadData(wordListURL: string, wordVecURL: string) {
+	const wordListResponse = await fetch(wordListURL);
 	if (!wordListResponse.ok) {
 		throw new Error("Failed to load word list");
 	}
 	const wordListText = await wordListResponse.text();
 	const words = wordListText.split("\n").map(word => word.trim()).filter(word => word.length > 0);
-	const wordVecResponse = await fetch("/word2vec-guess/word_vecs.bin");
+	const wordVecResponse = await fetch(wordVecURL);
 	if (!wordVecResponse.ok) {
 		throw new Error("Failed to load word vectors");
 	}
@@ -58,7 +63,7 @@ async function loadData() {
 }
 
 
-export default function Word2VecGuess() {
+export default function Word2VecGuess({ wordListURL, wordVecURL }: Word2VecGuessProps) {
 	const CANDIDATE_WORDS_COUNT = 36;
 	const PRE_CANDIDATE_WORDS_COUNT = 100;
 
@@ -110,7 +115,7 @@ export default function Word2VecGuess() {
 
 	const handleStartGame = useCallback(() => {
 		if (wordListRef.current.length === 0 || Object.keys(VecDictRef.current).length === 0) {
-			loadData().then(data => {
+			loadData(wordListURL, wordVecURL).then(data => {
 				wordListRef.current = data.words;
 				VecDictRef.current = data.vecDict;
 				startNewRound();
