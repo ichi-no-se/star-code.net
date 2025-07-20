@@ -93,9 +93,11 @@
 }
 
 .panel-word {
-	font-size: 1.1rem;
+	width: 100%;
+	font-size: 1.0rem;
+	text-align: center;
 	font-weight: bold;
-	width: 4em;
+	width: 5em;
 }
 
 .panel-rank {
@@ -127,25 +129,25 @@
 }
 
 @media (max-width: 640px) {
+
 	.panel-grid,
-		.result-grid {
-			grid-template-columns: repeat(4, 1fr);
-			gap: 0.3rem;
-		}
-	
-		.word-panel,
-		.result-word-panel {
-			height: 4rem;
-			padding:0.4rem;
-		}
-	
-		.panel-word {
-			font-size: 1.0rem;
-	
-		}
-	
-		.panel-rank {
-			font-size: 0.7rem;
-		}
+	.result-grid {
+		grid-template-columns: repeat(4, 1fr);
+		gap: 0.3rem;
+	}
+
+	.word-panel,
+	.result-word-panel {
+		height: 4rem;
+		padding: 0.4rem;
+	}
+
+	.panel-word {
+		font-size: 0.9rem;
+	}
+
+	.panel-rank {
+		font-size: 0.7rem;
+	}
 
 }
