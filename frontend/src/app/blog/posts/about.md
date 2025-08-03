@@ -7,8 +7,9 @@ order: 0
 ## 管理人情報
 
 - GitHub: [ichi-no-se](https://github.com/ichi-no-se)
+- misskey.design: [一之瀬](https://misskey.design/@1_no_se)
+- pixiv: [一之瀬めろん](https://www.pixiv.net/users/73996425)
 - X: [一之瀬](https://x.com/1_no_se)
-- Pixiv: [一之瀬めろん](https://www.pixiv.net/users/73996425)
 - AtCoder: [1_no_se](https://atcoder.jp/users/1_no_se)
 
 ## ご利用にあたって
