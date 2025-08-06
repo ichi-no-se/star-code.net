@@ -1,7 +1,7 @@
 "use client";
 
 import "@styles/image-processor.css"
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent} from "react";
 
 type Props = {
     onLoad: (image: HTMLImageElement) => void;

@@ -20,13 +20,11 @@ export default function CanvasOutput({ image }: Props) {
         if (!image) {
             canvas.width = 100;
             canvas.height = 100;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
             return;
         }
         if (image instanceof HTMLImageElement) {
             canvas.width = image.naturalWidth;
             canvas.height = image.naturalHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(image, 0, 0);
             return;
         }
