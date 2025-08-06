@@ -56,7 +56,7 @@ export default function PixelRearrange() {
                 newImageData.data[i * 4 + 3] = pixels[i].a;
             }
         }
-        if (colorSpace === "HSV") {
+        else if (colorSpace === "HSV") {
             type Pixel = {
                 r: number;
                 g: number;
@@ -144,7 +144,7 @@ export default function PixelRearrange() {
                 }
             }
         }
-        if (colorSpace === "RGB") {
+        else if (colorSpace === "RGB") {
             type Pixel = {
                 r: number;
                 g: number;
