@@ -1,0 +1,140 @@
+.settings-form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin: 1rem auto;
+	padding: 1rem 2rem;
+	width: 70%;
+	border: 1px solid #ccc;
+	border-radius: 8px;
+	background-color: #fafafa;
+	justify-content: center;
+	align-items: center;
+}
+
+
+.settings-form .random-label,
+.settings-form legend {
+	font-size: 1.5rem;
+	font-weight: bold;
+	text-align: center;
+	display: block;
+}
+
+.settings-form label {
+	font-size: 1.2rem;
+	margin-left: 1rem;
+	margin-right: 1rem;
+}
+
+.settings-form fieldset {
+	border: none;
+	margin: 0;
+	padding: 0;
+	justify-content: center;
+	align-items: center;
+	display: flex;
+}
+
+.settings-form select {
+	font-size: 1.2rem;
+	padding: 0.5rem;
+	border-radius: 4px;
+	border: 1px solid #ccc;
+	background-color: #fff;
+}
+
+.settings-form legend {
+	font-size: 1.5rem;
+	font-weight: bold;
+	text-align: center;
+	width: 100%;
+	display: block;
+	margin-bottom: 0.5rem;
+}
+
+.settings-form input[type="checkbox"],
+.settings-form input[type="radio"] {
+	transform: scale(1.2);
+	margin-right: 0.5rem;
+	margin-left: 0.5rem;
+	cursor: pointer;
+}
+
+.canvas-wrapper {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 4px;
+	background-color: #f9f9f9;
+	border: 1px solid #ccc;
+	height: auto;
+	width: auto;
+	overflow: hidden;
+}
+
+.canvas-button-wrapper {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	width: 45vw;
+}
+
+.canvas-container {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 3rem;
+	padding: 1rem;
+}
+
+.canvas-container p {
+	font-size: 1.3rem;
+	font-weight: bold;
+}
+
+.generate-button,
+.download-button {
+	cursor: pointer;
+	border-radius: 6px;
+	transition: background-color 0.2s;
+	font-size: 1.2rem;
+	padding: 0rem;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	flex-wrap: wrap;
+	border: none;
+	padding: 0.75rem 1.5rem;
+	background-color: #4CAF50;
+	color: white;
+}
+
+.generate-button:hover,
+.download-button:hover {
+	background-color: #45a049;
+}
+
+.generate-button:disabled,
+.download-button:disabled {
+	background-color: #ccc;
+	cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+	.settings-form fieldset {
+		flex-direction: column;
+	}
+
+	.canvas-button-wrapper {
+		width: 90vw;
+		flex-direction: column-reverse;
+	}
+
+	.canvas-container {
+		flex-direction: column;
+		align-items: center;
+	}
+}
