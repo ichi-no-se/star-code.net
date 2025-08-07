@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import "@styles/image-processor.css";
 
 type Props = {
@@ -8,33 +9,40 @@ type Props = {
 };
 
 export default function CanvasOutput({ image }: Props) {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
 
     useEffect(() => {
-        const canvas = canvasRef.current;
+        if (!image) {
+            setImageUrl(null);
+            return;
+        }
+
+        if (image instanceof HTMLImageElement) {
+            setImageUrl(image.src);
+            return;
+        }
+
+        const canvas = document.createElement("canvas");
         if (!canvas) return;
 
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
-
-        if (!image) {
-            canvas.width = 100;
-            canvas.height = 100;
-            return;
-        }
-        if (image instanceof HTMLImageElement) {
-            canvas.width = image.naturalWidth;
-            canvas.height = image.naturalHeight;
-            ctx.drawImage(image, 0, 0);
-            return;
-        }
-        if (image instanceof ImageData) {
-            canvas.width = image.width;
-            canvas.height = image.height;
-            ctx.putImageData(image, 0, 0);
-            return;
-        }
+        canvas.width = image.width;
+        canvas.height = image.height;
+        ctx.putImageData(image, 0, 0);
+        const url = canvas.toDataURL("image/png");
+        setImageUrl(url);
     }, [image]);
 
-    return <canvas ref={canvasRef} className="image-canvas" />;
+    return (
+        <>
+            {imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                    src={imageUrl}
+                    className="image-canvas"
+                    style={{ maxWidth: "100%", height: "auto" }} alt={""} />
+            )}
+        </>
+    )
 }
