@@ -4,7 +4,7 @@
 	gap: 0.5rem;
 	margin: 1rem auto;
 	padding: 1rem 2rem;
-	width: 70%;
+	width: 70vw;
 	border: 1px solid #ccc;
 	border-radius: 8px;
 	background-color: #fafafa;
@@ -124,6 +124,26 @@
 }
 
 @media (max-width: 640px) {
+	.settings-form {
+		width: 90vw;
+		gap: 0.2rem;
+	}
+
+	.settings-form .random-label,
+	.settings-form legend {
+		font-size: 1.2rem;
+	}
+
+	.settings-form select {
+		font-size: 0.9rem;
+		padding: 0.3rem;
+	}
+
+	.settings-form legend {
+		font-size: 1.2rem;
+		margin-bottom: 0.3rem;
+	}
+
 	.settings-form fieldset {
 		flex-direction: column;
 	}
