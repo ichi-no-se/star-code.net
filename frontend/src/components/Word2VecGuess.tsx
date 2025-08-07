@@ -126,7 +126,7 @@ export default function Word2VecGuess({ wordListURL, wordVecURL }: Word2VecGuess
 		else {
 			startNewRound();
 		}
-	}, [])
+	}, [wordListURL, wordVecURL]);
 
 	function handleGuess(index: number) {
 		if (gameState !== "playing") return;
