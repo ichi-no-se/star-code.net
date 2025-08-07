@@ -24,11 +24,12 @@ export default function PixelRearrange() {
     const [secondaryHSVKey, setSecondaryHSVKey] = useState<HSVKey>("Saturation");
     const [primaryRGBKey, setPrimaryRGBKey] = useState<RGBKey>("Red");
     const [secondaryRGBKey, setSecondaryRGBKey] = useState<RGBKey>("Green");
-    const [axis, setAxis] = useState<"Row" | "Column">("Row");
+    const [axis, setAxis] = useState<"Row" | "Column">("Column");
     const [flipHorizontal, setFlipHorizontal] = useState(false);
     const [flipVertical, setFlipVertical] = useState(false);
     const [inputImage, setInputImage] = useState<HTMLImageElement | null>(null);
     const [outputImage, setOutputImage] = useState<ImageData | null>(null);
+    const [resizeDivisor, setResizeDivisor] = useState<1 | 2 | 4 | 8>(4);
 
     const handleGenerate = () => {
         if (!inputImage) return;
@@ -261,9 +262,17 @@ export default function PixelRearrange() {
             <h1 className="title">画像ピクセル並び替え</h1>
             <h2 className="introduction">
                 画像をピクセルレベルでバラバラにした後，特定の優先順位に基づいて並び替えます．<br />
-                画像サイズが大きい場合，変換に時間がかかることがあります．
+                画像サイズが大きい場合，エラーが生じたり，変換に時間がかかることがあります．<br />
+                縮小オプションを使用して画像を縮小することができます．
             </h2>
             <div className="settings-form">
+                <fieldset>
+                    <legend>縮小倍率（画像読み込み時に適用）</legend>
+                    <label><input type="radio" value="1" checked={resizeDivisor === 1} onChange={() => setResizeDivisor(1)} /> 原寸大 </label>
+                    <label><input type="radio" value="2" checked={resizeDivisor === 2} onChange={() => setResizeDivisor(2)} /> 1/2 </label>
+                    <label><input type="radio" value="4" checked={resizeDivisor === 4} onChange={() => setResizeDivisor(4)} /> 1/4 </label>
+                    <label><input type="radio" value="8" checked={resizeDivisor === 8} onChange={() => setResizeDivisor(8)} /> 1/8 </label>
+                </fieldset>
                 <fieldset>
                     <label className="random-label"><input type="checkbox" checked={isRandom} onChange={e => setIsRandom(e.target.checked)} /> ランダムに並び替える</label>
                 </fieldset>
@@ -328,7 +337,7 @@ export default function PixelRearrange() {
             </div>
             <div className="canvas-container">
                 <div className="canvas-button-wrapper">
-                    <ImageUploader onLoad={setInputImage} />
+                    <ImageUploader onLoad={setInputImage} resizeDivisor={resizeDivisor} />
                     <div className="canvas-wrapper">
                         <CanvasOutput image={inputImage} />
                     </div>
@@ -337,7 +346,7 @@ export default function PixelRearrange() {
                 <div className="canvas-button-wrapper">
                     <button className="download-button" disabled={!outputImage} onClick={() => outputImage && downloadImageData(outputImage, "output.png")}>ダウンロード</button>
                     <div className="canvas-wrapper">
-                        <CanvasOutput image={outputImage} />
+                        <CanvasOutput image={outputImage}/>
                     </div>
                     <p>出力画像</p>
                 </div>
