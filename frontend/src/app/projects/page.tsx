@@ -8,7 +8,7 @@ export default function ProjectsPage() {
 				<Link href="/projects/pixel-rearrange" className="post-box">
 					<div>
 						<h2 className="post-title">画像ピクセル並び替え</h2>
-						<p className="post-date">2025-08-03</p>
+						<p className="post-date">2025-08-07</p>
 						<p className="post-description">画像をピクセルでバラバラにして並び替える</p>
 					</div>
 				</Link>

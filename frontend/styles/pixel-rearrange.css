@@ -96,7 +96,8 @@
 }
 
 .generate-button,
-.download-button {
+.download-button,
+.upload-label {
 	cursor: pointer;
 	border-radius: 6px;
 	transition: background-color 0.2s;
@@ -113,7 +114,8 @@
 }
 
 .generate-button:hover,
-.download-button:hover {
+.download-button:hover,
+.upload-label:hover {
 	background-color: #45a049;
 }
 
@@ -121,6 +123,10 @@
 .download-button:disabled {
 	background-color: #ccc;
 	cursor: not-allowed;
+}
+
+.file-input {
+	display: none;
 }
 
 @media (max-width: 640px) {
