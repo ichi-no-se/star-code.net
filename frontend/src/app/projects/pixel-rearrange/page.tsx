@@ -263,7 +263,8 @@ export default function PixelRearrange() {
             <h2 className="introduction">
                 画像をピクセルレベルでバラバラにした後，特定の優先順位に基づいて並び替えます．<br />
                 画像サイズが大きい場合，変換に時間がかかったり，エラーが発生したりすることがあります．<br />
-                縮小オプションを使用して画像を縮小することを推奨します．
+                縮小オプションを使用して画像を縮小することを推奨します．<br />
+                画像はサーバーに送信されず、ブラウザ内で処理されます．
             </h2>
             <div className="settings-form">
                 <fieldset>
