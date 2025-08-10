@@ -43,6 +43,12 @@
 	background-color: #fff;
 }
 
+.settings-form input[type="number"]{
+	background-color: #fff;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+}
+
 .settings-form legend,
 .settings-form .span {
 	font-size: 1.5rem;
