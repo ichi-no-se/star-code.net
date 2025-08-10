@@ -280,7 +280,7 @@ export default function ImageAsciiArt() {
 			<h2 className="introduction">
 				画像をアスキーアートに変換します．<br />
 				関連記事は <Link href="/blog/image-ascii-art">こちら</Link> から．<br />
-				画像はサーバーに送信されず、ブラウザ内で処理されます．
+				画像はブラウザ上で処理されます．サーバーに送信されることはありません．
 			</h2>
 			<div className="settings-form">
 				<fieldset>
