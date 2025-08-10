@@ -148,7 +148,7 @@
 	background-color: #f9f9f9;
 	border: 1px solid #ccc;
 	height: auto;
-	max-width: 20vw;
+	max-width: 30vw;
 	overflow: hidden;
 }
 
@@ -202,6 +202,6 @@
 	}
 
 	.canvas-wrapper {
-		width: 30vw;
+		width: 50vw;
 	}
 }
