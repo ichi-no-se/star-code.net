@@ -1,4 +1,4 @@
-import { getPostSlugs, getPostData } from '../blogLoader';
+import { getPostSlugs, getPostData } from '../../../lib/blogLoader';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -9,7 +9,7 @@ import '@styles/blog.css';
 import Link from 'next/link';
 
 type BlogProps = {
-	params:Promise<{ slug: string }>;
+	params: Promise<{ slug: string }>;
 }
 
 export default async function BlogPost({ params }: BlogProps) {

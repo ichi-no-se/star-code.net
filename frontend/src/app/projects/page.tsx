@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<main>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/image-ascii-art" className="post-box">
+					<div>
+						<h2 className="post-title">画像アスキーアート化</h2>
+						<p className="post-date">2025-08-10 </p>
+						<p className="post-description">画像をアスキーアートに変換する</p>
+					</div>
+				</Link>
 				<Link href="/projects/pixel-rearrange" className="post-box">
 					<div>
 						<h2 className="post-title">画像ピクセル並び替え</h2>
