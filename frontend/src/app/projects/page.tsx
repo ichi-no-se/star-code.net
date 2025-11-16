@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<main>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/legions-path" className="post-box">
+					<div>
+						<h2 className="post-title">Legion&apos;s Path</h2>
+						<p className="post-date">2025-11-16</p>
+						<p className="post-description">操作は「線を引く」だけ，リアルタイムストラテジーゲーム</p>
+					</div>
+				</Link>
 				<Link href="/projects/image-ascii-art" className="post-box">
 					<div>
 						<h2 className="post-title">画像アスキーアート化</h2>
