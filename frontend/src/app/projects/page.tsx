@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<main>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/reversi-local" className="post-box">
+				<div>
+					<h2 className="post-title">リバーシ（Local）</h2>
+					<p className="post-date">2025-11-25</p>
+					<p className="post-description">リバーシ（Local）</p>
+				</div>
+			</Link>
 				<Link href="/projects/legions-path" className="post-box">
 					<div>
 						<h2 className="post-title">Legion&apos;s Path</h2>
