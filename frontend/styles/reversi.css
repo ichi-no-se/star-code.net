@@ -263,3 +263,176 @@
 	color: #999;
 	box-shadow: none;
 }
+
+.settings-container{
+	display:flex;
+	flex-direction: row;
+	justify-content: center;
+	gap: 1rem;
+	margin-left:auto;
+	margin-right:auto;
+	margin-bottom:4rem;
+	width:80%;
+}
+
+.settings-panel{
+	border: 1px solid #ccc;
+	border-radius: 8px;
+	background: #eee;
+	overflow: hidden;
+	display:flex;
+	flex-direction: column;
+	flex:1;
+}
+
+.settings-header{
+	padding:0.5rem;
+	text-align:center;
+	font-weight:bold;
+	font-size:1.2rem;
+}
+
+.header-black{
+	background-color: #000;
+	color:#fff;
+}
+
+.header-white{
+	background-color: #fff;
+	color:#000;
+}
+
+.settings-body{
+	padding:0.5rem;
+}
+
+.mode-tabs{
+	display:flex;
+	margin-bottom: 1rem;
+	border:1px solid #ccc;
+	border-radius:4px;
+	overflow:hidden;
+}
+
+.mode-tab{
+	flex:1;
+	padding:0.5rem;
+	border:none;
+	cursor:pointer;
+	background-color:#eee;
+	color:#333;
+	transition: all 0.2s ease;
+}
+
+.mode-tab:not(.mode-tab-active):hover{
+	background-color:#ddd;
+}
+
+.mode-tab-active{
+	background-color:#309010;
+	color:#fff;
+	font-weight:bold;
+}
+
+.mode-tab-active:hover{
+	background-color:#208000;
+}
+
+.source-selection{
+	display:flex;
+	flex-direction: column;
+	gap:0.5rem;
+	margin-bottom:1rem;
+	margin-left:1rem;
+	margin-right:1rem;
+}
+
+.source-row{
+	display: flex;
+	align-items: center;
+	width:100%;
+}
+
+.source-radio-label{
+	display:flex;
+	align-items:center;
+	cursor: pointer;
+}
+
+.source-name{
+	margin-left:0.5rem;
+	font-weight:bold;
+	width:70px;
+}
+
+.preset-select{
+	flex:1;
+	padding:0.2rem;
+	border-radius:4px;
+	border:1px solid #ccc;
+	background-color: #f4f4f4;
+}
+
+.preset-select:disabled{
+	background-color: #e0e0e0;
+	cursor:not-allowed;
+}
+
+.file-input-wrapper{
+	flex:1;
+}
+
+.hidden-file-input{
+	display:none;
+}
+
+.custom-file-button{
+	padding:0.3rem 0.6rem;
+	border:1px solid #333;
+	border-radius:4px;
+	background-color:#eee;
+	cursor:pointer;
+	transition: all 0.2s ease;
+	margin-right:1rem;
+}
+
+.custom-file-button-active{
+	background-color:#a0e0a0;
+	border-color:#208000;
+	font-weight:bold;
+}
+
+.custom-file-button:hover{
+	background-color:#ddd;
+}
+
+.file-status-text{
+	font-size:0.9rem;
+	color:#333;
+	vertical-align:middle;
+	text-overflow: ellipsis;
+}
+
+.manual-input-note{
+	font-size:0.8rem;
+	color:#666;
+}
+
+.grid-editor{
+	display:grid;
+	grid-template-columns:repeat(8,1fr);
+	margin:0 auto;
+	width:90%;
+	border:2px solid #333;
+	margin-bottom:2rem;
+}
+
+.priority-grid-cell{
+	width:100%;
+	aspect-ratio: 1 / 1;
+	text-align:center;
+	font-size:150%;
+	padding:0;
+	border:1px solid #333;
+	background-color: #a0e0a0;
+}
