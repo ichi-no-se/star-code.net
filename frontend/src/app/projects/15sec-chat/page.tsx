@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react'
-import io from 'socket.io-client'
+import { io, Socket } from 'socket.io-client'
 import '@styles/chat.css'
 
 interface ChatMessage {
@@ -10,35 +10,39 @@ interface ChatMessage {
 	timestamp: number;
 }
 
-const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001');
-
 export default function Chat() {
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [message, setMessage] = useState<string>('');
 	const chatContainerRef = useRef<HTMLDivElement>(null);
 	const [isAtBottom, setIsAtBottom] = useState(true);
-	// const [userCount,setUserCount]= useState<number>(0);
+	const [userCount,setUserCount]= useState<number>(0);
+
+	const socketRef = useRef<Socket|null>(null);
 
 	useEffect(() => {
+		const url = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001') + '/chat';
+		const socket = io(url);
+		socketRef.current = socket;
+
+
 		socket.on('newMessages', (messages: ChatMessage[]) => {
 			setMessages(messages);
 		});
-		/*
+		
 		socket.on('userCount', (count: number) => {
 			setUserCount(count);
 		});
-		*/
 
 		return () => {
 			socket.off('newMessages');
-			// socket.off('userCount');
+			socket.off('userCount');
 			socket.disconnect();
 		}
 	}, []);
 
 	const sendMessage = () => {
-		if (message.trim() !== '') {
-			socket.emit('sendMessage', message);
+		if (message.trim() !== '' && socketRef.current) {
+			socketRef.current.emit('sendMessage', message);
 			setMessage('');
 		}
 	};
@@ -50,7 +54,7 @@ export default function Chat() {
 				behavior: 'auto',
 			});
 		}
-	}, [isAtBottom]);
+	}, [messages,isAtBottom]);
 
 	useEffect(() => {
 		if (isAtBottom) {
@@ -74,9 +78,9 @@ export default function Chat() {
 			<h2 className="introduction">
 				15 秒でメッセージが消えるチャット，詳細は<Link href="/blog/15sec-chat">こちら</Link>から
 			</h2>
-			{/* <div className="user-count">
+			<div className="user-count">
 				<p>現在のユーザー数: {userCount}</p>
-			</div> */}
+			</div>
 			<div className="chat-container" ref={chatContainerRef} onScroll={handleScroll}>
 				{messages.map((msg, i) => (
 					<div key={i} className="chat-message">

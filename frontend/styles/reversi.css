@@ -436,3 +436,18 @@
 	border:1px solid #333;
 	background-color: #a0e0a0;
 }
+
+.online-status{
+	text-align: center;
+	font-weight: bold;
+	margin-bottom: 1rem;
+	font-size: 2rem;
+}
+
+.online-status.connected{
+	color: #00a000;
+}
+
+.online-status.disconnected{
+	color: #a00000;
+}

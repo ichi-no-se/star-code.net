@@ -4,6 +4,7 @@ export type CellState = Player | "Empty";
 export type Board = CellState[];
 export type Move = { index: number, player: Player };
 export type ReversiHistoryRecord = { board: Board, previousMove: Move | null, passPlayer: Player | null, gameStatus: GameStatus };
+export type ReversiHistoryRecordServer = ReversiHistoryRecord & { scores: { Black: number, White: number } };
 
 export const BOARD_SIZE = 8;
 export const DIRECTIONS: number[][] = [

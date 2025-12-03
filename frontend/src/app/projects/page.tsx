@@ -7,16 +7,23 @@ export default function ProjectsPage() {
 			<ol className="post-list">
 				<Link href="/projects/reversi-static-ai" className="post-box">
 					<div>
-						<h2 className="post-title">リバーシ（静的 AI）</h2>
-						<p className="post-date">2025-11-25</p>
-						<p className="post-description">リバーシ（静的 AI）</p>
+						<h2 className="post-title">リバーシ（vs 静的 AI）</h2>
+						<p className="post-date">2025-12-03</p>
+						<p className="post-description">静的な優先度マップに基づいて動作する AI と対戦できます．</p>
+					</div>
+				</Link>
+				<Link href="/projects/reversi-global" className="post-box">
+					<div>
+						<h2 className="post-title">全世界同期リバーシ</h2>
+						<p className="post-date">2025-12-03</p>
+						<p className="post-description">盤面は全ての閲覧者とリアルタイムで共有されます．</p>
 					</div>
 				</Link>
 				<Link href="/projects/reversi-local" className="post-box">
 					<div>
-						<h2 className="post-title">リバーシ（Local）</h2>
-						<p className="post-date">2025-11-25</p>
-						<p className="post-description">リバーシ（Local）</p>
+						<h2 className="post-title">リバーシ（シンプル）</h2>
+						<p className="post-date">2025-12-03</p>
+						<p className="post-description">シンプルなリバーシ盤です．一人二役もよし，誰かと同じ PC で対戦もよし．</p>
 					</div>
 				</Link>
 				<Link href="/projects/legions-path" className="post-box">

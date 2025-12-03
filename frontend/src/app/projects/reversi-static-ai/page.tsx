@@ -381,10 +381,11 @@ export default function ReversiStaticAIPage() {
 
 	return (
 		<main>
-			<h1 className="title">リバーシ（静的 AI）</h1>
+			<h1 className="title">リバーシ（vs 静的 AI）</h1>
 			<h2 className="introduction">
 				ブラウザ上で動作するリバーシ盤面．<br />
-				関連記事は<Link href="/blog/reversi-local">こちら</Link>から．
+				静的な優先度マップに基づいて動作する AI と対戦できます．<br />
+				関連記事は<Link href="/blog/reversi-static-ai">こちら</Link>から．
 			</h2>
 			<div className="game-container">
 				<div className="board-container">
