@@ -1,5 +1,4 @@
 "use client"
-import Link from "next/link"
 import { useState, useMemo, useRef} from "react"
 import { createInitialBoard, getValidMoves, applyMove, canMove, countPieces, Board, Player, GameStatus, ReversiHistoryRecord } from "@/lib/ReversiLogic"
 import { ReversiBoard } from "@/components/Reversi/ReversiBoard";
