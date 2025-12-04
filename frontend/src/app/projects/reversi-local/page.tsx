@@ -98,7 +98,6 @@ export default function ReversiLocalPage() {
 			<h2 className="introduction">
 				ブラウザ上で動作するシンプルなリバーシ盤面．<br />
 				一人二役もよし，誰かと同じ PC で対戦もよし．<br />
-				関連記事は<Link href="/blog/reversi-local">こちら</Link>から．
 			</h2>
 			<div className="game-container">
 				<div className="board-container">
