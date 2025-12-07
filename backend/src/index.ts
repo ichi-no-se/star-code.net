@@ -23,6 +23,6 @@ const reversiNamespace = io.of('/reversi');
 reversiHandler(reversiNamespace);
 
 const PORT = process.env.PORT || 3001;
-server.listen(Number(PORT), "127.0.0.1", () => {
-	console.log(`Server is running on http://127.0.0.1:${PORT}`);
+server.listen(PORT, () => {
+	console.log(`Server is running on http://localhost:${PORT}`);
 });
