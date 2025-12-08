@@ -42,7 +42,9 @@ order: 20
 
 ## 対策
 
-SSH は鍵認証のみにします．これやっていなかったのかなあ，今となっては確認のしようもないです．
+SSH は鍵認証のみにします．
+
+`/etc/sshd_config` の `PasswordAuthentication` を `no` にすれば良いわけではなく，`/etc/sshd_config.d/50-cloud-init.conf` 内で同様の設定が必要でした．恐らくこれはしていなかったのだろうと思われます．
 
 Minecraft サーバーは一旦閉じます．
 Docker 使うか，ユーザーを分けるか，対策を講じたのちに再開させます．
