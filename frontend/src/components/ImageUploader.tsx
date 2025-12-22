@@ -1,6 +1,5 @@
 "use client";
 
-import "@styles/image-processor.css"
 import { ChangeEvent } from "react";
 
 type Props = {
@@ -42,12 +41,7 @@ export default function ImageUploader({ onLoad, resizeDivisor = 1 }: Props) {
         img.src = objectUrl;
     };
     return (
-        <div className="image-uploader">
-            <label className="upload-label">
-                ファイルを選択
-                <input type="file" accept="image/*" onChange={handleFileChange}
-                    className="file-input" />
-            </label>
-        </div>
+        <input type="file" accept="image/*" onChange={handleFileChange}
+            className="file-input" />
     )
 }

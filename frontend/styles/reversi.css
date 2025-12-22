@@ -1,0 +1,468 @@
+.game-container {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 1rem;
+	flex-wrap: wrap;
+	margin-top: 1rem;
+	margin-bottom: 3rem;
+}
+
+.info-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	flex: 0 0 auto;
+	max-width: 350px;
+}
+
+.board-container {
+	flex: 0 0 auto;
+	width: 480px;
+	max-width: 100%;
+}
+
+.reversi-board {
+	display: grid;
+	grid-template-columns: repeat(8, 1fr);
+	/* 8等分 */
+	grid-template-rows: repeat(8, 1fr);
+
+	aspect-ratio: 1 / 1;
+
+	background-color: #000;
+	border: 4px solid #333;
+	gap: 1px;
+	box-sizing: border-box;
+
+	margin: 0 auto;
+}
+
+.reversi-cell {
+	background-color: #008000;
+	position: relative;
+	cursor: pointer;
+}
+
+.reversi-cell:hover {
+	background-color: #00a000;
+}
+
+.reversi-stone {
+	width: 80%;
+	height: 80%;
+	border-radius: 50%;
+	position: absolute;
+	top: 10%;
+	left: 10%;
+	box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+	transition: transform 0.2s ease-out;
+}
+
+.reversi-stone.black-stone {
+	background-color: #000;
+	background-image: radial-gradient(circle at 30% 30%, #444, #000);
+}
+
+.reversi-stone.white-stone {
+	background-color: #fff;
+	background-image: radial-gradient(circle at 30% 30%, #fff, #ddd);
+}
+
+.reversi-last-move-indicator {
+	width: 80%;
+	height: 80%;
+	border: 3px solid rgba(255, 130, 0, 0.95);
+	border-radius: 50%;
+	position: absolute;
+	top: 10%;
+	left: 10%;
+	z-index: 2;
+}
+
+/* ensure the stone itself sits above the indicator */
+.reversi-stone {
+	z-index: 1;
+}
+
+.reversi-guide {
+	width: 30%;
+	height: 30%;
+	border-radius: 50%;
+	position: absolute;
+	top: 35%;
+	left: 35%;
+	pointer-events: none;
+	/* クリックを邪魔しないようにする重要設定 */
+}
+
+.reversi-guide.black {
+	background-color: rgba(0, 0, 0, 0.3);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.reversi-guide.white {
+	background-color: rgba(255, 255, 255, 0.3);
+	border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.reversi-scoreboard {
+	display: flex;
+	width: 100%;
+	max-width: 400px;
+	background-color: #a0e0a0;
+	padding: 1rem;
+	border-radius: 1rem;
+	flex-direction: column;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	margin: 0;
+}
+
+.reversi-score {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	padding: 10px;
+	border-radius: 8px;
+	font-weight: bold;
+	font-size: 1.1rem;
+	border: 6px solid transparent;
+	transition: all 0.3s ease;
+	position: relative;
+	font-variant-numeric: tabular-nums;
+}
+
+.reversi-scores-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
+	width: 100%;
+}
+
+.black-score {
+	white-space: nowrap;
+	background-color: #222;
+	color: #fff;
+	border-color: #444;
+}
+
+.white-score {
+	white-space: nowrap;
+	background-color: #f0f0f0;
+	color: #111;
+	border-color: #ccc;
+}
+
+.reversi-score.active-turn {
+	border-color: rgba(255, 130, 0, 0.95);
+	box-shadow: 0 0 12px rgba(0, 230, 0, 0.4);
+}
+
+.reversi-result {
+	box-sizing: border-box;
+	margin-top: 8px;
+	text-align: center;
+	font-weight: 900;
+	font-size: 1.2rem;
+	padding: 8px;
+	border-radius: 6px;
+	border: 2px solid transparent;
+	transition: all 0.3s ease;
+	opacity: 0;
+	
+	min-height : 2.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.reversi-result.show {
+	opacity: 1;
+}
+
+.result-black {
+	background-color: #ffd700;
+	color: #000;
+	border: 2px solid #774411;
+	box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+}
+
+.result-white {
+	background-color: #774411;
+	color: #fff;
+	border: 2px solid #ffd700;
+	box-shadow: 0 2px 8px rgba(255, 215, 0, 0.2);
+}
+
+.result-pass {
+	background-color: #444;
+	color: #fff;
+	border : 2px solid #222;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.result-draw {
+	background-color: #888;
+	color: #fff;
+}
+
+.result-draw {
+	background-color: #888;
+	color: #fff;
+}
+
+.reversi-controlls {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.8rem;
+	width: 100%;
+}
+
+
+.reversi-controlls-button {
+	flex:initial;
+	width:100%;
+	min-width: 3rem;
+	height: 2.5rem;
+	border-radius: 6px;
+	background-color: #fff;
+	border: 2px solid #555;
+	color: #333;
+	font-family: monospace;
+	font-weight: bold;
+	font-size: 1.2rem;
+	line-height: 1;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.2s ease;
+}
+
+.reversi-controlls-button:not(:disabled):hover {
+	background-color: #333;
+	color: #fff;
+	border-color: #000;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.reversi-controlls-button:not(:disabled):active {
+	transform: translateY(0);
+	box-shadow: none;
+}
+
+.reversi-controlls-button:disabled {
+	opacity: 0.3;
+	cursor: not-allowed;
+	border-color: #ccc;
+	background-color: #eee;
+	color: #999;
+	box-shadow: none;
+}
+
+.settings-container{
+	display:flex;
+	flex-direction: row;
+	justify-content: center;
+	gap: 1rem;
+	margin-left:auto;
+	margin-right:auto;
+	margin-bottom:4rem;
+	width:90%;
+	max-width:900px;
+}
+
+@media (max-width: 640px) {
+	.settings-container{
+		flex-direction: column;
+	}
+	
+}
+
+.settings-panel{
+	border: 1px solid #ccc;
+	border-radius: 8px;
+	background: #eee;
+	overflow: hidden;
+	display:flex;
+	flex-direction: column;
+	flex:1;
+}
+
+.settings-header{
+	padding:0.5rem;
+	text-align:center;
+	font-weight:bold;
+	font-size:1.2rem;
+}
+
+.header-black{
+	background-color: #000;
+	color:#fff;
+}
+
+.header-white{
+	background-color: #fff;
+	color:#000;
+}
+
+.settings-body{
+	padding:0.5rem;
+}
+
+.mode-tabs{
+	display:flex;
+	margin-bottom: 1rem;
+	border:1px solid #ccc;
+	border-radius:4px;
+	overflow:hidden;
+}
+
+.mode-tab{
+	flex:1;
+	padding:0.5rem;
+	border:none;
+	cursor:pointer;
+	background-color:#eee;
+	color:#333;
+	transition: all 0.2s ease;
+}
+
+.mode-tab:not(.mode-tab-active):hover{
+	background-color:#ddd;
+}
+
+.mode-tab-active{
+	background-color:#309010;
+	color:#fff;
+	font-weight:bold;
+}
+
+.mode-tab-active:hover{
+	background-color:#208000;
+}
+
+.source-selection{
+	display:flex;
+	flex-direction: column;
+	gap:0.5rem;
+	margin-bottom:1rem;
+	margin-left:1rem;
+	margin-right:1rem;
+}
+
+.source-row{
+	display: flex;
+	align-items: center;
+	width:100%;
+}
+
+.source-radio-label{
+	display:flex;
+	align-items:center;
+	cursor: pointer;
+}
+
+.source-name{
+	margin-left:0.5rem;
+	font-weight:bold;
+	width:70px;
+}
+
+.preset-select{
+	flex:1;
+	padding:0.2rem;
+	border-radius:4px;
+	border:1px solid #ccc;
+	background-color: #f4f4f4;
+	overflow: hidden;
+}
+
+.preset-select:disabled{
+	background-color: #e0e0e0;
+	cursor:not-allowed;
+}
+
+.file-input-wrapper{
+	flex:1;
+}
+
+.hidden-file-input{
+	display:none;
+}
+
+.custom-file-button{
+	padding:0.3rem 0.6rem;
+	border:1px solid #333;
+	border-radius:4px;
+	background-color:#eee;
+	cursor:pointer;
+	transition: all 0.2s ease;
+	margin-right:1rem;
+}
+
+.custom-file-button-active{
+	background-color:#a0e0a0;
+	border-color:#208000;
+	font-weight:bold;
+}
+
+.custom-file-button:hover{
+	background-color:#ddd;
+}
+
+.file-status-text{
+	font-size:0.9rem;
+	color:#333;
+	vertical-align:middle;
+	text-overflow: ellipsis;
+}
+
+.manual-input-note{
+	font-size:0.8rem;
+	color:#666;
+}
+
+.grid-editor{
+	display:grid;
+	grid-template-columns:repeat(8,1fr);
+	margin:0 auto;
+	width:90%;
+	border:2px solid #333;
+	margin-bottom:2rem;
+}
+
+.priority-grid-cell{
+	width:100%;
+	aspect-ratio: 1 / 1;
+	text-align:center;
+	font-size:150%;
+	padding:0;
+	border:1px solid #333;
+	background-color: #a0e0a0;
+}
+
+.online-status{
+	text-align: center;
+	font-weight: bold;
+	margin-bottom: 1rem;
+	font-size: 2rem;
+}
+
+.online-status.connected{
+	color: #00a000;
+}
+
+.online-status.disconnected{
+	color: #a00000;
+}
+
+@media (max-width: 640px) {
+	.settings-container {
+		flex-direction: column;
+	}
+}

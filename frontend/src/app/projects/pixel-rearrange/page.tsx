@@ -4,7 +4,7 @@ import ImageUploader from "@/components/ImageUploader";
 import CanvasOutput from "@/components/CanvasOutput";
 import { getImageDataFromImage, rgbToHsv, downloadImageData } from "@/lib/ImageUtils";
 import "@styles/image-processor.css";
-import "@styles/pixel-rearranger.css";
+import "@styles/pixel-rearrange.css";
 
 type ColorSpace = "HSV" | "RGB";
 type HSVKey = "Hue" | "Saturation" | "Value";
@@ -263,7 +263,8 @@ export default function PixelRearrange() {
             <h2 className="introduction">
                 画像をピクセルレベルでバラバラにした後，特定の優先順位に基づいて並び替えます．<br />
                 画像サイズが大きい場合，変換に時間がかかったり，エラーが発生したりすることがあります．<br />
-                縮小オプションを使用して画像を縮小することを推奨します．
+                縮小オプションを使用して画像を縮小することを推奨します．<br />
+                画像はブラウザ上で処理されます．サーバーに送信されることはありません．
             </h2>
             <div className="settings-form">
                 <fieldset>
@@ -337,7 +338,12 @@ export default function PixelRearrange() {
             </div>
             <div className="canvas-container">
                 <div className="canvas-button-wrapper">
-                    <ImageUploader onLoad={setInputImage} resizeDivisor={resizeDivisor} />
+                    <div className="image-uploader">
+                        <label className="upload-label">
+                            ファイルを選択
+                            <ImageUploader onLoad={setInputImage} resizeDivisor={resizeDivisor} />
+                        </label>
+                    </div>
                     <div className="canvas-wrapper">
                         <CanvasOutput image={inputImage} />
                     </div>
@@ -346,7 +352,7 @@ export default function PixelRearrange() {
                 <div className="canvas-button-wrapper">
                     <button className="download-button" disabled={!outputImage} onClick={() => outputImage && downloadImageData(outputImage, "output.png")}>ダウンロード</button>
                     <div className="canvas-wrapper">
-                        <CanvasOutput image={outputImage}/>
+                        <CanvasOutput image={outputImage} />
                     </div>
                     <p>出力画像</p>
                 </div>

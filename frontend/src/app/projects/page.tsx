@@ -5,10 +5,45 @@ export default function ProjectsPage() {
 		<main>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/reversi-static-ai" className="post-box">
+					<div>
+						<h2 className="post-title">リバーシ（vs 静的 AI）</h2>
+						<p className="post-date">2025-12-04</p>
+						<p className="post-description">静的な優先度マップに基づいて動作する AI と対戦</p>
+					</div>
+				</Link>
+				<Link href="/projects/reversi-global" className="post-box">
+					<div>
+						<h2 className="post-title">全世界同期リバーシ</h2>
+						<p className="post-date">2025-12-04</p>
+						<p className="post-description">全ての閲覧者と盤面をリアルタイム共有</p>
+					</div>
+				</Link>
+				<Link href="/projects/reversi-local" className="post-box">
+					<div>
+						<h2 className="post-title">リバーシ（シンプル）</h2>
+						<p className="post-date">2025-12-04</p>
+						<p className="post-description">シンプルなリバーシ盤，一人二役でも，誰かと同じ PC で対戦でも</p>
+					</div>
+				</Link>
+				<Link href="/projects/legions-path" className="post-box">
+					<div>
+						<h2 className="post-title">Legion&apos;s Path</h2>
+						<p className="post-date">2025-11-16</p>
+						<p className="post-description">操作は「線を引く」だけ，リアルタイムストラテジーゲーム</p>
+					</div>
+				</Link>
+				<Link href="/projects/image-ascii-art" className="post-box">
+					<div>
+						<h2 className="post-title">画像アスキーアート化</h2>
+						<p className="post-date">2025-08-10 </p>
+						<p className="post-description">画像をアスキーアートに変換する</p>
+					</div>
+				</Link>
 				<Link href="/projects/pixel-rearrange" className="post-box">
 					<div>
 						<h2 className="post-title">画像ピクセル並び替え</h2>
-						<p className="post-date">2025-08-03</p>
+						<p className="post-date">2025-08-07</p>
 						<p className="post-description">画像をピクセルでバラバラにして並び替える</p>
 					</div>
 				</Link>

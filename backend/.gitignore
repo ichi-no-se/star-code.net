@@ -1,6 +1,7 @@
 # Node.js関連
 node_modules/
 package-lock.json
+dist/
 
 # 環境変数
 .env
