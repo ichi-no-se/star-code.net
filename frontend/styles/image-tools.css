@@ -61,6 +61,22 @@
 	cursor: pointer;
 }
 
+.settings-form input[type="number"] {
+	width: 5rem;
+	font-size: 1.2rem;
+	padding: 0.3rem;
+	border-radius: 4px;
+	border: 1px solid #ccc;
+	text-align: right;
+}
+
+.settings-form input[type="range"] {
+	flex:1;
+	width: auto;
+	margin-right: 1rem;
+    cursor: pointer;
+}
+
 .canvas-wrapper {
 	display: flex;
 	justify-content: center;

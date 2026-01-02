@@ -4,7 +4,7 @@ import ImageUploader from "@/components/ImageUploader";
 import CanvasOutput from "@/components/CanvasOutput";
 import { getImageDataFromImage, rgbToHsv, downloadImageData } from "@/lib/ImageUtils";
 import "@styles/image-processor.css";
-import "@styles/pixel-rearrange.css";
+import "@styles/image-tools.css";
 
 type ColorSpace = "HSV" | "RGB";
 type HSVKey = "Hue" | "Saturation" | "Value";
