@@ -9,7 +9,7 @@ export default function ProjectsPage() {
 					<div>
 						<h2 className="post-title">円による画像近似</h2>
 						<p className="post-date">2026-01-02</p>
-						<p className="post-description">画像を円の集合で近似します．</p>
+						<p className="post-description">画像を円の集合で近似</p>
 					</div>
 				</Link>
 				<Link href="/projects/reversi-static-ai" className="post-box">

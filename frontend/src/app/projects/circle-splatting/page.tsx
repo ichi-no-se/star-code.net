@@ -30,7 +30,7 @@ const DualInput = ({ label, value, onChange, min, sliderMax, limitMax }: {
 );
 
 export default function CircleSplatting() {
-    const module = useCircleSplatting();
+    const wasmModule = useCircleSplatting();
 
     const [numberOfCircles, setNumberOfCircles] = useState(400);
     const [epochs, setEpochs] = useState(1000);
@@ -49,14 +49,14 @@ export default function CircleSplatting() {
     };
 
     const handleGenerate = async () => {
-        if (!module || !inputImage) return;
+        if (!wasmModule || !inputImage) return;
         setIsProcessing(true);
-        await new Promise((resolve) => setTimeout(resolve, 50)); // allow UI update
+        await new Promise((resolve) => setTimeout(resolve, 10)); // allow UI update
         try {
             const w = inputImage.naturalWidth;
             const h = inputImage.naturalHeight;
             const imageData = getImageDataFromImage(inputImage);
-            const instance = new module.CircleSplatting(w, h);
+            const instance = new wasmModule.CircleSplatting(w, h);
             instance.getInputBuffer().set(imageData.data);
             instance.run(numberOfCircles, epochs, initialRadiusMax);
             const resultView = instance.getDrawImageData();
@@ -106,14 +106,14 @@ export default function CircleSplatting() {
                     sliderMax={50}
                     limitMax={100}
                 />
-                <button className="generate-button" onClick={handleGenerate} disabled={!inputImage}>生成</button>
+                <button className="generate-button" onClick={handleGenerate} disabled={!inputImage || isProcessing}>{isProcessing ? "生成中..." : "生成"}</button>
             </div>
             <div className="canvas-container">
                 <div className="canvas-button-wrapper">
                     <div className="image-uploader">
                         <label className="upload-label">
                             ファイルを選択
-                            <ImageUploader onLoad={setInputImage} resizeDivisor={1} />
+                            <ImageUploader onLoad={handleImageLoad} resizeDivisor={1} />
                         </label>
                     </div>
                     <div className="canvas-wrapper">
