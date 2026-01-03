@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<main>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/circle-splatting" className="post-box">
+					<div>
+						<h2 className="post-title">円による画像近似</h2>
+						<p className="post-date">2026-01-03</p>
+						<p className="post-description">画像を円の集合で近似</p>
+					</div>
+				</Link>
 				<Link href="/projects/reversi-static-ai" className="post-box">
 					<div>
 						<h2 className="post-title">リバーシ（vs 静的 AI）</h2>

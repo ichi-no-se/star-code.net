@@ -1,0 +1,3 @@
+[submodule "frontend/circle-splatting-wasm"]
+	path = frontend/circle-splatting-wasm
+	url = https://github.com/ichi-no-se/circle-splatting-wasm.git
