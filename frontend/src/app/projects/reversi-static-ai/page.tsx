@@ -385,7 +385,8 @@ export default function ReversiStaticAIPage() {
 			<h2 className="introduction">
 				ブラウザ上で動作するリバーシ盤面．<br />
 				静的な優先度マップに基づいて動作する AI と対戦できます．<br />
-				関連記事は<Link href="/blog/reversi-static-ai">こちら</Link>から．
+				関連記事は<Link href="/blog/reversi-static-ai">こ</Link><Link href="/blog/reversi-static-ai-2">ち</Link><Link href="/blog/reversi-static-ai-3">ら</Link>から．<br />
+				静的 AI のプリセットは<Link href="/blog/reversi-static-ai-3">こちら</Link>の記事で行った対戦で使用したものです．
 			</h2>
 			<div className="game-container">
 				<div className="board-container">
