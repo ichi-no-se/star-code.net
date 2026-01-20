@@ -7,6 +7,7 @@ order: 0
 ## 管理人情報
 
 - GitHub: [ichi-no-se](https://github.com/ichi-no-se)
+- mixi2: [一之瀬このみ](https://mixi.social/@1_no_se)
 - misskey.design: [一之瀬このみ](https://misskey.design/@1_no_se)
 - pixiv: [一之瀬このみ](https://www.pixiv.net/users/73996425)
 - X: [一之瀬このみ](https://x.com/1_no_se)

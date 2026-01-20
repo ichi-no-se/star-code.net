@@ -89,7 +89,7 @@ header h1 {
 }
 
 header nav ul {
-	@apply flex space-x-4;
+	@apply flex space-x-2;
 }
 
 .header-link {
