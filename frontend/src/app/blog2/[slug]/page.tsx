@@ -14,7 +14,7 @@ type BlogProps = {
 }
 
 export default async function BlogPost({ params }: BlogProps) {
-	const postsDirectory = path.join(process.cwd(), 'src', 'app', 'blog', 'posts');
+	const postsDirectory = path.join(process.cwd(), 'src', 'app', 'blog2', 'posts');
 	const { slug } = await params;
 	const slugs = getPostSlugs(postsDirectory);
 	if (!slugs.includes(slug)) {
@@ -41,7 +41,7 @@ export default async function BlogPost({ params }: BlogProps) {
 			<nav className="article-navigation">
 				<div className="article-nav-tiles">
 					{prevPost && (
-						<Link href={`/blog/${prevPost.slug}`}>
+						<Link href={`/blog2/${prevPost.slug}`}>
 							<div className="article-nav-tile-left">
 								<span className="article-nav-tile-label">前の記事</span>
 								<br />
@@ -52,7 +52,7 @@ export default async function BlogPost({ params }: BlogProps) {
 						</Link>
 					)}
 					{nextPost && (
-						<Link href={`/blog/${nextPost.slug}`}>
+						<Link href={`/blog2/${nextPost.slug}`}>
 							<div className="article-nav-tile-right">
 								<span className="article-nav-tile-label">次の記事</span>
 								<br />
@@ -62,7 +62,7 @@ export default async function BlogPost({ params }: BlogProps) {
 							</div>
 						</Link>
 					)}
-					<Link href="/blog">
+					<Link href="/blog2">
 						<div className="article-nav-tile-center">
 							<span className="article-nav-tile-label">ホームに戻る</span>
 						</div>
@@ -74,7 +74,7 @@ export default async function BlogPost({ params }: BlogProps) {
 }
 
 export async function generateStaticParams() {
-	const postsDirectory = path.join(process.cwd(), 'src', 'app', 'blog', 'posts');
+	const postsDirectory = path.join(process.cwd(), 'src', 'app', 'blog2', 'posts');
 	const slugs = getPostSlugs(postsDirectory);
 	return slugs.map((slug) => ({
 		slug,
