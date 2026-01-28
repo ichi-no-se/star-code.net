@@ -9,7 +9,7 @@ export default function ProjectsPage() {
 					<div>
 						<h2 className="post-title">言葉をオブラートに包む</h2>
 						<p className="post-date">2026-01-28</p>
-						<p className="post-description">オブラート</p>
+						<p className="post-description">オブ言葉ラート</p>
 					</div>
 				</Link>
 				<Link href="/projects/circle-splatting" className="post-box">
