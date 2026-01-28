@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<main>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/oblate" className="post-box">
+					<div>
+						<h2 className="post-title">言葉をオブラートに包む</h2>
+						<p className="post-date">2026-01-28</p>
+						<p className="post-description">オブラート</p>
+					</div>
+				</Link>
 				<Link href="/projects/circle-splatting" className="post-box">
 					<div>
 						<h2 className="post-title">図形による画像近似</h2>
