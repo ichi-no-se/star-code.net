@@ -69,7 +69,6 @@ export default class MainScene extends Phaser.Scene {
     }
 
     connectSocket() {
-        this.clearAllObjects();
         const url = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001') + '/online-game-prototype-0';
         this.socket = io(url);
         this.socket.on('currentPlayers', (players: Player[]) => {
@@ -99,14 +98,5 @@ export default class MainScene extends Phaser.Scene {
     addPlayer(player: Player) {
         const rect = this.add.rectangle(player.x, player.y, this.playerSize, this.playerSize, player.color);
         this.playerRects.set(player.id, rect);
-    }
-
-    private clearAllObjects() {
-        this.playerRects.forEach(rect => rect.destroy());
-        this.playerRects.clear();
-        if (this.myRect) {
-            this.myRect.destroy();
-            this.myRect = null;
-        }
     }
 }
