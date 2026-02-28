@@ -61,12 +61,15 @@ export default class MainScene extends Phaser.Scene {
             this.myRect.y += this.speed;
             moved = true;
         }
+        this.myRect.x = Phaser.Math.Clamp(this.myRect.x, this.playerSize / 2, this.width - this.playerSize / 2);
+        this.myRect.y = Phaser.Math.Clamp(this.myRect.y, this.playerSize / 2, this.height - this.playerSize / 2);
         if (moved) {
             this.socket.emit('playerMovement', { x: this.myRect.x, y: this.myRect.y } as MovementData);
         }
     }
 
     connectSocket() {
+        this.clearAllObjects();
         const url = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001') + '/online-game-prototype-0';
         this.socket = io(url);
         this.socket.on('currentPlayers', (players: Player[]) => {
@@ -96,5 +99,14 @@ export default class MainScene extends Phaser.Scene {
     addPlayer(player: Player) {
         const rect = this.add.rectangle(player.x, player.y, this.playerSize, this.playerSize, player.color);
         this.playerRects.set(player.id, rect);
+    }
+
+    private clearAllObjects() {
+        this.playerRects.forEach(rect => rect.destroy());
+        this.playerRects.clear();
+        if (this.myRect) {
+            this.myRect.destroy();
+            this.myRect = null;
+        }
     }
 }

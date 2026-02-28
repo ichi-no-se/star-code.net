@@ -32,8 +32,8 @@ export default function GameContainer() {
         width: '800px',
         height: '600px',
         margin: '20px auto',
-        border: '4px solid #333',
-        borderRadius: '8px',
+        // border: '4px solid #333',
+        // borderRadius: '8px',
         overflow: 'hidden',
         backgroundColor: '#000',
     };
