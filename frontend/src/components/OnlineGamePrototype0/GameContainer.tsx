@@ -9,7 +9,16 @@ export default function GameContainer() {
     const gameRef = useRef<Phaser.Game | null>(null);
 
     useEffect(() => {
-        if (!containerRef.current || gameRef.current) return;
+        if (!containerRef.current) return;
+
+        while (containerRef.current.firstChild) {
+            containerRef.current.removeChild(containerRef.current.firstChild);
+        }
+
+        if (gameRef.current) {
+            gameRef.current.destroy(true);
+            gameRef.current = null;
+        }
 
         const config: Phaser.Types.Core.GameConfig = {
             type: Phaser.AUTO,
