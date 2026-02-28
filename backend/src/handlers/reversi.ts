@@ -13,12 +13,12 @@ let canGoBack: boolean = false;
 let canGoForward: boolean = false;
 let currentStep: number = 0;
 
-export const reversiHandler = (io: Namespace) => {
-	io.on('connection', (socket) => {
-		console.log(`Client connected: ${socket.id}`);
+export const reversiHandler = (ns: Namespace) => {
+	ns.on('connection', (socket) => {
+		console.log(`[Reversi] Client connected: ${socket.id}`);
 
 		const broadcastCurrentState = () => {
-			io.emit('gameState', { board, lastMoveIndex, passPlayer, gameStatus, validMoves, scores, canGoBack, canGoForward });
+			ns.emit('gameState', { board, lastMoveIndex, passPlayer, gameStatus, validMoves, scores, canGoBack, canGoForward });
 		};
 
 		broadcastCurrentState();
@@ -103,7 +103,7 @@ export const reversiHandler = (io: Namespace) => {
 		});
 
 		socket.on('disconnect', () => {
-			console.log(`Client disconnected: ${socket.id}`);
+			console.log(`[Reversi] Client disconnected: ${socket.id}`);
 		});
 	});
 };

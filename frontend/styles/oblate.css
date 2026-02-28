@@ -77,7 +77,7 @@
 	.output-container {
 		grid-template-columns: 1fr;
 		gap: 0.5rem;
-		min-height: auto;
+		min-height: 4.5rem;
 	}
 
 	.input-button,
