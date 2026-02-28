@@ -62,7 +62,7 @@ export default class MainScene extends Phaser.Scene {
             moved = true;
         }
         if (moved) {
-            this.socket.emit('playerMovement', { x: this.myRect.x, y: this.myRect.y });
+            this.socket.emit('playerMovement', { x: this.myRect.x, y: this.myRect.y } as MovementData);
         }
     }
 
