@@ -14,7 +14,7 @@ export default function BlogPage() {
 	const sortedPosts = posts.sort((a, b) => b.order - a.order);
 
 	return (
-		<main>
+		<>
 			<h1 className="title">Blog (Tech)</h1>
 			<ol className="post-list">
 				{sortedPosts.map((post) => (
@@ -26,6 +26,6 @@ export default function BlogPage() {
 					</Link>
 				))}
 			</ol>
-		</main>
+		</>
 	);
 }

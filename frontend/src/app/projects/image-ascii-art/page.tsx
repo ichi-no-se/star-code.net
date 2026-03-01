@@ -275,7 +275,7 @@ export default function ImageAsciiArt() {
 	}
 
 	return (
-		<main>
+		<>
 			<h1 className="title">画像アスキーアート化</h1>
 			<h2 className="introduction">
 				画像をアスキーアートに変換します．<br />
@@ -341,6 +341,6 @@ export default function ImageAsciiArt() {
 					<button className="copy-button" onClick={handleCopy} disabled={!outputText}>コピー</button>
 				</div>
 			)}
-		</main >
+		</>
 	);
 }

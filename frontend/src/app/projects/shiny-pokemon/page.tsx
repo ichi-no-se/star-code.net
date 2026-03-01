@@ -208,7 +208,7 @@ export default function ShinyPokemon() {
 		});
 	}
 	return (
-		<main>
+		<>
 			<h1 className="title">ポケモン色違い抽選シミュレーター</h1>
 			<h2 className="introduction">
 				4096 分の 1 の奇跡．<br />
@@ -258,7 +258,7 @@ export default function ShinyPokemon() {
 						</p>
 					</div>
 				</div>
-				<div className="main-panel">
+				<div className="-panel">
 					<label className="title-label">
 						結果
 					</label>
@@ -300,6 +300,6 @@ export default function ShinyPokemon() {
 					全ての結果をリセット
 				</button>
 			</div>
-		</main >
+		</>
 	);
 }

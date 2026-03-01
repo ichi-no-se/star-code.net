@@ -31,13 +31,13 @@ export default async function BlogPost({ params }: BlogProps) {
 	const { title, date, content } = getPostData(postsDirectory, slug);
 	return (
 		<>
-			<main className="article">
+			<div className="article">
 				<h1 className="article-title">{title}</h1>
 				<p className="article-date">{date}</p>
 				<div className="article-content">
 					<ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} >{content}</ReactMarkdown>
 				</div>
-			</main>
+			</div>
 			<nav className="article-navigation">
 				<div className="article-nav-tiles">
 					{prevPost && (

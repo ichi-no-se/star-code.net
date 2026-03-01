@@ -35,7 +35,7 @@ export default function Oblate() {
 	};
 
 	return (
-		<main>
+		<>
 			<h1 className="title">言葉をオブラートに包む</h1>
 			<div className="container">
 				<div className="input-container">
@@ -52,6 +52,6 @@ export default function Oblate() {
 					)}
 				</div>
 			</div>
-		</main>
+		</>
 	)
 }

@@ -92,7 +92,7 @@ export default function ReversiLocalPage() {
 	const canGoBack = isGameOver && (step > 0);
 
 	return (
-		<main>
+		<>
 			<h1 className="title">リバーシ（シンプル）</h1>
 			<h2 className="introduction">
 				ブラウザ上で動作するシンプルなリバーシ盤面．<br />
@@ -117,6 +117,6 @@ export default function ReversiLocalPage() {
 					</button>
 				</div>
 			</div>
-		</main>
+		</>
 	)
 }

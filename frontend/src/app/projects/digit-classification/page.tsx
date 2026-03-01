@@ -133,7 +133,7 @@ export default function DigitClassification() {
     };
 
     return (
-        <main>
+        <>
             <h1 className="title">手書き数字分類</h1>
             <h2 className="introduction">学習には MNIST データセットを用いています．技術情報は<Link href="/blog/digit-classification">こちら</Link>から．</h2>
             <div className="layout-container">
@@ -158,6 +158,6 @@ export default function DigitClassification() {
                     <ProbabilityChart probabilities={probabilities} />
                 </div>
             </div>
-        </main>
+        </>
     )
 }

@@ -5,7 +5,7 @@ import "@styles/legions-path.css";
 
 export default function LegionsPath() {
 	return (
-		<main>
+		<>
 				<h1 className="title">Legion&apos;s Path</h1>
 				<h2 className="introduction">操作は「線を引く」だけ，リアルタイムストラテジーゲーム<br />
 					開発記事は<Link href="/blog/legions-path">こちら</Link>から．<br /><br />
@@ -23,6 +23,6 @@ export default function LegionsPath() {
 					height="600"
 					title="Game Window" />
 			</div>
-		</main>
+		</>
 	)
 }

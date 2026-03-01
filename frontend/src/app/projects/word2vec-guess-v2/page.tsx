@@ -8,7 +8,7 @@ export default function Word2VecGuessPage() {
 
 
 	return (
-		<main>
+		<>
 			<h1 className="title">Word2Vec 類似度単語当てゲーム V2</h1>
 			<div className="introduction">
 				表示されている単語の中に正解が 1 つあります．
@@ -30,7 +30,7 @@ export default function Word2VecGuessPage() {
 					<Link href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</Link>の下で配布されています．
 				</li>
 			</div>
-		</main>
+		</>
 	)
 
 }
