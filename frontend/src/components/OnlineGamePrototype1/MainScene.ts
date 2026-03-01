@@ -29,6 +29,7 @@ export default class MainScene extends Phaser.Scene {
     private keyD?: Phaser.Input.Keyboard.Key;
     private keyEsc?: Phaser.Input.Keyboard.Key;
     private roomId?: string;
+    private rectPositions: Map<string, {x: number, y: number}> = new Map();
 
     constructor() {
         super({ key: 'MainScene' });
@@ -72,7 +73,7 @@ export default class MainScene extends Phaser.Scene {
         this.socket.on('playerMoved', (player: Player) => {
             const rect = this.playerRects.get(player.id);
             if (rect) {
-                rect.setPosition(player.x, player.y);
+                this.rectPositions.set(player.id, {x: player.x, y: player.y});
             }
         });
         this.socket.on('playerDisconnected', (id: string) => {
@@ -80,6 +81,7 @@ export default class MainScene extends Phaser.Scene {
             if (rect) {
                 rect.destroy();
                 this.playerRects.delete(id);
+                this.rectPositions.delete(id);
             }
         });
         this.events.once('shutdown', () => {
@@ -92,7 +94,7 @@ export default class MainScene extends Phaser.Scene {
         this.socket.emit('joinRoom', this.roomId);
     }
 
-    update() {
+    update(_time: number, delta: number) {
         if (!this.myRect || !this.cursors || !this.socket) return;
         let moved = false;
         if (this.cursors.left?.isDown || this.keyA?.isDown) {
@@ -116,10 +118,19 @@ export default class MainScene extends Phaser.Scene {
         if (moved) {
             this.socket.emit('playerMovement', { x: this.myRect.x, y: this.myRect.y } as MovementData);
         }
+        // 他プレイヤーの位置をスムーズに補間
+        this.rectPositions.forEach((pos, id) => {
+            const rect = this.playerRects.get(id);
+            if (rect) {
+                rect.x = Phaser.Math.Linear(rect.x, pos.x, 1 - Math.exp(-delta / 10));
+                rect.y = Phaser.Math.Linear(rect.y, pos.y, 1 - Math.exp(-delta / 10));
+            }
+        });
     }
 
     addPlayer(player: Player) {
         const rect = this.add.rectangle(player.x, player.y, this.playerSize, this.playerSize, player.color);
         this.playerRects.set(player.id, rect);
+        this.rectPositions.set(player.id, {x: player.x, y: player.y});
     }
 }
