@@ -298,7 +298,7 @@ export default function EmojiGenerator() {
 	};
 	useEffect(() => {
 		if (lightCanvasRef.current === null || darkCanvasRef.current === null) return;
-		
+
 		const drawCharacters = (canvas: HTMLCanvasElement, configs: CharRenderConfig[], scale: number) => {
 			if (!canvas) return;
 			const ctx = canvas.getContext("2d");
@@ -329,7 +329,7 @@ export default function EmojiGenerator() {
 		}, "image/png");
 	};
 	return (
-		<main>
+		<>
 			<h1 className="title">絵文字ジェネレーター</h1>
 			<h2 className="introduction">
 				Slack や Discord で使える絵文字を生成するツール．<br />
@@ -380,6 +380,6 @@ export default function EmojiGenerator() {
 				</button>
 			</div>
 
-		</main>
+		</>
 	);
 }

@@ -380,7 +380,7 @@ export default function ReversiStaticAIPage() {
 	}, [gameStatus, board, isGameOver, blackStrategy, whiteStrategy]);
 
 	return (
-		<main>
+		<>
 			<h1 className="title">リバーシ（vs 静的 AI）</h1>
 			<h2 className="introduction">
 				ブラウザ上で動作するリバーシ盤面．<br />
@@ -412,6 +412,6 @@ export default function ReversiStaticAIPage() {
 				<SettingsPanel config={blackStrategy} setConfig={setBlackStrategy} color="Black" />
 				<SettingsPanel config={whiteStrategy} setConfig={setWhiteStrategy} color="White" />
 			</div>
-		</main>
+		</>
 	)
 }

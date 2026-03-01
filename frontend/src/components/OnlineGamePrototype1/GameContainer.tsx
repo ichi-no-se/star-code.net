@@ -23,8 +23,12 @@ export default function GameContainer() {
 
         const config: Phaser.Types.Core.GameConfig = {
             type: Phaser.AUTO,
-            width: 800,
-            height: 600,
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH,
+                width: 800,
+                height: 600,
+            },
             parent: containerRef.current,
             scene: [LobbyScene, MainScene],
         };
@@ -39,13 +43,13 @@ export default function GameContainer() {
     }, []);
 
     const containerStyle: React.CSSProperties = {
-        width: '800px',
-        height: '600px',
-        margin: '20px auto 20px auto',
-        // border: '4px solid #333',
-        // borderRadius: '8px',
+        width: '100%',
+        height: '100%',
         overflow: 'hidden',
         backgroundColor: '#000',
+        position: 'absolute',
+        top: 0,
+        left: 0,
     };
 
     return <div ref={containerRef} style={containerStyle} />;

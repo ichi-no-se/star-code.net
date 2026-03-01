@@ -2,7 +2,7 @@ import Link from 'next/link';
 import '@styles/projects.css';
 export default function ProjectsPage() {
 	return (
-		<main>
+		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
 				<Link href="/projects/online-game-prototype-1" className="post-box">
@@ -125,6 +125,6 @@ export default function ProjectsPage() {
 					</div>
 				</Link>
 			</ol>
-		</main>
+		</>
 	);
 }

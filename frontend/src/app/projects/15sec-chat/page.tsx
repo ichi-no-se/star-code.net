@@ -15,9 +15,9 @@ export default function Chat() {
 	const [message, setMessage] = useState<string>('');
 	const chatContainerRef = useRef<HTMLDivElement>(null);
 	const [isAtBottom, setIsAtBottom] = useState(true);
-	const [userCount,setUserCount]= useState<number>(0);
+	const [userCount, setUserCount] = useState<number>(0);
 
-	const socketRef = useRef<Socket|null>(null);
+	const socketRef = useRef<Socket | null>(null);
 
 	useEffect(() => {
 		const url = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001') + '/chat';
@@ -28,7 +28,7 @@ export default function Chat() {
 		socket.on('newMessages', (messages: ChatMessage[]) => {
 			setMessages(messages);
 		});
-		
+
 		socket.on('userCount', (count: number) => {
 			setUserCount(count);
 		});
@@ -54,7 +54,7 @@ export default function Chat() {
 				behavior: 'auto',
 			});
 		}
-	}, [messages,isAtBottom]);
+	}, [messages, isAtBottom]);
 
 	useEffect(() => {
 		if (isAtBottom) {
@@ -73,7 +73,7 @@ export default function Chat() {
 	};
 
 	return (
-		<main>
+		<>
 			<h1 className="title">15 秒チャット </h1>
 			<h2 className="introduction">
 				15 秒でメッセージが消えるチャット，詳細は<Link href="/blog/15sec-chat">こちら</Link>から
@@ -101,6 +101,6 @@ export default function Chat() {
 				/>
 				<button onClick={sendMessage} className="chat-send-button">送信</button>
 			</div>
-		</main>
+		</>
 	)
 }

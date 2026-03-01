@@ -28,7 +28,7 @@ export default function SudokuPage() {
 	const [result, setResult] = useState<number[][] | null>(null);
 
 	return (
-		<main>
+		<>
 			<h1 className="title">数独ソルバー</h1>
 			<div className="introduction">
 				（かなり）高速に動作する数独ソルバー，関連記事は<Link href="/blog/sudoku">こちら</Link>から．<br />
@@ -134,6 +134,6 @@ export default function SudokuPage() {
 					</div>
 				</div>
 			</div>
-		</main>
+		</>
 	);
 }

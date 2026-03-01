@@ -258,7 +258,7 @@ export default function PixelRearrange() {
     };
 
     return (
-        <main>
+        <>
             <h1 className="title">画像ピクセル並び替え</h1>
             <h2 className="introduction">
                 画像をピクセルレベルでバラバラにした後，特定の優先順位に基づいて並び替えます．<br />
@@ -357,6 +357,6 @@ export default function PixelRearrange() {
                     <p>出力画像</p>
                 </div>
             </div>
-        </main>
+        </>
     )
 }
