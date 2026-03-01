@@ -5,11 +5,18 @@ export default function ProjectsPage() {
 		<main>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/online-game-prototype-1" className="post-box">
+					<div>
+						<h2 className="post-title">オンラインゲームプロトタイプ 1</h2>
+						<p className="post-date">2026-03-01</p>
+						<p className="post-description">オンラインゲーム制作に向けたテスト 1</p>
+					</div>
+				</Link>
 				<Link href="/projects/online-game-prototype-0" className="post-box">
 					<div>
 						<h2 className="post-title">オンラインゲームプロトタイプ 0</h2>
 						<p className="post-date">2026-02-28</p>
-						<p className="post-description">オンラインゲーム制作に向けたテスト</p>
+						<p className="post-description">オンラインゲーム制作に向けたテスト 0</p>
 					</div>
 				</Link>
 				<Link href="/projects/oblate" className="post-box">
