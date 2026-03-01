@@ -1,5 +1,5 @@
 import * as Phaser from "phaser"
-import { io, Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
 
 interface Player {
     id: string;
@@ -27,20 +27,69 @@ export default class MainScene extends Phaser.Scene {
     private keyA?: Phaser.Input.Keyboard.Key;
     private keyS?: Phaser.Input.Keyboard.Key;
     private keyD?: Phaser.Input.Keyboard.Key;
+    private keyEsc?: Phaser.Input.Keyboard.Key;
+    private roomId?: string;
 
     constructor() {
         super({ key: 'MainScene' });
     }
 
+    init(data: {roomId: string}) {
+        this.roomId = data.roomId;
+    }
     create() {
         this.cursors = this.input.keyboard?.createCursorKeys();
         this.keyW = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyA = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyS = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.keyD = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        this.keyEsc = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+        this.keyEsc?.on('down', () => {
+            this.socket?.emit('leaveRoom');
+            this.scene.start('LobbyScene');
+        });
 
-        // 遅延させないとエラーが生じる
-        this.events.once('update', () => this.connectSocket());
+        this.socket = this.registry.get('socket') as Socket;
+        if (!this.socket) {
+            console.error('Socket not found in registry');
+            return;
+        }
+
+        this.events.once('update', () => this.postCreate());
+    }
+
+    postCreate() {
+        if (!this.socket) return;
+        this.socket.on('currentPlayers', (players: Player[]) => {
+            players.forEach(p => this.addPlayer(p));
+        });
+        this.socket.on('yourPlayer', (player: Player) => {
+            this.myRect = this.add.rectangle(player.x, player.y, this.playerSize, this.playerSize, player.color);
+        });
+        this.socket.on('newPlayer', (player: Player) => {
+            this.addPlayer(player);
+        });
+        this.socket.on('playerMoved', (player: Player) => {
+            const rect = this.playerRects.get(player.id);
+            if (rect) {
+                rect.setPosition(player.x, player.y);
+            }
+        });
+        this.socket.on('playerDisconnected', (id: string) => {
+            const rect = this.playerRects.get(id);
+            if (rect) {
+                rect.destroy();
+                this.playerRects.delete(id);
+            }
+        });
+        this.events.once('shutdown', () => {
+            this.socket?.off('currentPlayers');
+            this.socket?.off('yourPlayer');
+            this.socket?.off('newPlayer');
+            this.socket?.off('playerMoved');
+            this.socket?.off('playerDisconnected');
+        });
+        this.socket.emit('joinRoom', this.roomId);
     }
 
     update() {
@@ -67,33 +116,6 @@ export default class MainScene extends Phaser.Scene {
         if (moved) {
             this.socket.emit('playerMovement', { x: this.myRect.x, y: this.myRect.y } as MovementData);
         }
-    }
-
-    connectSocket() {
-        const url = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001') + '/online-game-prototype-0';
-        this.socket = io(url);
-        this.socket.on('currentPlayers', (players: Player[]) => {
-            players.forEach(p => this.addPlayer(p));
-        });
-        this.socket.on('yourPlayer', (player: Player) => {
-            this.myRect = this.add.rectangle(player.x, player.y, this.playerSize, this.playerSize, player.color);
-        });
-        this.socket.on('newPlayer', (player: Player) => {
-            this.addPlayer(player);
-        });
-        this.socket.on('playerMoved', (player: Player) => {
-            const rect = this.playerRects.get(player.id);
-            if (rect) {
-                rect.setPosition(player.x, player.y);
-            }
-        });
-        this.socket.on('playerDisconnected', (id: string) => {
-            const rect = this.playerRects.get(id);
-            if (rect) {
-                rect.destroy();
-                this.playerRects.delete(id);
-            }
-        });
     }
 
     addPlayer(player: Player) {
