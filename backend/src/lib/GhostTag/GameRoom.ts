@@ -23,6 +23,7 @@ enum ActorRole {
 
 interface Actor {
 	slotId: number; // 0 - 3
+	sessionId: string | null;
 	role: ActorRole;
 	controller: ControllerType;
 	direction: Direction;
@@ -30,6 +31,7 @@ interface Actor {
 	y: number;
 	dir: Direction;
 	nextDir: Direction;
+	visible: boolean;
 }
 
 interface Session {
@@ -38,9 +40,10 @@ interface Session {
 }
 
 
-export class GameRoom{
+export class GameRoom {
 	private sessions: Map<string, Session>;
 	private actors: Actor[];
+	private intervalId: NodeJS.Timeout | null = null;
 
 	constructor() {
 		this.sessions = new Map();
@@ -48,15 +51,76 @@ export class GameRoom{
 		for (let i = 0; i < 4; i++) {
 			this.actors.push({
 				slotId: i,
+				sessionId: null,
 				role: i,
 				controller: ControllerType.NONE,
 				direction: Direction.NONE,
 				x: 0,
 				y: 0,
 				dir: Direction.NONE,
-				nextDir: Direction.NONE
+				nextDir: Direction.NONE,
+				visible: false
 			});
 		}
+	}
+
+	private startGameLoop() {
+		let lastTime = Date.now();
+		this.intervalId = setInterval(() => {
+			const now = Date.now();
+			const deltaTime = now - lastTime;
+			lastTime = now;
+			this.updateGame(deltaTime);
+		}, 1000 / 60);
+	}
+
+	private updateGame(deltaTime: number) {
+
+		this.broadcastGameState();
+	}
+
+	private broadcastGameState() {
+	}
+
+	public joinGamePlayer(socket: Socket, role: ActorRole) {
+		const session = this.sessions.get(socket.id);
+		if (!session) {
+			console.log(`[GhostTag] joinGamePlayer: Session not found for socket ${socket.id}`);
+			return;
+		}
+		const slotId = session.joinedSlotId;
+		if (slotId !== null) {
+			this.leaveGamePlayer(socket.id);
+		}
+		const actor = this.actors.find(a => a.role === role);
+		if (!actor) {
+			console.log(`[GhostTag] joinGamePlayer: Actor not found for role ${role}`);
+			return;
+		}
+		if (actor.sessionId) {
+			console.log(`[GhostTag] joinGamePlayer: Actor for role ${role} is already occupied by session ${actor.sessionId}`);
+			return;
+		}
+		actor.controller = ControllerType.PLAYER;
+		actor.visible = true;
+		session.joinedSlotId = actor.slotId;
+	}
+
+	private leaveGamePlayer(sessionId: string) {
+		const session = this.sessions.get(sessionId);
+		if (!session) {
+			console.log(`[GhostTag] leaveGamePlayer: Session not found for socket ${sessionId}`);
+			return;
+		}
+		const slotId = session.joinedSlotId;
+		if (slotId === null) {
+			return;
+		}
+		const actor = this.actors[slotId];
+		actor.sessionId = null;
+		actor.controller = ControllerType.NONE;
+		actor.visible = false;
+		session.joinedSlotId = null;
 	}
 
 	public addPlayer(socket: Socket) {
@@ -68,6 +132,7 @@ export class GameRoom{
 	}
 
 	public removePlayer(socket: Socket) {
+		this.leaveGamePlayer(socket.id);
 		this.sessions.delete(socket.id);
 	}
 

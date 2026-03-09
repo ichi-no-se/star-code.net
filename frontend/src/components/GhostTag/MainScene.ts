@@ -1,6 +1,4 @@
-import next from "next";
 import * as Phaser from "phaser"
-import { off } from "process";
 import { Socket } from "socket.io-client";
 
 enum Direction {
@@ -9,6 +7,13 @@ enum Direction {
     DOWN = 2,
     LEFT = 3,
     RIGHT = 4
+}
+
+enum ActorRole {
+    HUMAN_1 = 0,
+    HUMAN_2 = 1,
+    GHOST_1 = 2,
+    GHOST_2 = 3
 }
 
 interface PlayerState {
@@ -65,6 +70,10 @@ export default class MainScene extends Phaser.Scene {
 
     private playerState?: PlayerState;
     private playerSprite?: Phaser.GameObjects.Sprite;
+    private buttonHuman1Join?: Phaser.GameObjects.Text;
+    private buttonHuman2Join?: Phaser.GameObjects.Text;
+    private buttonGhost1Join?: Phaser.GameObjects.Text;
+    private buttonGhost2Join?: Phaser.GameObjects.Text;
 
     constructor() {
         super({ key: 'MainScene' });
@@ -95,16 +104,18 @@ export default class MainScene extends Phaser.Scene {
         this.keyS = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.keyD = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.keyEsc = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
-        this.keyEsc?.on('down', () => {
-            this.socket?.emit('leaveRoom');
-            this.scene.start('LobbyScene');
-        });
 
         this.socket = this.registry.get('socket') as Socket;
         if (!this.socket) {
             console.error('Socket not found in registry');
             return;
         }
+
+        this.keyEsc?.on('down', () => {
+            this.socket?.emit('leaveRoom');
+            this.scene.start('LobbyScene');
+        });
+
 
         this.MAP.forEach((row, y) => {
             row.forEach((tile, x) => {
@@ -123,6 +134,12 @@ export default class MainScene extends Phaser.Scene {
                 }
             });
         });
+
+        const protoButtonStyle = { fontSize: '20px', color: '#0f0', backgroundColor: '#000' };
+        this.buttonHuman1Join = this.add.text(20, 20, 'Join as Human 1', protoButtonStyle).setInteractive({ useHandCursor: true }).on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.HUMAN_1) });
+        this.buttonHuman2Join = this.add.text(20, 60, 'Join as Human 2', protoButtonStyle).setInteractive({ useHandCursor: true }).on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.HUMAN_2) });
+        this.buttonGhost1Join = this.add.text(20, 100, 'Join as Ghost 1', protoButtonStyle).setInteractive({ useHandCursor: true }).on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.GHOST_1) });
+        this.buttonGhost2Join = this.add.text(20, 140, 'Join as Ghost 2', protoButtonStyle).setInteractive({ useHandCursor: true }).on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.GHOST_2) });
 
         this.playerState = {
             gridX: 1,
@@ -166,6 +183,11 @@ export default class MainScene extends Phaser.Scene {
         if (dir === Direction.LEFT) return this.MAP[y]?.[x - 1] === 0;
         if (dir === Direction.RIGHT) return this.MAP[y]?.[x + 1] === 0;
         return false;
+    }
+
+    private joinGamePlayerRequest(role: ActorRole) {
+        if (!this.socket) return;
+        this.socket.emit('joinGame', { roleId: role });
     }
 
     private nextPlayerState(playerStatus: PlayerState, distance: number): PlayerState {

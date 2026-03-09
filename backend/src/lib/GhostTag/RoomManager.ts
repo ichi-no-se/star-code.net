@@ -14,19 +14,19 @@ export class RoomManager {
 
 	public handleConnectLobby(socket: Socket) {
 		socket.join("lobby");
-		console.log(`[GhostTag] Socket ${socket.id} connected and joined lobby.`);
+		console.log(`[GhostTag] handleConnectLobby: Socket ${socket.id} connected and joined lobby.`);
 	}
 
 	public handleJoinRoom(socket: Socket, roomId: string) {
 		let room = this.rooms[roomId];
 		if (!room) {
-			console.log(`[GhostTag] Room ${roomId} does not exist.`);
+			console.log(`[GhostTag] handleJoinRoom: Room ${roomId} does not exist.`);
 			return;
 		}
 		socket.leave("lobby");
 		socket.join(roomId);
 		room.addPlayer(socket);
-		console.log(`[GhostTag] Socket ${socket.id} joined room ${roomId}.`);
+		console.log(`[GhostTag] handleJoinRoom: Socket ${socket.id} joined room ${roomId}.`);
 		this.ns.to("lobby").emit("roomStatsUpdate", this.getRoomStats());
 	}
 
@@ -35,7 +35,7 @@ export class RoomManager {
 			if (socket.rooms.has(roomId)) {
 				socket.leave(roomId);
 				room.removePlayer(socket);
-				console.log(`[GhostTag] Socket ${socket.id} left room ${roomId}.`);
+				console.log(`[GhostTag] leaveCurrentRoom: Socket ${socket.id} left room ${roomId}.`);
 			}
 		}
 		this.ns.to("lobby").emit("roomStatsUpdate", this.getRoomStats());
@@ -50,7 +50,7 @@ export class RoomManager {
 
 	public handleDisconnect(socket: Socket) {
 		this.leaveCurrentRoom(socket, false);
-		console.log(`[GhostTag] Socket ${socket.id} disconnected.`);
+		console.log(`[GhostTag] handleDisconnect: Socket ${socket.id} disconnected.`);
 	}
 
 	public handleRequestRoomStats(socket: Socket) {
