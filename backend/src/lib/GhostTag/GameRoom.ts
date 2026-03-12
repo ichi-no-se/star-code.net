@@ -1,67 +1,49 @@
-import { Socket } from "socket.io";
-
-enum Direction {
-	NONE = 0,
-	UP = 1,
-	DOWN = 2,
-	LEFT = 3,
-	RIGHT = 4
-}
-
-enum ControllerType {
-	NONE = 0,
-	PLAYER = 1,
-	CPU = 2
-}
-
-enum ActorRole {
-	HUMAN_1 = 0,
-	HUMAN_2 = 1,
-	GHOST_1 = 2,
-	GHOST_2 = 3
-}
-
-interface Actor {
-	slotId: number; // 0 - 3
-	sessionId: string | null;
-	role: ActorRole;
-	controller: ControllerType;
-	direction: Direction;
-	x: number;
-	y: number;
-	dir: Direction;
-	nextDir: Direction;
-	visible: boolean;
-}
-
-interface Session {
-	id: string;
-	joinedSlotId: number | null;
-}
+import { Namespace } from "socket.io";
+import {
+	ActorRole, ActorStatus, ControllerType, GameState, RoomPhase, Direction, Session, MovementState,
+	GameSnapshot,
+	HUMAN_1_INITIAL_POS, HUMAN_2_INITIAL_POS, GHOST_1_INITIAL_POS, GHOST_2_INITIAL_POS
+} from "@shared/GhostTag/core";
 
 
 export class GameRoom {
 	private sessions: Map<string, Session>;
-	private actors: Actor[];
 	private intervalId: NodeJS.Timeout | null = null;
+	private gameState: GameState;
 
-	constructor() {
+	constructor(private ns: Namespace, private roomId: string) {
 		this.sessions = new Map();
-		this.actors = [];
+		this.gameState = {
+			roomPhase: RoomPhase.WAITING,
+			roomTimer: 0,
+			actors: []
+			// items: [] 将来的に追加
+		}
 		for (let i = 0; i < 4; i++) {
-			this.actors.push({
+			this.gameState.actors.push({
 				slotId: i,
 				sessionId: null,
 				role: i,
 				controller: ControllerType.NONE,
-				direction: Direction.NONE,
-				x: 0,
-				y: 0,
-				dir: Direction.NONE,
-				nextDir: Direction.NONE,
-				visible: false
+				movement: {
+					gridX: 0,
+					gridY: 0,
+					offsetX: 0,
+					offsetY: 0,
+					currentDir: Direction.NONE,
+					nextDir: Direction.NONE,
+				},
+				status: ActorStatus.INACTIVE,
+				statusTimer: 0,
+				score: 0,
+				lastUpdateTime: Date.now()
 			});
 		}
+		this.startGameLoop();
+	}
+
+	public findSession(socketId: string): Session | undefined {
+		return this.sessions.get(socketId);
 	}
 
 	private startGameLoop() {
@@ -75,24 +57,40 @@ export class GameRoom {
 	}
 
 	private updateGame(deltaTime: number) {
+		this.gameState.roomTimer += deltaTime;
 
-		this.broadcastGameState();
+		const gameSnapshot: GameSnapshot = {
+			roomPhase: this.gameState.roomPhase,
+			roomTimer: this.gameState.roomTimer,
+			actors: this.gameState.actors.map(a => ({
+				movement: a.movement,
+				status: a.status,
+				statusTimer: a.statusTimer,
+				sessionId: a.sessionId,
+				role: a.role,
+				controller: a.controller,
+				score: a.score
+			}))
+			// items: this.master.items.map(i => ({ ... })) 将来的に追加
+		};
+		this.broadcastGameSnapshot(gameSnapshot);
 	}
 
-	private broadcastGameState() {
+	private broadcastGameSnapshot(gameSnapshot: GameSnapshot) {
+		this.ns.to(this.roomId).emit("gameSnapshot", gameSnapshot);
 	}
 
-	public joinGamePlayer(socket: Socket, role: ActorRole) {
-		const session = this.sessions.get(socket.id);
+	public joinGamePlayer(socketId: string, role: ActorRole) {
+		const session = this.sessions.get(socketId);
 		if (!session) {
-			console.log(`[GhostTag] joinGamePlayer: Session not found for socket ${socket.id}`);
+			console.log(`[GhostTag] joinGamePlayer: Session not found for socket ${socketId}`);
 			return;
 		}
 		const slotId = session.joinedSlotId;
 		if (slotId !== null) {
-			this.leaveGamePlayer(socket.id);
+			this.leaveGamePlayer(socketId);
 		}
-		const actor = this.actors.find(a => a.role === role);
+		const actor = this.gameState.actors.find(a => a.role === role);
 		if (!actor) {
 			console.log(`[GhostTag] joinGamePlayer: Actor not found for role ${role}`);
 			return;
@@ -101,42 +99,65 @@ export class GameRoom {
 			console.log(`[GhostTag] joinGamePlayer: Actor for role ${role} is already occupied by session ${actor.sessionId}`);
 			return;
 		}
+		actor.sessionId = socketId;
 		actor.controller = ControllerType.PLAYER;
-		actor.visible = true;
+		actor.status = ActorStatus.ACTIVE;
 		session.joinedSlotId = actor.slotId;
+		switch (role) {
+			case ActorRole.HUMAN_1:
+				actor.movement.gridX = HUMAN_1_INITIAL_POS.gridX;
+				actor.movement.gridY = HUMAN_1_INITIAL_POS.gridY;
+				break;
+			case ActorRole.HUMAN_2:
+				actor.movement.gridX = HUMAN_2_INITIAL_POS.gridX;
+				actor.movement.gridY = HUMAN_2_INITIAL_POS.gridY;
+				break;
+			case ActorRole.GHOST_1:
+				actor.movement.gridX = GHOST_1_INITIAL_POS.gridX;
+				actor.movement.gridY = GHOST_1_INITIAL_POS.gridY;
+				break;
+			case ActorRole.GHOST_2:
+				actor.movement.gridX = GHOST_2_INITIAL_POS.gridX;
+				actor.movement.gridY = GHOST_2_INITIAL_POS.gridY;
+				break;
+		}
 	}
 
-	private leaveGamePlayer(sessionId: string) {
-		const session = this.sessions.get(sessionId);
+	public leaveGamePlayer(socketId: string) {
+		const session = this.sessions.get(socketId);
 		if (!session) {
-			console.log(`[GhostTag] leaveGamePlayer: Session not found for socket ${sessionId}`);
+			console.log(`[GhostTag] leaveGamePlayer: Session not found for socket ${socketId}`);
 			return;
 		}
 		const slotId = session.joinedSlotId;
 		if (slotId === null) {
 			return;
 		}
-		const actor = this.actors[slotId];
+		const actor = this.gameState.actors[slotId];
 		actor.sessionId = null;
 		actor.controller = ControllerType.NONE;
-		actor.visible = false;
+		actor.status = ActorStatus.INACTIVE;
 		session.joinedSlotId = null;
 	}
 
-	public addPlayer(socket: Socket) {
+	public addPlayer(socketId: string) {
 		const newSession: Session = {
-			id: socket.id,
+			id: socketId,
 			joinedSlotId: null
 		};
-		this.sessions.set(socket.id, newSession);
+		this.sessions.set(socketId, newSession);
 	}
 
-	public removePlayer(socket: Socket) {
-		this.leaveGamePlayer(socket.id);
-		this.sessions.delete(socket.id);
+	public removePlayer(socketId: string) {
+		this.leaveGamePlayer(socketId);
+		this.sessions.delete(socketId);
 	}
 
 	public getPlayerCount(): number {
 		return this.sessions.size;
+	}
+
+	public getRoomId(): string {
+		return this.roomId;
 	}
 }

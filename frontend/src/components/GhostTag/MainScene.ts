@@ -1,62 +1,18 @@
 import * as Phaser from "phaser"
 import { Socket } from "socket.io-client";
+import { ActorRole, ActorStatus, Direction, MovementState, MAP, HUMAN_SPEED, calcNextMovement, hasConnection, GameSnapshot } from "@shared/GhostTag/core";
 
-enum Direction {
-    NONE = 0,
-    UP = 1,
-    DOWN = 2,
-    LEFT = 3,
-    RIGHT = 4
-}
-
-enum ActorRole {
-    HUMAN_1 = 0,
-    HUMAN_2 = 1,
-    GHOST_1 = 2,
-    GHOST_2 = 3
-}
-
-interface PlayerState {
-    gridX: number;
-    gridY: number;
-    offsetX: number; // [-0.5, 0.5]
-    offsetY: number; // [-0.5, 0.5]
-    currentDir: Direction;
-    nextDir: Direction;
-}
 
 export default class MainScene extends Phaser.Scene {
-    private readonly WIDTH = 1920;
-    private readonly HEIGHT = 1080;
+    private static readonly WIDTH = 1920;
+    private static readonly HEIGHT = 1080;
 
-    private readonly MAP_WIDTH = 42;
-    private readonly MAP_HEIGHT = 18;
-    private readonly TILE_SIZE = 40;
+    private static readonly MAP_WIDTH = 42;
+    private static readonly MAP_HEIGHT = 18;
+    private static readonly TILE_SIZE = 40;
 
-    private readonly MAP = [
-        [1, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1],
-        [1, 0, 1, 1, 1, 0, 2, 3, 2, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1],
-        [1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 2, 4, 4, 0, 2, 3, 2, 2, 4, 3, 2, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 2, 2, 4, 4, 3, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 2, 4, 3, 0, 2, 4, 4, 2, 2, 3, 2, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 2, 4, 3, 2, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 3, 4, 2, 2, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 4, 4, 2, 3, 2, 4, 2, 0, 2, 4, 2, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 3, 2, 4, 4, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 4, 3, 2, 0, 2, 3, 2, 2, 3, 2, 4, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 4, 4, 2, 2, 0, 1, 1, 1, 0, 1],
-        [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1],
-        [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-        [1, 0, 3, 2, 4, 2, 2, 4, 4, 0, 2, 4, 3, 0, 2, 4, 2, 3, 0, 4, 4, 2, 3, 2, 2, 4, 2, 3, 0, 2, 4, 2, 0, 3, 2, 4, 0, 4, 2, 3, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-    ];
-
-    private readonly MAP_ORIGIN_X = (this.WIDTH - this.MAP_WIDTH * this.TILE_SIZE) / 2;
-    private readonly MAP_ORIGIN_Y = (this.HEIGHT - this.MAP_HEIGHT * this.TILE_SIZE) / 2;
-
-    private readonly HUMAN_SPEED = 4 * 60 / 40;
+    private static readonly MAP_ORIGIN_X = (this.WIDTH - this.MAP_WIDTH * this.TILE_SIZE) / 2;
+    private static readonly MAP_ORIGIN_Y = (this.HEIGHT - this.MAP_HEIGHT * this.TILE_SIZE) / 2;
 
     private socket: Socket | null = null;
 
@@ -68,12 +24,15 @@ export default class MainScene extends Phaser.Scene {
     private keyEsc?: Phaser.Input.Keyboard.Key;
     private roomId?: string;
 
-    private playerState?: PlayerState;
+    private movementState?: MovementState;
     private playerSprite?: Phaser.GameObjects.Sprite;
     private buttonHuman1Join?: Phaser.GameObjects.Text;
     private buttonHuman2Join?: Phaser.GameObjects.Text;
     private buttonGhost1Join?: Phaser.GameObjects.Text;
     private buttonGhost2Join?: Phaser.GameObjects.Text;
+
+    private gameSnapshot?: GameSnapshot;
+    private lastSnapshotTime?: number;
 
     constructor() {
         super({ key: 'MainScene' });
@@ -117,10 +76,10 @@ export default class MainScene extends Phaser.Scene {
         });
 
 
-        this.MAP.forEach((row, y) => {
+        MAP.forEach((row, y) => {
             row.forEach((tile, x) => {
-                const tileX = this.MAP_ORIGIN_X + x * this.TILE_SIZE;
-                const tileY = this.MAP_ORIGIN_Y + y * this.TILE_SIZE;
+                const tileX = MainScene.MAP_ORIGIN_X + x * MainScene.TILE_SIZE;
+                const tileY = MainScene.MAP_ORIGIN_Y + y * MainScene.TILE_SIZE;
 
                 let textureKey = '';
                 if (tile === 0) {
@@ -141,7 +100,7 @@ export default class MainScene extends Phaser.Scene {
         this.buttonGhost1Join = this.add.text(20, 100, 'Join as Ghost 1', protoButtonStyle).setInteractive({ useHandCursor: true }).on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.GHOST_1) });
         this.buttonGhost2Join = this.add.text(20, 140, 'Join as Ghost 2', protoButtonStyle).setInteractive({ useHandCursor: true }).on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.GHOST_2) });
 
-        this.playerState = {
+        this.movementState = {
             gridX: 1,
             gridY: 1,
             offsetX: 0,
@@ -150,302 +109,137 @@ export default class MainScene extends Phaser.Scene {
             nextDir: Direction.NONE
         };
 
-        const { x: playerX, y: playerY } = this.calcPlayerPosition(this.playerState);
+        const { x: playerX, y: playerY } = this.calcPlayerPosition(this.movementState);
 
         this.playerSprite = this.add.sprite(playerX, playerY, 'char_d_a').setOrigin(0, 0);
-
         this.events.once('update', () => this.postCreate());
     }
 
     private postCreate() {
         if (!this.socket) return;
         this.socket.emit('joinRoom', this.roomId);
+        this.socket.on('gameSnapshot', (snapshot: GameSnapshot) => {
+            this.gameSnapshot = snapshot;
+            this.lastSnapshotTime = Date.now();
+        });
     }
 
     private getRoadTextureKey(x: number, y: number): string {
         let connections = '';
-        if (this.hasConnection(x, y, Direction.UP)) connections += 'u';
-        if (this.hasConnection(x, y, Direction.DOWN)) connections += 'd';
-        if (this.hasConnection(x, y, Direction.LEFT)) connections += 'l';
-        if (this.hasConnection(x, y, Direction.RIGHT)) connections += 'r';
+        if (hasConnection(x, y, Direction.UP)) connections += 'u';
+        if (hasConnection(x, y, Direction.DOWN)) connections += 'd';
+        if (hasConnection(x, y, Direction.LEFT)) connections += 'l';
+        if (hasConnection(x, y, Direction.RIGHT)) connections += 'r';
         return `road_${connections || 'default'}`;
     }
 
-    private calcPlayerPosition(playerState: PlayerState) {
-        const x = this.MAP_ORIGIN_X + (playerState.gridX + playerState.offsetX) * this.TILE_SIZE;
-        const y = this.MAP_ORIGIN_Y + (playerState.gridY + playerState.offsetY) * this.TILE_SIZE;
+    private calcPlayerPosition(movementState: MovementState): { x: number, y: number } {
+        const x = MainScene.MAP_ORIGIN_X + (movementState.gridX + movementState.offsetX) * MainScene.TILE_SIZE;
+        const y = MainScene.MAP_ORIGIN_Y + (movementState.gridY + movementState.offsetY) * MainScene.TILE_SIZE;
         return { x, y };
-    }
-
-    private hasConnection(x: number, y: number, dir: Direction): boolean {
-        if (dir === Direction.UP) return this.MAP[y - 1]?.[x] === 0;
-        if (dir === Direction.DOWN) return this.MAP[y + 1]?.[x] === 0;
-        if (dir === Direction.LEFT) return this.MAP[y]?.[x - 1] === 0;
-        if (dir === Direction.RIGHT) return this.MAP[y]?.[x + 1] === 0;
-        return false;
     }
 
     private joinGamePlayerRequest(role: ActorRole) {
         if (!this.socket) return;
-        this.socket.emit('joinGame', { roleId: role });
+        this.socket.emit('joinGamePlayer', { roleId: role });
     }
 
-    private nextPlayerState(playerStatus: PlayerState, distance: number): PlayerState {
-        let { gridX, gridY, offsetX, offsetY, currentDir, nextDir } = playerStatus;
-        while (distance > 0) {
-            if (currentDir === Direction.NONE) {
-                if (nextDir !== Direction.NONE) {
-                    currentDir = nextDir;
-                    nextDir = Direction.NONE;
-                }
-                else {
-                    distance = 0;
-                }
-            }
-            else if (currentDir === Direction.UP) {
-                offsetX = 0;
-                if (nextDir === Direction.DOWN) {
-                    currentDir = Direction.DOWN;
-                    nextDir = Direction.NONE;
-                }
-                else if (offsetY < 0) {
-                    if (this.hasConnection(gridX, gridY, Direction.UP)) {
-                        if (offsetY - distance >= -0.5) {
-                            offsetY -= distance;
-                            distance = 0;
-                        }
-                        else {
-                            distance -= (offsetY + 0.5);
-                            offsetY = 0.5;
-                            gridY -= 1;
-                        }
-                    }
-                    else {
-                        offsetY = 0;
-                    }
-                }
-                else if (offsetY === 0) {
-                    if (this.hasConnection(gridX, gridY, nextDir)) {
-                        currentDir = nextDir;
-                        nextDir = Direction.NONE;
-                    }
-                    else if (this.hasConnection(gridX, gridY, Direction.UP)) {
-                        if (distance <= 0.5) {
-                            offsetY -= distance;
-                            distance = 0;
-                        }
-                        else {
-                            distance -= 0.5;
-                            offsetY = 0.5;
-                            gridY -= 1;
-                        }
-                    }
-                    else {
-                        distance = 0;
-                    }
-                }
-                else {
-                    if (offsetY - distance >= 0) {
-                        offsetY -= distance;
-                        distance = 0;
-                    }
-                    else {
-                        distance -= offsetY;
-                        offsetY = 0;
-                    }
-                }
-            }
-            else if (currentDir === Direction.DOWN) {
-                offsetX = 0;
-                if (nextDir === Direction.UP) {
-                    currentDir = Direction.UP;
-                    nextDir = Direction.NONE;
-                }
-                else if (offsetY > 0) {
-                    if (this.hasConnection(gridX, gridY, Direction.DOWN)) {
-                        if (offsetY + distance <= 0.5) {
-                            offsetY += distance;
-                            distance = 0;
-                        }
-                        else {
-                            distance -= 0.5 - offsetY;
-                            offsetY = -0.5;
-                            gridY += 1;
-                        }
-                    }
-                    else {
-                        offsetY = 0;
-                    }
-                }
-                else if (offsetY === 0) {
-                    if (this.hasConnection(gridX, gridY, nextDir)) {
-                        currentDir = nextDir;
-                        nextDir = Direction.NONE;
-                    }
-                    else if (this.hasConnection(gridX, gridY, Direction.DOWN)) {
-                        if (distance <= 0.5) {
-                            offsetY += distance;
-                            distance = 0;
-                        }
-                        else {
-                            distance -= 0.5;
-                            offsetY = -0.5;
-                            gridY += 1;
-                        }
-                    }
-                    else {
-                        distance = 0;
-                    }
-                }
-                else {
-                    if (offsetY + distance <= 0) {
-                        offsetY += distance;
-                        distance = 0;
-                    }
-                    else {
-                        distance -= -offsetY;
-                        offsetY = 0;
-                    }
-                }
-            }
-            else if (currentDir === Direction.LEFT) {
-                offsetY = 0;
-                if (nextDir === Direction.RIGHT) {
-                    currentDir = Direction.RIGHT;
-                    nextDir = Direction.NONE;
-                }
-                else if (offsetX < 0) {
-                    if (this.hasConnection(gridX, gridY, Direction.LEFT)) {
-                        if (offsetX - distance >= -0.5) {
-                            offsetX -= distance;
-                            distance = 0;
-                        }
-                        else {
-                            distance -= (offsetX + 0.5);
-                            offsetX = 0.5;
-                            gridX -= 1;
-                        }
-                    }
-                    else {
-                        offsetX = 0;
-                    }
-                }
-                else if (offsetX === 0) {
-                    if (this.hasConnection(gridX, gridY, nextDir)) {
-                        currentDir = nextDir;
-                        nextDir = Direction.NONE;
-                    }
-                    else if (this.hasConnection(gridX, gridY, Direction.LEFT)) {
-                        if (distance <= 0.5) {
-                            offsetX -= distance;
-                            distance = 0;
-                        }
-                        else {
-                            distance -= 0.5;
-                            offsetX = 0.5;
-                            gridX -= 1;
-                        }
-                    }
-                    else {
-                        distance = 0;
-                    }
-                }
-                else {
-                    if (offsetX - distance >= 0) {
-                        offsetX -= distance;
-                        distance = 0;
-                    }
-                    else {
-                        distance -= offsetX;
-                        offsetX = 0;
-                    }
-                }
-            }
-            else if (currentDir === Direction.RIGHT) {
-                offsetY = 0;
-                if (nextDir === Direction.LEFT) {
-                    currentDir = Direction.LEFT;
-                    nextDir = Direction.NONE;
-                }
-                else if (offsetX > 0) {
-                    if (this.hasConnection(gridX, gridY, Direction.RIGHT)) {
-                        if (offsetX + distance <= 0.5) {
-                            offsetX += distance;
-                            distance = 0;
-                        }
-                        else {
-                            distance -= 0.5 - offsetX;
-                            offsetX = -0.5;
-                            gridX += 1;
-                        }
-                    }
-                    else {
-                        offsetX = 0;
-                    }
-                }
-                else if (offsetX === 0) {
-                    if (this.hasConnection(gridX, gridY, nextDir)) {
-                        currentDir = nextDir;
-                        nextDir = Direction.NONE;
-                    }
-                    else if (this.hasConnection(gridX, gridY, Direction.RIGHT)) {
-                        if (distance <= 0.5) {
-                            offsetX += distance;
-                            distance = 0;
-                        }
-                        else {
-                            distance -= 0.5;
-                            offsetX = -0.5;
-                            gridX += 1;
-                        }
-                    }
-                    else {
-                        distance = 0;
-                    }
-                }
-                else {
-                    if (offsetX + distance <= 0) {
-                        offsetX += distance;
-                        distance = 0;
-                    }
-                    else {
-                        distance -= -offsetX;
-                        offsetX = 0;
-                    }
-                }
-            }
-        }
-        return { gridX, gridY, offsetX, offsetY, currentDir, nextDir };
+    private leaveGamePlayerRequest() {
+        if (!this.socket) return;
+        this.socket.emit('leaveGamePlayer');
     }
 
-    update(_time: number, delta: number) {
-        if (!this.playerState || !this.playerSprite) return;
+    update(time: number, delta: number) {
+        if (!this.movementState || !this.playerSprite) return;
 
         if (this.cursors?.up.isDown || this.keyW?.isDown) {
-            this.playerState.nextDir = Direction.UP;
+            this.movementState.nextDir = Direction.UP;
         }
         else if (this.cursors?.down.isDown || this.keyS?.isDown) {
-            this.playerState.nextDir = Direction.DOWN;
+            this.movementState.nextDir = Direction.DOWN;
         }
         else if (this.cursors?.left.isDown || this.keyA?.isDown) {
-            this.playerState.nextDir = Direction.LEFT;
+            this.movementState.nextDir = Direction.LEFT;
         }
         else if (this.cursors?.right.isDown || this.keyD?.isDown) {
-            this.playerState.nextDir = Direction.RIGHT;
+            this.movementState.nextDir = Direction.RIGHT;
         }
 
-        const distance = this.HUMAN_SPEED * delta / 1000;
-        this.playerState = this.nextPlayerState(this.playerState, distance);
-        const { x: playerX, y: playerY } = this.calcPlayerPosition(this.playerState);
+        // 仮
+        if (this.gameSnapshot) {
+            if (this.gameSnapshot.actors[ActorRole.HUMAN_1].sessionId === this.socket?.id) {
+                this.buttonHuman1Join?.setText('Leave Human 1')
+                this.buttonHuman1Join?.off('pointerdown');
+                this.buttonHuman1Join?.on('pointerdown', () => { this.leaveGamePlayerRequest(); });
+            }
+            else if (this.gameSnapshot.actors[ActorRole.HUMAN_1].status !== ActorStatus.INACTIVE) {
+                this.buttonHuman1Join?.setText('Human 1: Taken')
+                this.buttonHuman1Join?.off('pointerdown');
+            }
+            else {
+                this.buttonHuman1Join?.setText('Join as Human 1')
+                this.buttonHuman1Join?.off('pointerdown');
+                this.buttonHuman1Join?.on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.HUMAN_1); });
+            }
+
+            if (this.gameSnapshot.actors[ActorRole.HUMAN_2].sessionId === this.socket?.id) {
+                this.buttonHuman2Join?.setText('Leave Human 2')
+                this.buttonHuman2Join?.off('pointerdown');
+                this.buttonHuman2Join?.on('pointerdown', () => { this.leaveGamePlayerRequest(); });
+            }
+            else if (this.gameSnapshot.actors[ActorRole.HUMAN_2].status !== ActorStatus.INACTIVE) {
+                this.buttonHuman2Join?.setText('Human 2: Taken')
+                this.buttonHuman2Join?.off('pointerdown');
+            }
+            else {
+                this.buttonHuman2Join?.setText('Join as Human 2')
+                this.buttonHuman2Join?.off('pointerdown');
+                this.buttonHuman2Join?.on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.HUMAN_2); });
+            }
+
+            if (this.gameSnapshot.actors[ActorRole.GHOST_1].sessionId === this.socket?.id) {
+                this.buttonGhost1Join?.setText('Leave Ghost 1')
+                this.buttonGhost1Join?.off('pointerdown');
+                this.buttonGhost1Join?.on('pointerdown', () => { this.leaveGamePlayerRequest(); });
+            }
+            else if (this.gameSnapshot.actors[ActorRole.GHOST_1].status !== ActorStatus.INACTIVE) {
+                this.buttonGhost1Join?.setText('Ghost 1: Taken')
+                this.buttonGhost1Join?.off('pointerdown');
+            }
+            else {
+                this.buttonGhost1Join?.setText('Join as Ghost 1')
+                this.buttonGhost1Join?.off('pointerdown');
+                this.buttonGhost1Join?.on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.GHOST_1); });
+            }
+
+            if (this.gameSnapshot.actors[ActorRole.GHOST_2].sessionId === this.socket?.id) {
+                this.buttonGhost2Join?.setText('Leave Ghost 2')
+                this.buttonGhost2Join?.off('pointerdown');
+                this.buttonGhost2Join?.on('pointerdown', () => { this.leaveGamePlayerRequest(); });
+            }
+            else if (this.gameSnapshot.actors[ActorRole.GHOST_2].status !== ActorStatus.INACTIVE) {
+                this.buttonGhost2Join?.setText('Ghost 2: Taken')
+                this.buttonGhost2Join?.off('pointerdown');
+            }
+            else {
+                this.buttonGhost2Join?.setText('Join as Ghost 2')
+                this.buttonGhost2Join?.off('pointerdown');
+                this.buttonGhost2Join?.on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.GHOST_2); });
+            }
+        }
+
+        const distance = HUMAN_SPEED * delta / 1000;
+        this.movementState = calcNextMovement(this.movementState, distance);
+        const { x: playerX, y: playerY } = this.calcPlayerPosition(this.movementState);
 
         let textureKey = '';
-        if (this.playerState.currentDir === Direction.UP) textureKey = 'char_u';
-        else if (this.playerState.currentDir === Direction.DOWN) textureKey = 'char_d';
-        else if (this.playerState.currentDir === Direction.LEFT) textureKey = 'char_l';
-        else if (this.playerState.currentDir === Direction.RIGHT) textureKey = 'char_r';
+        if (this.movementState.currentDir === Direction.UP) textureKey = 'char_u';
+        else if (this.movementState.currentDir === Direction.DOWN) textureKey = 'char_d';
+        else if (this.movementState.currentDir === Direction.LEFT) textureKey = 'char_l';
+        else if (this.movementState.currentDir === Direction.RIGHT) textureKey = 'char_r';
         else textureKey = 'char_d';
 
-        const textureSuffix = Math.floor((_time / 200) % 2) === 0 ? '_a' : '_b';
+        const textureSuffix = Math.floor((time / 200) % 2) === 0 ? '_a' : '_b';
         this.playerSprite.setTexture(textureKey + textureSuffix);
         this.playerSprite.setPosition(playerX, playerY);
     }

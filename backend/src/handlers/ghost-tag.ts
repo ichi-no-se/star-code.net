@@ -1,5 +1,6 @@
 import { Namespace } from "socket.io";
 import { RoomManager } from "../lib/GhostTag/RoomManager";
+import { ActorRole } from "@shared/GhostTag/core";
 
 export const ghostTagHandler = (ns: Namespace) => {
 	const manager = new RoomManager(ns);
@@ -11,6 +12,7 @@ export const ghostTagHandler = (ns: Namespace) => {
 		socket.on("leaveRoom", () => manager.handleLeaveRoom(socket));
 		socket.on("requestRoomStats", () => manager.handleRequestRoomStats(socket));
 		socket.on("disconnect", () => manager.handleDisconnect(socket));
+		socket.on("joinGamePlayer", (data: { roleId: ActorRole }) => manager.handleJoinGamePlayer(socket, data.roleId));
+		socket.on("leaveGamePlayer", () => manager.handleLeaveGamePlayer(socket));
 	});
-
 }

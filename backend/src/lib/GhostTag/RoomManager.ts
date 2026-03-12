@@ -1,14 +1,15 @@
 import { Socket, Namespace } from "socket.io";
 import { GameRoom } from "./GameRoom";
+import { ActorRole } from "@shared/GhostTag/core";
 
 export class RoomManager {
 	private rooms: Record<string, GameRoom>;
 
 	constructor(private ns: Namespace) {
 		this.rooms = {
-			"room1": new GameRoom(),
-			"room2": new GameRoom(),
-			"room3": new GameRoom()
+			"room1": new GameRoom(ns, "room1"),
+			"room2": new GameRoom(ns, "room2"),
+			"room3": new GameRoom(ns, "room3")
 		};
 	}
 
@@ -25,18 +26,18 @@ export class RoomManager {
 		}
 		socket.leave("lobby");
 		socket.join(roomId);
-		room.addPlayer(socket);
+		room.addPlayer(socket.id);
 		console.log(`[GhostTag] handleJoinRoom: Socket ${socket.id} joined room ${roomId}.`);
 		this.ns.to("lobby").emit("roomStatsUpdate", this.getRoomStats());
 	}
 
 	private leaveCurrentRoom(socket: Socket, joinLobby: boolean = true) {
-		for (const [roomId, room] of Object.entries(this.rooms)) {
-			if (socket.rooms.has(roomId)) {
-				socket.leave(roomId);
-				room.removePlayer(socket);
-				console.log(`[GhostTag] leaveCurrentRoom: Socket ${socket.id} left room ${roomId}.`);
-			}
+		const rooms = this.getGameRoomsForSocketId(socket.id);
+		for (const room of rooms) {
+			const roomId = room.getRoomId();
+			socket.leave(roomId);
+			room.removePlayer(socket.id);
+			console.log(`[GhostTag] leaveCurrentRoom: Socket ${socket.id} left room ${roomId}.`);
 		}
 		this.ns.to("lobby").emit("roomStatsUpdate", this.getRoomStats());
 		if (joinLobby) {
@@ -62,5 +63,45 @@ export class RoomManager {
 			id: roomId,
 			playerCount: room.getPlayerCount()
 		}));
+	}
+
+	private getGameRoomsForSocketId(socketId: string): GameRoom[] {
+		const gameRooms: GameRoom[] = [];
+		for(const room of Object.values(this.rooms)) {
+			if (room.findSession(socketId)) {
+				gameRooms.push(room);
+			}
+		}
+		return gameRooms;
+	}
+
+	public handleJoinGamePlayer(socket: Socket, roleId: ActorRole) {
+		const rooms = this.getGameRoomsForSocketId(socket.id);
+		if (rooms.length === 0) {
+			console.log(`[GhostTag] handleJoinGamePlayer: Socket ${socket.id} is not in any game room.`);
+			return;
+		}
+		else if (rooms.length >= 2) {
+			console.log(`[GhostTag] handleJoinGamePlayer: Socket ${socket.id} is in multiple game rooms, which should not happen.`);
+			this.leaveCurrentRoom(socket);
+			return;
+		}
+		const room = rooms[0];
+		room.joinGamePlayer(socket.id, roleId);
+	}
+
+	public handleLeaveGamePlayer(socket: Socket) {
+		const rooms = this.getGameRoomsForSocketId(socket.id);
+		if (rooms.length === 0) {
+			console.log(`[GhostTag] handleLeaveGamePlayer: Socket ${socket.id} is not in any game room.`);
+			return;
+		}
+		else if (rooms.length >= 2) {
+			console.log(`[GhostTag] handleLeaveGamePlayer: Socket ${socket.id} is in multiple game rooms, which should not happen.`);
+			this.leaveCurrentRoom(socket);
+			return;
+		}
+		const room = rooms[0];
+		room.leaveGamePlayer(socket.id);
 	}
 }
