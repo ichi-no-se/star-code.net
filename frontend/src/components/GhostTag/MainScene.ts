@@ -229,7 +229,7 @@ export default class MainScene extends Phaser.Scene {
                     if (this.visualActorStates[role]) {
                         // 補間して滑らかに移動させる
                         const { x, y } = this.visualActorStates[role]!;
-                        const k = 0.1;
+                        const k = 0.05;
                         const t = 1 - Math.exp(-k * delta);
                         let newX: number;
                         if (Math.abs(x - targetX) < 0.5) {
