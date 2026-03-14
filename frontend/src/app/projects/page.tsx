@@ -7,9 +7,9 @@ export default function ProjectsPage() {
 			<ol className="post-list">
 				<Link href="/projects/ghost-tag" className="post-box">
 					<div>
-						<h2 className="post-title">Ghost Tag</h2>
-						<p className="post-date">2026-03-31</p>
-						<p className="post-description">2 vs 2 オンライン対戦鬼ごっこ</p>
+						<h2 className="post-title">Ghost Tag（製作中）</h2>
+						<p className="post-date">2026-03-XX</p>
+						<p className="post-description">（製作中）2 vs 2 オンライン対戦鬼ごっこ</p>
 					</div>
 				</Link>
 				<Link href="/projects/oblate" className="post-box">

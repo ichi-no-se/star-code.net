@@ -97,6 +97,12 @@ export interface GameState {
 	// items: ItemState[]; 将来的に追加
 }
 
+export const ROOM_CONFIG = [
+	{ id: 'room1', name: 'Room 1' },
+	{ id: 'room2', name: 'Room 2' },
+	{ id: 'room3', name: 'Room 3' }
+]
+
 // 0: 通行可能 その他: 通行不可
 export const MAP = [
 	[1, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 1],

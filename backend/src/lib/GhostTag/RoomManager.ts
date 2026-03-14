@@ -1,16 +1,15 @@
 import { Socket, Namespace } from "socket.io";
 import { GameRoom } from "./GameRoom";
-import { ActorRole, MovementState } from "@shared/GhostTag/core";
+import { ActorRole, MovementState, ROOM_CONFIG } from "@shared/GhostTag/core";
 
 export class RoomManager {
 	private rooms: Record<string, GameRoom>;
 
 	constructor(private ns: Namespace) {
-		this.rooms = {
-			"room1": new GameRoom(ns, "room1"),
-			"room2": new GameRoom(ns, "room2"),
-			"room3": new GameRoom(ns, "room3")
-		};
+		this.rooms = {};
+		ROOM_CONFIG.forEach(({ id }) => {
+			this.rooms[id] = new GameRoom(ns, id);
+		});
 	}
 
 	public handleConnectLobby(socket: Socket) {

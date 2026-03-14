@@ -1,12 +1,10 @@
 import * as Phaser from "phaser"
 import { Socket, io } from "socket.io-client";
+import { ROOM_CONFIG } from "@shared/GhostTag/core";
 
 export default class LobbyScene extends Phaser.Scene {
     private socket: Socket | null = null;
     private roomButtons: Map<string, Phaser.GameObjects.Text> = new Map();
-
-    private readonly roomNames: string[] = ['Room 1', 'Room 2', 'Room 3'];
-    private readonly roomIds: string[] = ['room1', 'room2', 'room3'];
 
     constructor() {
         super({ key: 'LobbyScene' });
@@ -21,13 +19,13 @@ export default class LobbyScene extends Phaser.Scene {
             this.socket = socket;
         }
         this.add.text(20, 20, 'Lobby - Click a room to join', { fontSize: '24px', color: '#fff' });
-        this.roomIds.forEach((roomId, index) => {
-            const button = this.add.text(20, 80 + index * 40, `${this.roomNames[index]} (0)`, { fontSize: '20px', color: '#0f0' })
+        ROOM_CONFIG.forEach(({ id, name }, index) => {
+            const button = this.add.text(20, 80 + index * 40, `${name} (0)`, { fontSize: '20px', color: '#0f0' })
                 .setInteractive()
                 .on('pointerdown', () => {
-                    this.scene.start('MainScene', { roomId });
+                    this.scene.start('MainScene', { roomId: id });
                 });
-            this.roomButtons.set(roomId, button);
+            this.roomButtons.set(id, button);
         });
 
         this.events.once('update', () => this.postCreate());
@@ -39,8 +37,8 @@ export default class LobbyScene extends Phaser.Scene {
             stats.forEach(room => {
                 const button = this.roomButtons.get(room.id);
                 if (button) {
-                    const roomIndex = this.roomIds.indexOf(room.id);
-                    button.setText(`${this.roomNames[roomIndex]} (${room.playerCount})`);
+                    const { name } = ROOM_CONFIG.find(config => config.id === room.id) || { name: "Unknown" };
+                    button.setText(`${name} (${room.playerCount})`);
                 }
             });
         });
