@@ -10,9 +10,10 @@ export default class MainScene extends Phaser.Scene {
     private static readonly MAP_WIDTH = 42;
     private static readonly MAP_HEIGHT = 18;
     private static readonly TILE_SIZE = 40;
-
     private static readonly MAP_ORIGIN_X = (this.WIDTH - this.MAP_WIDTH * this.TILE_SIZE) / 2;
     private static readonly MAP_ORIGIN_Y = (this.HEIGHT - this.MAP_HEIGHT * this.TILE_SIZE) / 2;
+
+    private static readonly EMIT_INTERVAL = 1000 / 20; // 20 FPS
 
     private socket: Socket | null = null;
 
@@ -32,6 +33,7 @@ export default class MainScene extends Phaser.Scene {
     private gameSnapshot?: GameSnapshot;
     private lastSnapshotTime?: number;
 
+    private timeSinceLastEmit: number = 0;
     private currentRole: ActorRole | null = null;
     private currentSpeed: number = 0;
 
@@ -179,7 +181,11 @@ export default class MainScene extends Phaser.Scene {
             }
             const distance = this.currentSpeed * delta / 1000;
             this.localMovement = calcNextMovement(this.localMovement, distance);
-            this.socket.emit('reportMovement', { role: this.currentRole, movement: this.localMovement });
+            this.timeSinceLastEmit += delta;
+            while (this.timeSinceLastEmit >= MainScene.EMIT_INTERVAL) {
+                this.socket.emit('reportMovement', { role: this.currentRole, movement: this.localMovement });
+                this.timeSinceLastEmit -= MainScene.EMIT_INTERVAL;
+            }
         }
 
         // 仮

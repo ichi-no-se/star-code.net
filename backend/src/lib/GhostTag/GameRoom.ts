@@ -17,6 +17,7 @@ export class GameRoom {
 	private intervalId: NodeJS.Timeout | null = null;
 	private gameState: GameState;
 	private receivedMovements: MovementReport[] = [];
+	private updateInterval: number = 1000 / 20; // 20 FPS
 
 	constructor(private ns: Namespace, private roomId: string) {
 		this.sessions = new Map();
@@ -60,7 +61,7 @@ export class GameRoom {
 			const deltaTime = now - lastTime;
 			lastTime = now;
 			this.updateGame(deltaTime);
-		}, 1000 / 60);
+		}, this.updateInterval);
 	}
 
 	private updateGame(deltaTime: number) {
