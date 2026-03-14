@@ -1,6 +1,6 @@
 import { Socket, Namespace } from "socket.io";
 import { GameRoom } from "./GameRoom";
-import { ActorRole } from "@shared/GhostTag/core";
+import { ActorRole, MovementState } from "@shared/GhostTag/core";
 
 export class RoomManager {
 	private rooms: Record<string, GameRoom>;
@@ -67,7 +67,7 @@ export class RoomManager {
 
 	private getGameRoomsForSocketId(socketId: string): GameRoom[] {
 		const gameRooms: GameRoom[] = [];
-		for(const room of Object.values(this.rooms)) {
+		for (const room of Object.values(this.rooms)) {
 			if (room.findSession(socketId)) {
 				gameRooms.push(room);
 			}
@@ -75,7 +75,7 @@ export class RoomManager {
 		return gameRooms;
 	}
 
-	public handleJoinGamePlayer(socket: Socket, roleId: ActorRole) {
+	public handleJoinGamePlayer(socket: Socket, role: ActorRole) {
 		const rooms = this.getGameRoomsForSocketId(socket.id);
 		if (rooms.length === 0) {
 			console.log(`[GhostTag] handleJoinGamePlayer: Socket ${socket.id} is not in any game room.`);
@@ -87,7 +87,7 @@ export class RoomManager {
 			return;
 		}
 		const room = rooms[0];
-		room.joinGamePlayer(socket.id, roleId);
+		room.joinGamePlayer(socket.id, role);
 	}
 
 	public handleLeaveGamePlayer(socket: Socket) {
@@ -103,5 +103,20 @@ export class RoomManager {
 		}
 		const room = rooms[0];
 		room.leaveGamePlayer(socket.id);
+	}
+
+	public handleReportMovement(socket: Socket, role: ActorRole, movement: MovementState) {
+		const rooms = this.getGameRoomsForSocketId(socket.id);
+		if (rooms.length === 0) {
+			console.log(`[GhostTag] handleReportMovement: Socket ${socket.id} is not in any game room.`);
+			return;
+		}
+		else if (rooms.length >= 2) {
+			console.log(`[GhostTag] handleReportMovement: Socket ${socket.id} is in multiple game rooms, which should not happen.`);
+			this.leaveCurrentRoom(socket);
+			return;
+		}
+		const room = rooms[0];
+		room.receivePlayerMovement(socket.id, role, movement);
 	}
 }

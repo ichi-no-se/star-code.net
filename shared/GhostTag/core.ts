@@ -121,10 +121,12 @@ export const MAP = [
 export const HUMAN_SPEED = 4 * 60 / 40;
 export const GHOST_SPEED = 3 * 60 / 40;
 
-export const HUMAN_1_INITIAL_POS = { gridX: 1, gridY: 1 };
-export const HUMAN_2_INITIAL_POS = { gridX: 1, gridY: 16 };
-export const GHOST_1_INITIAL_POS = { gridX: 40, gridY: 1 };
-export const GHOST_2_INITIAL_POS = { gridX: 40, gridY: 16 };
+export const ACTOR_CONFIG = [
+	{ role: ActorRole.HUMAN_1, name: "Human 1", speed: HUMAN_SPEED, spritePrefix: 'human_1', initialPos: { gridX: 1, gridY: 1 }, buttonInitialPos: { x: 20, y: 20 } },
+	{ role: ActorRole.HUMAN_2, name: "Human 2", speed: HUMAN_SPEED, spritePrefix: 'human_2', initialPos: { gridX: 1, gridY: 16 }, buttonInitialPos: { x: 20, y: 60 } },
+	{ role: ActorRole.GHOST_1, name: "Ghost 1", speed: GHOST_SPEED, spritePrefix: 'ghost_1', initialPos: { gridX: 40, gridY: 1 }, buttonInitialPos: { x: 20, y: 100 } },
+	{ role: ActorRole.GHOST_2, name: "Ghost 2", speed: GHOST_SPEED, spritePrefix: 'ghost_2', initialPos: { gridX: 40, gridY: 16 }, buttonInitialPos: { x: 20, y: 140 } }
+];
 
 export const hasConnection = (x: number, y: number, dir: Direction): boolean => {
 	if (dir === Direction.UP) return MAP[y - 1]?.[x] === 0;

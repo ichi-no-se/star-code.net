@@ -1,6 +1,6 @@
 import * as Phaser from "phaser"
 import { Socket } from "socket.io-client";
-import { ActorRole, ActorStatus, Direction, MovementState, MAP, HUMAN_SPEED, calcNextMovement, hasConnection, GameSnapshot } from "@shared/GhostTag/core";
+import { ActorRole, ActorStatus, Direction, MovementState, MAP, calcNextMovement, hasConnection, GameSnapshot, ACTOR_CONFIG } from "@shared/GhostTag/core";
 
 
 export default class MainScene extends Phaser.Scene {
@@ -24,15 +24,16 @@ export default class MainScene extends Phaser.Scene {
     private keyEsc?: Phaser.Input.Keyboard.Key;
     private roomId?: string;
 
-    private movementState?: MovementState;
-    private playerSprite?: Phaser.GameObjects.Sprite;
-    private buttonHuman1Join?: Phaser.GameObjects.Text;
-    private buttonHuman2Join?: Phaser.GameObjects.Text;
-    private buttonGhost1Join?: Phaser.GameObjects.Text;
-    private buttonGhost2Join?: Phaser.GameObjects.Text;
+    private actorSprites: Phaser.GameObjects.Sprite[] = [];
+    private actorMovements: MovementState[] = []; // 手元での位置
+    private actorJoinButtons: Phaser.GameObjects.Text[] = [];
 
+    private localMovement?: MovementState; // 操作キャラの手元での位置
     private gameSnapshot?: GameSnapshot;
     private lastSnapshotTime?: number;
+
+    private currentRole: ActorRole | null = null;
+    private currentSpeed: number = 0;
 
     constructor() {
         super({ key: 'MainScene' });
@@ -48,8 +49,10 @@ export default class MainScene extends Phaser.Scene {
         }
         const dirs = ['u', 'd', 'l', 'r'];
         for (const dir of dirs) {
-            this.load.image(`char_${dir}_a`, `/ghost-tag/sprites/char_${dir}_a.png`);
-            this.load.image(`char_${dir}_b`, `/ghost-tag/sprites/char_${dir}_b.png`);
+            for (const { spritePrefix } of Object.values(ACTOR_CONFIG)) {
+                this.load.image(`${spritePrefix}_${dir}_a`, `/ghost-tag/sprites/${spritePrefix}_${dir}_a.png`);
+                this.load.image(`${spritePrefix}_${dir}_b`, `/ghost-tag/sprites/${spritePrefix}_${dir}_b.png`);
+            }
         }
     }
 
@@ -94,30 +97,39 @@ export default class MainScene extends Phaser.Scene {
             });
         });
 
+        // 仮の UI 後でちゃんとしたのに差し替える
         const protoButtonStyle = { fontSize: '20px', color: '#0f0', backgroundColor: '#000' };
-        this.buttonHuman1Join = this.add.text(20, 20, 'Join as Human 1', protoButtonStyle).setInteractive({ useHandCursor: true }).on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.HUMAN_1) });
-        this.buttonHuman2Join = this.add.text(20, 60, 'Join as Human 2', protoButtonStyle).setInteractive({ useHandCursor: true }).on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.HUMAN_2) });
-        this.buttonGhost1Join = this.add.text(20, 100, 'Join as Ghost 1', protoButtonStyle).setInteractive({ useHandCursor: true }).on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.GHOST_1) });
-        this.buttonGhost2Join = this.add.text(20, 140, 'Join as Ghost 2', protoButtonStyle).setInteractive({ useHandCursor: true }).on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.GHOST_2) });
+        for (const { role, name, buttonInitialPos } of Object.values(ACTOR_CONFIG)) {
+            const button = this.add.text(buttonInitialPos.x, buttonInitialPos.y, `Join as ${name}`, protoButtonStyle)
+                .setInteractive({ useHandCursor: true })
+                .on('pointerdown', () => { this.joinGamePlayerRequest(role); });
+            this.actorJoinButtons[role] = button;
+        }
 
-        this.movementState = {
-            gridX: 1,
-            gridY: 1,
-            offsetX: 0,
-            offsetY: 0,
-            currentDir: Direction.NONE,
-            nextDir: Direction.NONE
-        };
+        for (const { role, initialPos } of Object.values(ACTOR_CONFIG)) {
+            this.actorMovements[role] = {
+                gridX: initialPos.gridX,
+                gridY: initialPos.gridY,
+                offsetX: 0,
+                offsetY: 0,
+                currentDir: Direction.NONE,
+                nextDir: Direction.NONE
+            };
+        }
 
-        const { x: playerX, y: playerY } = this.calcPlayerPosition(this.movementState);
+        for (const { role, spritePrefix } of Object.values(ACTOR_CONFIG)) {
+            const movementState = this.actorMovements[role];
+            const { x, y } = this.calcPlayerPosition(movementState);
+            const sprite = this.add.sprite(x, y, `${spritePrefix}_d_a`).setOrigin(0, 0);
+            this.actorSprites[role] = sprite;
+        }
 
-        this.playerSprite = this.add.sprite(playerX, playerY, 'char_d_a').setOrigin(0, 0);
         this.events.once('update', () => this.postCreate());
     }
 
     private postCreate() {
         if (!this.socket) return;
-        this.socket.emit('joinRoom', this.roomId);
+        this.socket.emit('joinRoom', { roomId: this.roomId });
         this.socket.on('gameSnapshot', (snapshot: GameSnapshot) => {
             this.gameSnapshot = snapshot;
             this.lastSnapshotTime = Date.now();
@@ -141,7 +153,7 @@ export default class MainScene extends Phaser.Scene {
 
     private joinGamePlayerRequest(role: ActorRole) {
         if (!this.socket) return;
-        this.socket.emit('joinGamePlayer', { roleId: role });
+        this.socket.emit('joinGamePlayer', { role: role });
     }
 
     private leaveGamePlayerRequest() {
@@ -150,97 +162,81 @@ export default class MainScene extends Phaser.Scene {
     }
 
     update(time: number, delta: number) {
-        if (!this.movementState || !this.playerSprite) return;
+        if (!this.socket) return;
 
-        if (this.cursors?.up.isDown || this.keyW?.isDown) {
-            this.movementState.nextDir = Direction.UP;
-        }
-        else if (this.cursors?.down.isDown || this.keyS?.isDown) {
-            this.movementState.nextDir = Direction.DOWN;
-        }
-        else if (this.cursors?.left.isDown || this.keyA?.isDown) {
-            this.movementState.nextDir = Direction.LEFT;
-        }
-        else if (this.cursors?.right.isDown || this.keyD?.isDown) {
-            this.movementState.nextDir = Direction.RIGHT;
+        if (this.localMovement && this.currentRole !== null) {
+            if (this.cursors?.up.isDown || this.keyW?.isDown) {
+                this.localMovement.nextDir = Direction.UP;
+            }
+            else if (this.cursors?.down.isDown || this.keyS?.isDown) {
+                this.localMovement.nextDir = Direction.DOWN;
+            }
+            else if (this.cursors?.left.isDown || this.keyA?.isDown) {
+                this.localMovement.nextDir = Direction.LEFT;
+            }
+            else if (this.cursors?.right.isDown || this.keyD?.isDown) {
+                this.localMovement.nextDir = Direction.RIGHT;
+            }
+            const distance = this.currentSpeed * delta / 1000;
+            this.localMovement = calcNextMovement(this.localMovement, distance);
+            this.socket.emit('reportMovement', { role: this.currentRole, movement: this.localMovement });
         }
 
         // 仮
         if (this.gameSnapshot) {
-            if (this.gameSnapshot.actors[ActorRole.HUMAN_1].sessionId === this.socket?.id) {
-                this.buttonHuman1Join?.setText('Leave Human 1')
-                this.buttonHuman1Join?.off('pointerdown');
-                this.buttonHuman1Join?.on('pointerdown', () => { this.leaveGamePlayerRequest(); });
-            }
-            else if (this.gameSnapshot.actors[ActorRole.HUMAN_1].status !== ActorStatus.INACTIVE) {
-                this.buttonHuman1Join?.setText('Human 1: Taken')
-                this.buttonHuman1Join?.off('pointerdown');
-            }
-            else {
-                this.buttonHuman1Join?.setText('Join as Human 1')
-                this.buttonHuman1Join?.off('pointerdown');
-                this.buttonHuman1Join?.on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.HUMAN_1); });
+            const prevRole = this.currentRole;
+            this.currentRole = null;
+            for (const { role, name, speed, spritePrefix } of Object.values(ACTOR_CONFIG)) {
+                const actorState = this.gameSnapshot.actors[role]; // 受信した状態
+                const sprite = this.actorSprites[role];
+                const joinButton = this.actorJoinButtons[role];
+                const movementState = this.actorMovements[role];
+                console.log(`[GhostTag] Actor ${name} state: ${JSON.stringify(actorState)}`);
+                if (actorState.status === ActorStatus.INACTIVE) {
+                    sprite.setVisible(false);
+                    joinButton.setText(`Join as ${name}`);
+                    joinButton.off('pointerdown');
+                    joinButton.on('pointerdown', () => { this.joinGamePlayerRequest(role); });
+                }
+                else {
+                    sprite.setVisible(true);
+                    if (actorState.sessionId === this.socket.id) {
+                        this.currentRole = role;
+                        this.currentSpeed = speed;
+                        if (prevRole === role && this.localMovement) {
+                            Object.assign(movementState, this.localMovement);
+                        }
+                        else {
+                            this.localMovement = structuredClone(actorState.movement);
+                            joinButton.setText(`Leave ${name}`);
+                            joinButton.off('pointerdown');
+                            joinButton.on('pointerdown', () => { this.leaveGamePlayerRequest(); });
+                        }
+                    }
+                    else {
+                        Object.assign(movementState, actorState.movement);
+                        // TODO: 補間処理を入れる
+                        joinButton.setText(`Taken: ${name}`);
+                        joinButton.off('pointerdown');
+                    }
+                    let textureKey = '';
+                    if (movementState.currentDir === Direction.UP) textureKey = `${spritePrefix}_u`;
+                    else if (movementState.currentDir === Direction.DOWN) textureKey = `${spritePrefix}_d`;
+                    else if (movementState.currentDir === Direction.LEFT) textureKey = `${spritePrefix}_l`;
+                    else if (movementState.currentDir === Direction.RIGHT) textureKey = `${spritePrefix}_r`;
+                    else textureKey = `${spritePrefix}_d`;
+
+                    const textureSuffix = Math.floor((time / 200) % 2) === 0 ? '_a' : '_b';
+                    sprite.setTexture(textureKey + textureSuffix);
+                    const { x, y } = this.calcPlayerPosition(movementState);
+                    sprite.setPosition(x, y);
+                }
             }
 
-            if (this.gameSnapshot.actors[ActorRole.HUMAN_2].sessionId === this.socket?.id) {
-                this.buttonHuman2Join?.setText('Leave Human 2')
-                this.buttonHuman2Join?.off('pointerdown');
-                this.buttonHuman2Join?.on('pointerdown', () => { this.leaveGamePlayerRequest(); });
-            }
-            else if (this.gameSnapshot.actors[ActorRole.HUMAN_2].status !== ActorStatus.INACTIVE) {
-                this.buttonHuman2Join?.setText('Human 2: Taken')
-                this.buttonHuman2Join?.off('pointerdown');
-            }
-            else {
-                this.buttonHuman2Join?.setText('Join as Human 2')
-                this.buttonHuman2Join?.off('pointerdown');
-                this.buttonHuman2Join?.on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.HUMAN_2); });
-            }
-
-            if (this.gameSnapshot.actors[ActorRole.GHOST_1].sessionId === this.socket?.id) {
-                this.buttonGhost1Join?.setText('Leave Ghost 1')
-                this.buttonGhost1Join?.off('pointerdown');
-                this.buttonGhost1Join?.on('pointerdown', () => { this.leaveGamePlayerRequest(); });
-            }
-            else if (this.gameSnapshot.actors[ActorRole.GHOST_1].status !== ActorStatus.INACTIVE) {
-                this.buttonGhost1Join?.setText('Ghost 1: Taken')
-                this.buttonGhost1Join?.off('pointerdown');
-            }
-            else {
-                this.buttonGhost1Join?.setText('Join as Ghost 1')
-                this.buttonGhost1Join?.off('pointerdown');
-                this.buttonGhost1Join?.on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.GHOST_1); });
-            }
-
-            if (this.gameSnapshot.actors[ActorRole.GHOST_2].sessionId === this.socket?.id) {
-                this.buttonGhost2Join?.setText('Leave Ghost 2')
-                this.buttonGhost2Join?.off('pointerdown');
-                this.buttonGhost2Join?.on('pointerdown', () => { this.leaveGamePlayerRequest(); });
-            }
-            else if (this.gameSnapshot.actors[ActorRole.GHOST_2].status !== ActorStatus.INACTIVE) {
-                this.buttonGhost2Join?.setText('Ghost 2: Taken')
-                this.buttonGhost2Join?.off('pointerdown');
-            }
-            else {
-                this.buttonGhost2Join?.setText('Join as Ghost 2')
-                this.buttonGhost2Join?.off('pointerdown');
-                this.buttonGhost2Join?.on('pointerdown', () => { this.joinGamePlayerRequest(ActorRole.GHOST_2); });
+            if (this.currentRole === null) {
+                this.localMovement = undefined;
+                this.currentSpeed = 0;
             }
         }
-
-        const distance = HUMAN_SPEED * delta / 1000;
-        this.movementState = calcNextMovement(this.movementState, distance);
-        const { x: playerX, y: playerY } = this.calcPlayerPosition(this.movementState);
-
-        let textureKey = '';
-        if (this.movementState.currentDir === Direction.UP) textureKey = 'char_u';
-        else if (this.movementState.currentDir === Direction.DOWN) textureKey = 'char_d';
-        else if (this.movementState.currentDir === Direction.LEFT) textureKey = 'char_l';
-        else if (this.movementState.currentDir === Direction.RIGHT) textureKey = 'char_r';
-        else textureKey = 'char_d';
-
-        const textureSuffix = Math.floor((time / 200) % 2) === 0 ? '_a' : '_b';
-        this.playerSprite.setTexture(textureKey + textureSuffix);
-        this.playerSprite.setPosition(playerX, playerY);
     }
 }
