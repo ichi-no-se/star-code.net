@@ -1,17 +1,16 @@
 import * as Phaser from "phaser"
 import { Socket } from "socket.io-client";
-import { ActorRole, ActorStatus, Direction, MovementState, MAP, calcNextMovement, hasConnection, GameSnapshot, ACTOR_CONFIG } from "@shared/GhostTag/core";
+import { ActorRole, ActorStatus, VisualActorState, Direction, MovementState, MAP, calcNextMovement, hasConnection, GameSnapshot, ACTOR_CONFIG, MAP_HEIGHT, MAP_WIDTH } from "@shared/GhostTag/core";
 
 
 export default class MainScene extends Phaser.Scene {
     private static readonly WIDTH = 1920;
     private static readonly HEIGHT = 1080;
 
-    private static readonly MAP_WIDTH = 42;
-    private static readonly MAP_HEIGHT = 18;
+
     private static readonly TILE_SIZE = 40;
-    private static readonly MAP_ORIGIN_X = (this.WIDTH - this.MAP_WIDTH * this.TILE_SIZE) / 2;
-    private static readonly MAP_ORIGIN_Y = (this.HEIGHT - this.MAP_HEIGHT * this.TILE_SIZE) / 2;
+    private static readonly MAP_ORIGIN_X = (this.WIDTH - MAP_WIDTH * this.TILE_SIZE) / 2;
+    private static readonly MAP_ORIGIN_Y = (this.HEIGHT - MAP_HEIGHT * this.TILE_SIZE) / 2;
 
     private static readonly EMIT_INTERVAL = 1000 / 20; // 20 FPS
 
@@ -25,17 +24,18 @@ export default class MainScene extends Phaser.Scene {
     private keyEsc?: Phaser.Input.Keyboard.Key;
     private roomId?: string;
 
-    private actorSprites: Phaser.GameObjects.Sprite[] = [];
-    private actorMovements: MovementState[] = []; // 手元での位置
-    private actorJoinButtons: Phaser.GameObjects.Text[] = [];
+    private actorSprites: (Phaser.GameObjects.Sprite | null)[] = [null, null, null, null];
+    private visualActorStates: (VisualActorState | null)[] = [null, null, null, null]; // 描画用の位置
+    private predictedActorMovements: (MovementState | null)[] = [null, null, null, null]; // 手元での予測位置
+    private lastPredictedActorMovementsUpdateTime: number = 0; // 予測位置を最後に更新した時間
+    private actorJoinButtons: (Phaser.GameObjects.Text | null)[] = [null, null, null, null];
 
-    private localMovement?: MovementState; // 操作キャラの手元での位置
-    private gameSnapshot?: GameSnapshot;
-    private lastSnapshotTime?: number;
+    private localMovement: MovementState | null = null; // 操作キャラの手元での位置
+
+    private receivedGameSnapshots: { snapshot: GameSnapshot, time: number }[] = []; // 受信したスナップショットと受信時間の履歴
 
     private timeSinceLastEmit: number = 0;
     private currentRole: ActorRole | null = null;
-    private currentSpeed: number = 0;
 
     constructor() {
         super({ key: 'MainScene' });
@@ -108,21 +108,9 @@ export default class MainScene extends Phaser.Scene {
             this.actorJoinButtons[role] = button;
         }
 
-        for (const { role, initialPos } of Object.values(ACTOR_CONFIG)) {
-            this.actorMovements[role] = {
-                gridX: initialPos.gridX,
-                gridY: initialPos.gridY,
-                offsetX: 0,
-                offsetY: 0,
-                currentDir: Direction.NONE,
-                nextDir: Direction.NONE
-            };
-        }
-
         for (const { role, spritePrefix } of Object.values(ACTOR_CONFIG)) {
-            const movementState = this.actorMovements[role];
-            const { x, y } = this.calcPlayerPosition(movementState);
-            const sprite = this.add.sprite(x, y, `${spritePrefix}_d_a`).setOrigin(0, 0);
+            const sprite = this.add.sprite(0, 0, `${spritePrefix}_d_a`).setOrigin(0, 0);
+            sprite.setVisible(false);
             this.actorSprites[role] = sprite;
         }
 
@@ -133,8 +121,7 @@ export default class MainScene extends Phaser.Scene {
         if (!this.socket) return;
         this.socket.emit('joinRoom', { roomId: this.roomId });
         this.socket.on('gameSnapshot', (snapshot: GameSnapshot) => {
-            this.gameSnapshot = snapshot;
-            this.lastSnapshotTime = Date.now();
+            this.receivedGameSnapshots.push({ snapshot, time: performance.now() });
         });
     }
 
@@ -165,7 +152,43 @@ export default class MainScene extends Phaser.Scene {
 
     update(time: number, delta: number) {
         if (!this.socket) return;
+        const now = performance.now();
 
+        let newRole: ActorRole | null = this.receivedGameSnapshots.length > 0 ? null : this.currentRole;
+        for (const { snapshot, time: snapshotTime } of this.receivedGameSnapshots) {
+            this.lastPredictedActorMovementsUpdateTime = snapshotTime;
+            for (const { role } of Object.values(ACTOR_CONFIG)) {
+                const receivedActorState = snapshot.actors[role]; // 受信した状態
+                if (receivedActorState.status === ActorStatus.INACTIVE) {
+                    this.predictedActorMovements[role] = null;
+                }
+                else {
+                    this.predictedActorMovements[role] = receivedActorState.movement;
+                }
+                if (receivedActorState.sessionId === this.socket.id) {
+                    newRole = role;
+                }
+            }
+        }
+        this.receivedGameSnapshots = [];
+
+        if (newRole !== null && newRole !== this.currentRole) {
+            // 新たにプレイヤー役になった場合，受信したスナップショットの位置を手元の位置として採用する
+            this.localMovement = structuredClone(this.predictedActorMovements[newRole]);
+        }
+        this.currentRole = newRole;
+
+        // 予測位置の更新
+        const sinceLastUpdate = now - this.lastPredictedActorMovementsUpdateTime;
+        this.lastPredictedActorMovementsUpdateTime = now;
+        for (const { role, speed } of Object.values(ACTOR_CONFIG)) {
+            const predictedMovement = this.predictedActorMovements[role];
+            if (predictedMovement) {
+                Object.assign(predictedMovement, calcNextMovement(predictedMovement, speed * (sinceLastUpdate / 1000)));
+            }
+        }
+
+        // プレイヤー役であれば入力を処理して位置を更新する
         if (this.localMovement && this.currentRole !== null) {
             if (this.cursors?.up.isDown || this.keyW?.isDown) {
                 this.localMovement.nextDir = Direction.UP;
@@ -179,69 +202,100 @@ export default class MainScene extends Phaser.Scene {
             else if (this.cursors?.right.isDown || this.keyD?.isDown) {
                 this.localMovement.nextDir = Direction.RIGHT;
             }
-            const distance = this.currentSpeed * delta / 1000;
+
+            const speed = ACTOR_CONFIG[this.currentRole].speed; // 仮実装 アイテムなどの追加により将来的に変動する可能性がある
+
+            const distance = speed * delta / 1000;
             this.localMovement = calcNextMovement(this.localMovement, distance);
             this.timeSinceLastEmit += delta;
             while (this.timeSinceLastEmit >= MainScene.EMIT_INTERVAL) {
                 this.socket.emit('reportMovement', { role: this.currentRole, movement: this.localMovement });
                 this.timeSinceLastEmit -= MainScene.EMIT_INTERVAL;
             }
+            // 予測位置を上書き
+            this.predictedActorMovements[this.currentRole] = this.localMovement;
         }
 
-        // 仮
-        if (this.gameSnapshot) {
-            const prevRole = this.currentRole;
-            this.currentRole = null;
-            for (const { role, name, speed, spritePrefix } of Object.values(ACTOR_CONFIG)) {
-                const actorState = this.gameSnapshot.actors[role]; // 受信した状態
-                const sprite = this.actorSprites[role];
-                const joinButton = this.actorJoinButtons[role];
-                const movementState = this.actorMovements[role];
-                console.log(`[GhostTag] Actor ${name} state: ${JSON.stringify(actorState)}`);
-                if (actorState.status === ActorStatus.INACTIVE) {
-                    sprite.setVisible(false);
-                    joinButton.setText(`Join as ${name}`);
-                    joinButton.off('pointerdown');
-                    joinButton.on('pointerdown', () => { this.joinGamePlayerRequest(role); });
+        // VisualActorState の更新
+        for (const { role } of Object.values(ACTOR_CONFIG)) {
+            const predictedMovement = this.predictedActorMovements[role];
+            if (predictedMovement) {
+                if (this.currentRole === role && this.localMovement) {
+                    const { x, y } = this.calcPlayerPosition(this.localMovement);
+                    this.visualActorStates[role] = { x, y, dir: this.localMovement.currentDir };
                 }
                 else {
-                    sprite.setVisible(true);
-                    if (actorState.sessionId === this.socket.id) {
-                        this.currentRole = role;
-                        this.currentSpeed = speed;
-                        if (prevRole === role && this.localMovement) {
-                            Object.assign(movementState, this.localMovement);
+                    const { x: targetX, y: targetY } = this.calcPlayerPosition(predictedMovement);
+                    if (this.visualActorStates[role]) {
+                        // 補間して滑らかに移動させる
+                        const { x, y } = this.visualActorStates[role]!;
+                        const k = 0.1;
+                        const t = 1 - Math.exp(-k * delta);
+                        let newX: number;
+                        if (Math.abs(x - targetX) < 0.5) {
+                            newX = targetX;
                         }
                         else {
-                            this.localMovement = structuredClone(actorState.movement);
-                            joinButton.setText(`Leave ${name}`);
-                            joinButton.off('pointerdown');
-                            joinButton.on('pointerdown', () => { this.leaveGamePlayerRequest(); });
+                            newX = x + (targetX - x) * t;
                         }
+                        let newY: number;
+                        if(Math.abs(y - targetY) < 0.5) {
+                            newY = targetY;
+                        }
+                        else {
+                            newY = y + (targetY - y) * t;
+                        }
+
+                        this.visualActorStates[role] = { x: newX, y: newY, dir: predictedMovement.currentDir };
                     }
                     else {
-                        Object.assign(movementState, actorState.movement);
-                        // TODO: 補間処理を入れる
-                        joinButton.setText(`Taken: ${name}`);
-                        joinButton.off('pointerdown');
+                        this.visualActorStates[role] = { x: targetX, y: targetY, dir: predictedMovement.currentDir };
                     }
-                    let textureKey = '';
-                    if (movementState.currentDir === Direction.UP) textureKey = `${spritePrefix}_u`;
-                    else if (movementState.currentDir === Direction.DOWN) textureKey = `${spritePrefix}_d`;
-                    else if (movementState.currentDir === Direction.LEFT) textureKey = `${spritePrefix}_l`;
-                    else if (movementState.currentDir === Direction.RIGHT) textureKey = `${spritePrefix}_r`;
-                    else textureKey = `${spritePrefix}_d`;
-
-                    const textureSuffix = Math.floor((time / 200) % 2) === 0 ? '_a' : '_b';
-                    sprite.setTexture(textureKey + textureSuffix);
-                    const { x, y } = this.calcPlayerPosition(movementState);
-                    sprite.setPosition(x, y);
                 }
             }
+            else {
+                this.visualActorStates[role] = null;
+            }
+        }
 
-            if (this.currentRole === null) {
-                this.localMovement = undefined;
-                this.currentSpeed = 0;
+        // 描画の更新
+        for (const { role, name, spritePrefix } of Object.values(ACTOR_CONFIG)) {
+            const visualState = this.visualActorStates[role];
+            const sprite = this.actorSprites[role];
+            const joinButton = this.actorJoinButtons[role];
+            if (!sprite || !joinButton) continue;
+            if (visualState) {
+                if (this.currentRole === role) {
+                    joinButton.setText(`Leave ${name}`);
+                    joinButton.off('pointerdown');
+                    joinButton.on('pointerdown', () => { this.leaveGamePlayerRequest(); });
+                }
+                else {
+                    joinButton.setText(`Taken: ${name}`);
+                    joinButton.off('pointerdown');
+                }
+
+                sprite.setVisible(true);
+                const { x, y } = visualState;
+                sprite.setPosition(x, y);
+
+                let textureKey = '';
+                if (visualState.dir === Direction.UP) textureKey = `${spritePrefix}_u`;
+                else if (visualState.dir === Direction.DOWN) textureKey = `${spritePrefix}_d`;
+                else if (visualState.dir === Direction.LEFT) textureKey = `${spritePrefix}_l`;
+                else if (visualState.dir === Direction.RIGHT) textureKey = `${spritePrefix}_r`;
+                else textureKey = `${spritePrefix}_d`;
+
+                const textureSuffix = Math.floor((time / 200) % 2) === 0 ? '_a' : '_b';
+                sprite.setTexture(textureKey + textureSuffix);
+
+            }
+            else {
+                joinButton.setText(`Join as ${name}`);
+                joinButton.off('pointerdown');
+                joinButton.on('pointerdown', () => { this.joinGamePlayerRequest(role); });
+
+                sprite.setVisible(false);
             }
         }
     }

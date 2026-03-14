@@ -39,6 +39,12 @@ export interface Session {
 	joinedSlotId: number | null;
 }
 
+export interface VisualActorState {
+	x: number;
+	y: number;
+	dir: Direction;
+}
+
 export interface MovementState {
 	gridX: number;
 	gridY: number;
@@ -71,6 +77,7 @@ export interface GameSnapshot {
 	roomTimer: number;
 	actors: ActorSnapshot[];
 	// items: ItemState[]; 将来的に追加
+	// events: GameEvent[]; 将来的に追加
 }
 
 
@@ -100,7 +107,9 @@ export interface GameState {
 export const ROOM_CONFIG = [
 	{ id: 'room1', name: 'Room 1' },
 	{ id: 'room2', name: 'Room 2' },
-	{ id: 'room3', name: 'Room 3' }
+	{ id: 'room3', name: 'Room 3' },
+	{ id: 'room4', name: 'Room 4' },
+	{ id: 'room5', name: 'Room 5' }
 ]
 
 // 0: 通行可能 その他: 通行不可
@@ -123,6 +132,9 @@ export const MAP = [
 	[1, 0, 3, 2, 4, 2, 2, 4, 4, 0, 2, 4, 3, 0, 2, 4, 2, 3, 0, 4, 4, 2, 3, 2, 2, 4, 2, 3, 0, 2, 4, 2, 0, 3, 2, 4, 0, 4, 2, 3, 0, 1],
 	[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
 ];
+
+export const MAP_WIDTH = 42;
+export const MAP_HEIGHT = 18;
 
 export const HUMAN_SPEED = 4 * 60 / 40;
 export const GHOST_SPEED = 3 * 60 / 40;
@@ -368,4 +380,37 @@ export const calcNextMovement = (currentMovement: MovementState, distance: numbe
 		}
 	}
 	return { gridX, gridY, offsetX, offsetY, currentDir, nextDir };
+}
+
+export const isValidDirection = (data: any): data is Direction => {
+	return  Object.values(Direction).includes(data);
+}
+
+export const isValidControllerType = (data: any): data is ControllerType => {
+	return Object.values(ControllerType).includes(data);
+}
+export const isValidActorRole = (data: any): data is ActorRole => {
+	return Object.values(ActorRole).includes(data);
+}
+
+export const isValidActorStatus = (data: any): data is ActorStatus => {
+	return Object.values(ActorStatus).includes(data);
+}
+
+export const isValidRoomPhase = (data: any): data is RoomPhase => {
+	return Object.values(RoomPhase).includes(data);
+}
+
+export const isValidMovementState = (data: any): data is MovementState => {
+	return typeof data === 'object' &&
+		typeof data.gridX === 'number' &&
+		0 <= data.gridX && data.gridX < MAP_WIDTH &&
+		typeof data.gridY === 'number' &&
+		0 <= data.gridY && data.gridY < MAP_HEIGHT &&
+		typeof data.offsetX === 'number' &&
+		data.offsetX >= -0.5 && data.offsetX <= 0.5 &&
+		typeof data.offsetY === 'number' &&
+		data.offsetY >= -0.5 && data.offsetY <= 0.5 &&
+		isValidDirection(data.currentDir) &&
+		isValidDirection(data.nextDir);
 }

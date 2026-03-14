@@ -1,7 +1,7 @@
 import { Namespace } from "socket.io";
 import {
 	ActorRole, ActorStatus, ControllerType, GameState, RoomPhase, Direction, Session, MovementState,
-	GameSnapshot,
+	GameSnapshot, calcNextMovement,
 	ACTOR_CONFIG,
 } from "@shared/GhostTag/core";
 
@@ -44,7 +44,7 @@ export class GameRoom {
 				status: ActorStatus.INACTIVE,
 				statusTimer: 0,
 				score: 0,
-				lastUpdateTime: Date.now()
+				lastUpdateTime: performance.now()
 			};
 		}
 		this.startGameLoop();
@@ -55,9 +55,9 @@ export class GameRoom {
 	}
 
 	private startGameLoop() {
-		let lastTime = Date.now();
+		let lastTime = performance.now();
 		this.intervalId = setInterval(() => {
-			const now = Date.now();
+			const now = performance.now();
 			const deltaTime = now - lastTime;
 			lastTime = now;
 			this.updateGame(deltaTime);
@@ -69,7 +69,6 @@ export class GameRoom {
 		for (const { socketId, role, movement, time } of this.receivedMovements) {
 			const actor = this.gameState.actors.find(a => a.sessionId === socketId && a.role === role);
 			if (actor) {
-				// TODO: 時間差を考慮した補正処理を入れる
 				actor.movement = movement;
 				actor.lastUpdateTime = time;
 			}
@@ -79,15 +78,23 @@ export class GameRoom {
 		const gameSnapshot: GameSnapshot = {
 			roomPhase: this.gameState.roomPhase,
 			roomTimer: this.gameState.roomTimer,
-			actors: this.gameState.actors.map(a => ({
-				movement: a.movement,
-				status: a.status,
-				statusTimer: a.statusTimer,
-				sessionId: a.sessionId,
-				role: a.role,
-				controller: a.controller,
-				score: a.score
-			}))
+			actors: this.gameState.actors.map(a => {
+				// TODO: アイテム処理は将来的に追加
+				// 補間処理
+				const timeSinceLastUpdate = performance.now() - a.lastUpdateTime;
+				const speed = ACTOR_CONFIG[a.role].speed;
+				const distance = speed * (timeSinceLastUpdate / 1000);
+				const predictedMovement = calcNextMovement(a.movement, distance);
+				return {
+					movement: predictedMovement,
+					status: a.status,
+					statusTimer: a.statusTimer,
+					sessionId: a.sessionId,
+					role: a.role,
+					controller: a.controller,
+					score: a.score
+				};
+			})
 			// items: this.master.items.map(i => ({ ... })) 将来的に追加
 		};
 
@@ -167,7 +174,7 @@ export class GameRoom {
 	}
 
 	public receivePlayerMovement(socketId: string, role: ActorRole, movement: MovementState) {
-		this.receivedMovements.push({ socketId, role, movement, time: Date.now() });
+		this.receivedMovements.push({ socketId, role, movement, time: performance.now() });
 	}
 
 	public getPlayerCount(): number {
