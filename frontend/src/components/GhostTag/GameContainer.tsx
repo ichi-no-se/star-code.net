@@ -2,8 +2,10 @@
 
 import { useEffect, useRef } from "react";;
 import * as Phaser from "phaser"
+import {WIDTH, HEIGHT} from "@shared/GhostTag/core";
 import LobbyScene from "./LobbyScene";
 import MainScene from "./MainScene";
+import ResultScene from "./ResultScene";
 
 export default function GameContainer() {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -26,11 +28,11 @@ export default function GameContainer() {
             scale: {
                 mode: Phaser.Scale.FIT,
                 autoCenter: Phaser.Scale.CENTER_BOTH,
-                width: 1920,
-                height: 1080,
+                width: WIDTH,
+                height: HEIGHT,
             },
             parent: containerRef.current,
-            scene: [LobbyScene, MainScene],
+            scene: [LobbyScene, MainScene, ResultScene],
             pixelArt: true,
             roundPixels: true
         };

@@ -21,9 +21,8 @@ export enum ActorRole {
 
 export enum RoomPhase {
 	WAITING = 0,
-	COUNTDOWN = 1,
+	STARTING = 1,
 	PLAYING = 2,
-	RESULT = 3,
 }
 
 export enum ActorStatus {
@@ -32,6 +31,11 @@ export enum ActorStatus {
 	STUNNED = 2,
 	SPEEDUP = 3,
 	RESPAWN = 4,
+}
+
+export enum ActorType{
+	HUMAN = 0,
+	GHOST = 1
 }
 
 export interface Session {
@@ -72,12 +76,42 @@ export interface ActorSnapshot {
 	score: number;
 }
 
+export type ItemType = 'SPEED_UP' | 'STUN' | 'POINT';
+
+export type GameEventType = 'ITEM_PICKUP' | 'PLAYER_TAGGED' | 'GAME_OVER';
+
+export interface BaseGameEvent {
+	type: GameEventType;
+}
+
+export interface ItemPickupEvent extends BaseGameEvent {
+	type: 'ITEM_PICKUP';
+	role: ActorRole;
+	// 将来的にアイテムの種類や位置なども追加
+	// itemState: ItemState;
+}
+
+export interface PlayerTaggedEvent extends BaseGameEvent {
+	type: 'PLAYER_TAGGED';
+	taggerRole: ActorRole; // 捕まえた人
+	taggedRole: ActorRole; // 捕まったお化け
+	x: number;
+	y: number;
+}
+
+export interface GameOverEvent extends BaseGameEvent {
+	type: 'GAME_OVER';
+	scores: { role: ActorRole, score: number }[];
+}
+
+export type GameEvent = ItemPickupEvent | PlayerTaggedEvent | GameOverEvent;
+
 export interface GameSnapshot {
 	roomPhase: RoomPhase;
 	roomTimer: number;
 	actors: ActorSnapshot[];
 	// items: ItemState[]; 将来的に追加
-	// events: GameEvent[]; 将来的に追加
+	events: GameEvent[];
 }
 
 
@@ -112,6 +146,9 @@ export const ROOM_CONFIG = [
 	{ id: 'room5', name: 'Room 5' }
 ]
 
+export const WIDTH = 1920;
+export const HEIGHT = 1080;
+
 // 0: 通行可能 その他: 通行不可
 export const MAP = [
 	[1, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 2, 5, 1],
@@ -139,11 +176,15 @@ export const MAP_HEIGHT = 18;
 export const HUMAN_SPEED = 4 * 60 / 40;
 export const GHOST_SPEED = 3 * 60 / 40;
 
+export const COUNTDOWN_TIME = 5000; // ms
+// export const GAME_DURATION = 120000; // ms
+export const GAME_DURATION = 10000; // テスト用
+
 export const ACTOR_CONFIG = [
-	{ role: ActorRole.HUMAN_1, name: "Human 1", speed: HUMAN_SPEED, spritePrefix: 'human_1', initialPos: { gridX: 1, gridY: 1 }, buttonInitialPos: { x: 20, y: 20 } },
-	{ role: ActorRole.HUMAN_2, name: "Human 2", speed: HUMAN_SPEED, spritePrefix: 'human_2', initialPos: { gridX: 1, gridY: 16 }, buttonInitialPos: { x: 20, y: 60 } },
-	{ role: ActorRole.GHOST_1, name: "Ghost 1", speed: GHOST_SPEED, spritePrefix: 'ghost_1', initialPos: { gridX: 40, gridY: 1 }, buttonInitialPos: { x: 20, y: 100 } },
-	{ role: ActorRole.GHOST_2, name: "Ghost 2", speed: GHOST_SPEED, spritePrefix: 'ghost_2', initialPos: { gridX: 40, gridY: 16 }, buttonInitialPos: { x: 20, y: 140 } }
+	{ role: ActorRole.HUMAN_1, name: "Human 1", speed: HUMAN_SPEED, type: ActorType.HUMAN, spritePrefix: 'human_1', initialPos: { gridX: 1, gridY: 1 }, buttonInitialPos: { x: 20, y: 20 } },
+	{ role: ActorRole.HUMAN_2, name: "Human 2", speed: HUMAN_SPEED, type: ActorType.HUMAN, spritePrefix: 'human_2', initialPos: { gridX: 1, gridY: 16 }, buttonInitialPos: { x: 20, y: 60 } },
+	{ role: ActorRole.GHOST_1, name: "Ghost 1", speed: GHOST_SPEED, type: ActorType.GHOST, spritePrefix: 'ghost_1', initialPos: { gridX: 40, gridY: 1 }, buttonInitialPos: { x: 20, y: 100 } },
+	{ role: ActorRole.GHOST_2, name: "Ghost 2", speed: GHOST_SPEED, type: ActorType.GHOST, spritePrefix: 'ghost_2', initialPos: { gridX: 40, gridY: 16 }, buttonInitialPos: { x: 20, y: 140 } }
 ];
 
 export const hasConnection = (x: number, y: number, dir: Direction): boolean => {
@@ -383,7 +424,7 @@ export const calcNextMovement = (currentMovement: MovementState, distance: numbe
 }
 
 export const isValidDirection = (data: any): data is Direction => {
-	return  Object.values(Direction).includes(data);
+	return Object.values(Direction).includes(data);
 }
 
 export const isValidControllerType = (data: any): data is ControllerType => {

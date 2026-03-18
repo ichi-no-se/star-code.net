@@ -1,8 +1,9 @@
 import { Namespace } from "socket.io";
 import {
 	ActorRole, ActorStatus, ControllerType, GameState, RoomPhase, Direction, Session, MovementState,
-	GameSnapshot, calcNextMovement,
-	ACTOR_CONFIG,
+	GameSnapshot, GameEvent, calcNextMovement,
+	ACTOR_CONFIG, COUNTDOWN_TIME,
+	GAME_DURATION
 } from "@shared/GhostTag/core";
 
 interface MovementReport {
@@ -65,7 +66,6 @@ export class GameRoom {
 	}
 
 	private updateGame(deltaTime: number) {
-		this.gameState.roomTimer += deltaTime;
 		for (const { socketId, role, movement, time } of this.receivedMovements) {
 			const actor = this.gameState.actors.find(a => a.sessionId === socketId && a.role === role);
 			if (actor) {
@@ -75,6 +75,74 @@ export class GameRoom {
 			// console.log(`[GhostTag] Received movement from ${socketId} at ${time}: ${JSON.stringify(movement)}`);
 		}
 		this.receivedMovements = [];
+
+		const events: GameEvent[] = [];
+
+		switch (this.gameState.roomPhase) {
+			case RoomPhase.WAITING:
+				this.gameState.roomTimer = 0;
+				// 全てのプレイヤーが揃ったらゲーム開始
+				let activePlayerCount = 0;
+				for (const actor of this.gameState.actors) {
+					if (actor.controller === ControllerType.PLAYER || actor.controller === ControllerType.CPU) {
+						activePlayerCount++;
+					}
+				}
+				if (activePlayerCount === 4) {
+					this.gameState.roomPhase = RoomPhase.STARTING;
+					this.gameState.roomTimer = COUNTDOWN_TIME;
+					for (const { role, initialPos } of ACTOR_CONFIG) {
+						this.gameState.actors[role].movement = {
+							gridX: initialPos.gridX,
+							gridY: initialPos.gridY,
+							offsetX: 0,
+							offsetY: 0,
+							currentDir: Direction.NONE,
+							nextDir: Direction.NONE
+						};
+						this.gameState.actors[role].status = ActorStatus.ACTIVE;
+					}
+					console.log(`[GhostTag] Room ${this.roomId} starting game with 4 players`);
+				}
+				break;
+			case RoomPhase.STARTING:
+				this.gameState.roomTimer -= deltaTime;
+				if (this.gameState.roomTimer <= 0) {
+					this.gameState.roomPhase = RoomPhase.PLAYING;
+					this.gameState.roomTimer = GAME_DURATION;
+				}
+
+				break;
+			case RoomPhase.PLAYING:
+				this.gameState.roomTimer -= deltaTime;
+				if (this.gameState.roomTimer <= 0) {
+					// 結果のイベントを将来的に追加
+					events.push({
+						type: 'GAME_OVER',
+						scores: this.gameState.actors.map(a => ({ role: a.role, score: a.score }))
+					});
+					// 全員を非アクティブにして待機状態に戻す
+					for (const actor of this.gameState.actors) {
+						actor.status = ActorStatus.INACTIVE;
+						actor.controller = ControllerType.NONE;
+						actor.sessionId = null;
+						actor.movement = {
+							gridX: 0,
+							gridY: 0,
+							offsetX: 0,
+							offsetY: 0,
+							currentDir: Direction.NONE,
+							nextDir: Direction.NONE
+						};
+						actor.statusTimer = 0;
+						actor.score = 0;
+					}
+					this.gameState.roomPhase = RoomPhase.WAITING;
+					this.gameState.roomTimer = 0;
+				}
+				break;
+		}
+
 		const gameSnapshot: GameSnapshot = {
 			roomPhase: this.gameState.roomPhase,
 			roomTimer: this.gameState.roomTimer,
@@ -92,9 +160,10 @@ export class GameRoom {
 					sessionId: a.sessionId,
 					role: a.role,
 					controller: a.controller,
-					score: a.score
+					score: a.score,
 				};
-			})
+			}),
+			events
 			// items: this.master.items.map(i => ({ ... })) 将来的に追加
 		};
 

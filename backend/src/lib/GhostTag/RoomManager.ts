@@ -13,7 +13,7 @@ export class RoomManager {
 	}
 
 	public handleConnectLobby(socket: Socket) {
-		socket.join("lobby");
+		this.leaveCurrentRoom(socket, true);
 		console.log(`[GhostTag] handleConnectLobby: Socket ${socket.id} connected and joined lobby.`);
 	}
 

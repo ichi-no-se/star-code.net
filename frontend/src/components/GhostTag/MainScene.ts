@@ -1,20 +1,16 @@
 import * as Phaser from "phaser"
 import { Socket } from "socket.io-client";
-import { ActorRole, ActorStatus, VisualActorState, Direction, MovementState, MAP, calcNextMovement, hasConnection, GameSnapshot, ACTOR_CONFIG, MAP_HEIGHT, MAP_WIDTH } from "@shared/GhostTag/core";
+import { ActorRole, ActorStatus, VisualActorState, Direction, MovementState, MAP, calcNextMovement, hasConnection, GameSnapshot, ACTOR_CONFIG, MAP_HEIGHT, MAP_WIDTH, RoomPhase, GameEvent, WIDTH, HEIGHT } from "@shared/GhostTag/core";
 
 
 export default class MainScene extends Phaser.Scene {
-    private static readonly WIDTH = 1920;
-    private static readonly HEIGHT = 1080;
-
-
     private static readonly TILE_SIZE = 40;
-    private static readonly MAP_ORIGIN_X = (this.WIDTH - MAP_WIDTH * this.TILE_SIZE) / 2;
-    private static readonly MAP_ORIGIN_Y = (this.HEIGHT - MAP_HEIGHT * this.TILE_SIZE) / 2;
+    private static readonly MAP_ORIGIN_X = (WIDTH - MAP_WIDTH * this.TILE_SIZE) / 2;
+    private static readonly MAP_ORIGIN_Y = (HEIGHT - MAP_HEIGHT * this.TILE_SIZE) / 2;
 
     private static readonly EMIT_INTERVAL = 1000 / 20; // 20 FPS
 
-    private socket: Socket | null = null;
+    private socket!: Socket | null;
 
     private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
     private keyW?: Phaser.Input.Keyboard.Key;
@@ -22,20 +18,22 @@ export default class MainScene extends Phaser.Scene {
     private keyS?: Phaser.Input.Keyboard.Key;
     private keyD?: Phaser.Input.Keyboard.Key;
     private keyEsc?: Phaser.Input.Keyboard.Key;
-    private roomId?: string;
+    private roomId!: string;
 
-    private actorSprites: (Phaser.GameObjects.Sprite | null)[] = [null, null, null, null];
-    private visualActorStates: (VisualActorState | null)[] = [null, null, null, null]; // 描画用の位置
-    private predictedActorMovements: (MovementState | null)[] = [null, null, null, null]; // 手元での予測位置
-    private lastPredictedActorMovementsUpdateTime: number = 0; // 予測位置を最後に更新した時間
-    private actorJoinButtons: (Phaser.GameObjects.Text | null)[] = [null, null, null, null];
+    private timerText!: Phaser.GameObjects.Text;
+    private actorSprites!: (Phaser.GameObjects.Sprite | null)[];
+    private visualActorStates!: (VisualActorState | null)[]; // 描画用の位置
+    private predictedActorMovements!: (MovementState | null)[]; // 手元での予測位置
+    private lastPredictedActorMovementsUpdateTime!: number; // 予測位置を最後に更新した時間
+    private actorJoinButtons!: (Phaser.GameObjects.Text | null)[];
 
-    private localMovement: MovementState | null = null; // 操作キャラの手元での位置
+    private localMovement!: MovementState | null; // 操作キャラの手元での位置
 
-    private receivedGameSnapshots: { snapshot: GameSnapshot, time: number }[] = []; // 受信したスナップショットと受信時間の履歴
+    private receivedGameSnapshots!: { snapshot: GameSnapshot, time: number }[]; // 受信したスナップショットと受信時間の履歴
 
-    private timeSinceLastEmit: number = 0;
-    private currentRole: ActorRole | null = null;
+    private timeSinceLastEmit!: number;
+    private currentRole!: ActorRole | null;
+    private isTransitioningToResultScene!: boolean; // 結果画面への遷移中かどうかを示すフラグ
 
     constructor() {
         super({ key: 'MainScene' });
@@ -60,6 +58,16 @@ export default class MainScene extends Phaser.Scene {
 
     init(data: { roomId: string }) {
         this.roomId = data.roomId;
+        this.actorSprites = [null, null, null, null];
+        this.visualActorStates = [null, null, null, null];
+        this.predictedActorMovements = [null, null, null, null];
+        this.lastPredictedActorMovementsUpdateTime = performance.now();
+        this.actorJoinButtons = [null, null, null, null];
+        this.localMovement = null;
+        this.receivedGameSnapshots = [];
+        this.timeSinceLastEmit = 0;
+        this.currentRole = null;
+        this.isTransitioningToResultScene = false;
     }
     create() {
         this.cursors = this.input.keyboard?.createCursorKeys();
@@ -76,7 +84,6 @@ export default class MainScene extends Phaser.Scene {
         }
 
         this.keyEsc?.on('down', () => {
-            this.socket?.emit('leaveRoom');
             this.scene.start('LobbyScene');
         });
 
@@ -98,9 +105,9 @@ export default class MainScene extends Phaser.Scene {
                 }
             });
         });
-
         // 仮の UI 後でちゃんとしたのに差し替える
-        const protoButtonStyle = { fontSize: '20px', color: '#0f0', backgroundColor: '#000' };
+        this.timerText = this.add.text(WIDTH / 2, 20, 'Loading...', { fontSize: '40px', color: '#fff' }).setOrigin(0.5, 0);
+        const protoButtonStyle = { fontSize: '20px', color: '#0f0' };
         for (const { role, name, buttonInitialPos } of Object.values(ACTOR_CONFIG)) {
             const button = this.add.text(buttonInitialPos.x, buttonInitialPos.y, `Join as ${name}`, protoButtonStyle)
                 .setInteractive({ useHandCursor: true })
@@ -152,9 +159,13 @@ export default class MainScene extends Phaser.Scene {
 
     update(time: number, delta: number) {
         if (!this.socket) return;
+        if (this.isTransitioningToResultScene) return;
         const now = performance.now();
-
-        let newRole: ActorRole | null = this.receivedGameSnapshots.length > 0 ? null : this.currentRole;
+        const hasNewSnapshot = this.receivedGameSnapshots.length > 0;
+        let newRole: ActorRole | null = null;
+        let latestRoomTimer: number | null = null;
+        let latestRoomPhase: RoomPhase | null = null;
+        const events: GameEvent[] = [];
         for (const { snapshot, time: snapshotTime } of this.receivedGameSnapshots) {
             this.lastPredictedActorMovementsUpdateTime = snapshotTime;
             for (const { role } of Object.values(ACTOR_CONFIG)) {
@@ -169,15 +180,52 @@ export default class MainScene extends Phaser.Scene {
                     newRole = role;
                 }
             }
+            latestRoomTimer = snapshot.roomTimer;
+            latestRoomPhase = snapshot.roomPhase;
+            events.push(...snapshot.events);
         }
         this.receivedGameSnapshots = [];
 
-        if (newRole !== null && newRole !== this.currentRole) {
-            // 新たにプレイヤー役になった場合，受信したスナップショットの位置を手元の位置として採用する
-            this.localMovement = structuredClone(this.predictedActorMovements[newRole]);
-        }
-        this.currentRole = newRole;
+        if (hasNewSnapshot) {
+            if (newRole !== null && newRole !== this.currentRole) {
+                // 新たにプレイヤー役になった場合，受信したスナップショットの位置を手元の位置として採用する
+                this.localMovement = structuredClone(this.predictedActorMovements[newRole]);
+            }
+            this.currentRole = newRole;
 
+            // タイマーの更新
+            if (latestRoomTimer !== null && latestRoomPhase !== null) {
+                const seconds = Math.ceil(latestRoomTimer / 1000);
+                switch (latestRoomPhase) {
+                    case RoomPhase.WAITING:
+                        this.timerText.setText(`Waiting...`);
+                        break;
+                    case RoomPhase.STARTING:
+                        this.timerText.setText(`Starting... ${seconds}`);
+                        break;
+                    case RoomPhase.PLAYING:
+                        this.timerText.setText(`Time: ${seconds}`);
+                        break;
+                }
+            }
+
+            // イベントの処理
+            events.forEach(event => {
+                switch (event.type) {
+                    case 'GAME_OVER':
+                        // 結果画面に遷移するなどの処理をここに書く
+                        this.isTransitioningToResultScene = true;
+                        this.input.enabled = false; // 入力を無効化して多重遷移を防止
+                        this.cameras.main.fadeOut(200, 0, 0, 0);
+                        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+                            this.scene.start('ResultScene', { roomId: this.roomId, scores: event.scores });
+                        });
+                        break;
+                    // 将来的にアイテム取得やプレイヤーが捕まったイベントなどもここで処理する
+                }
+            }
+            );
+        }
         // 予測位置の更新
         const sinceLastUpdate = now - this.lastPredictedActorMovementsUpdateTime;
         this.lastPredictedActorMovementsUpdateTime = now;
@@ -189,7 +237,7 @@ export default class MainScene extends Phaser.Scene {
         }
 
         // プレイヤー役であれば入力を処理して位置を更新する
-        if (this.localMovement && this.currentRole !== null) {
+        if (this.localMovement && this.currentRole !== null && latestRoomPhase !== RoomPhase.WAITING) {
             if (this.cursors?.up.isDown || this.keyW?.isDown) {
                 this.localMovement.nextDir = Direction.UP;
             }
@@ -216,6 +264,17 @@ export default class MainScene extends Phaser.Scene {
             this.predictedActorMovements[this.currentRole] = this.localMovement;
         }
 
+        // ゲーム開始時
+        if (latestRoomPhase === RoomPhase.STARTING) {
+            // すべての役の予測位置を初期化する
+            Object.values(ACTOR_CONFIG).forEach(({ role, initialPos }) => {
+                this.predictedActorMovements[role] = { ...initialPos, currentDir: Direction.NONE, nextDir: Direction.NONE, offsetX: 0, offsetY: 0 };
+            });
+            if (this.localMovement !== null && this.currentRole !== null) {
+                this.localMovement = { ...ACTOR_CONFIG[this.currentRole].initialPos, currentDir: Direction.NONE, nextDir: Direction.NONE, offsetX: 0, offsetY: 0 };
+            }
+        }
+
         // VisualActorState の更新
         for (const { role } of Object.values(ACTOR_CONFIG)) {
             const predictedMovement = this.predictedActorMovements[role];
@@ -239,7 +298,7 @@ export default class MainScene extends Phaser.Scene {
                             newX = x + (targetX - x) * t;
                         }
                         let newY: number;
-                        if(Math.abs(y - targetY) < 0.5) {
+                        if (Math.abs(y - targetY) < 0.5) {
                             newY = targetY;
                         }
                         else {
