@@ -33,9 +33,27 @@ export enum ActorStatus {
 	RESPAWN = 4,
 }
 
-export enum ActorType{
+export enum ActorType {
 	HUMAN = 0,
 	GHOST = 1
+}
+
+export enum ItemCategory {
+	SCORE = 0,
+	SCORE_SPECIAL = 1,
+	SPEED = 2,
+	STUN = 3
+}
+
+export enum ItemType {
+	SCORE_CANDY = 0,
+	SCORE_CHOCOLATE = 1,
+	SCORE_DONUT = 2,
+	SCORE_SPECIAL_CANDY = 3,
+	SCORE_SPECIAL_CHOCOLATE = 4,
+	SCORE_SPECIAL_DONUT = 5,
+	SPEED_UP = 6,
+	STUN = 7
 }
 
 export interface Session {
@@ -75,8 +93,6 @@ export interface ActorSnapshot {
 	controller: ControllerType;
 	score: number;
 }
-
-export type ItemType = 'SPEED_UP' | 'STUN' | 'POINT';
 
 export type GameEventType = 'ITEM_PICKUP' | 'PLAYER_TAGGED' | 'GAME_OVER';
 
@@ -185,6 +201,17 @@ export const ACTOR_CONFIG = [
 	{ role: ActorRole.HUMAN_2, name: "Human 2", speed: HUMAN_SPEED, type: ActorType.HUMAN, spritePrefix: 'human_2', initialPos: { gridX: 1, gridY: 16 }, buttonInitialPos: { x: 20, y: 60 } },
 	{ role: ActorRole.GHOST_1, name: "Ghost 1", speed: GHOST_SPEED, type: ActorType.GHOST, spritePrefix: 'ghost_1', initialPos: { gridX: 40, gridY: 1 }, buttonInitialPos: { x: 20, y: 100 } },
 	{ role: ActorRole.GHOST_2, name: "Ghost 2", speed: GHOST_SPEED, type: ActorType.GHOST, spritePrefix: 'ghost_2', initialPos: { gridX: 40, gridY: 16 }, buttonInitialPos: { x: 20, y: 140 } }
+];
+
+export const ITEM_CONFIG = [
+	{ type: ItemType.SCORE_CANDY, category: ItemCategory.SCORE, spritePrefix: 'item_score_candy' },
+	{ type: ItemType.SCORE_CHOCOLATE, category: ItemCategory.SCORE, spritePrefix: 'item_score_chocolate' },
+	{ type: ItemType.SCORE_DONUT, category: ItemCategory.SCORE, spritePrefix: 'item_score_donut' },
+	{ type: ItemType.SCORE_SPECIAL_CANDY, category: ItemCategory.SCORE_SPECIAL, spritePrefix: 'item_score_special_candy' },
+	{ type: ItemType.SCORE_SPECIAL_CHOCOLATE, category: ItemCategory.SCORE_SPECIAL, spritePrefix: 'item_score_special_chocolate' },
+	{ type: ItemType.SCORE_SPECIAL_DONUT, category: ItemCategory.SCORE_SPECIAL, spritePrefix: 'item_score_special_donut' },
+	{ type: ItemType.SPEED_UP, category: ItemCategory.SPEED, spritePrefix: 'item_speed_up' },
+	{ type: ItemType.STUN, category: ItemCategory.STUN, spritePrefix: 'item_stun' }
 ];
 
 export const hasConnection = (x: number, y: number, dir: Direction): boolean => {
@@ -454,4 +481,75 @@ export const isValidMovementState = (data: any): data is MovementState => {
 		data.offsetY >= -0.5 && data.offsetY <= 0.5 &&
 		isValidDirection(data.currentDir) &&
 		isValidDirection(data.nextDir);
+}
+
+export const randomMapPosition = (): { x: number, y: number } => {
+	while (true) {
+		const x = Math.floor(Math.random() * MAP_WIDTH);
+		const y = Math.floor(Math.random() * MAP_HEIGHT);
+		if (MAP[y][x] === 0) {
+			return { x, y };
+		}
+	}
+}
+
+interface ItemSpawnRate {
+	category: ItemCategory;
+	count: number;
+}
+
+export class ItemDeck {
+	private items: ItemCategory[];
+
+	static readonly CONFIG: ItemSpawnRate[] = [
+		{ category: ItemCategory.SCORE, count: 17 },
+		{ category: ItemCategory.SCORE_SPECIAL, count: 1 },
+		{ category: ItemCategory.SPEED, count: 1 },
+		{ category: ItemCategory.STUN, count: 1 }
+	]
+
+	constructor() {
+		this.items = [];
+		this.refill();
+	}
+
+	private refill() {
+		this.items = [];
+		for (const { category, count } of ItemDeck.CONFIG) {
+			for (let i = 0; i < count; i++) {
+				this.items.push(category);
+			}
+		}
+		this.shuffle();
+	}
+
+	private shuffle() {
+		for (let i = this.items.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[this.items[i], this.items[j]] = [this.items[j], this.items[i]];
+		}
+	}
+
+	public pick(): ItemCategory {
+		if (this.items.length === 0) {
+			this.refill();
+		}
+		return this.items.pop()!;
+	}
+}
+
+const ITEM_TYPES_BY_CATEGORY: Record<ItemCategory, ItemType[]> = ITEM_CONFIG.reduce((acc, item) => {
+	if (!acc[item.category]) {
+		acc[item.category] = [];
+	}
+	acc[item.category].push(item.type);
+	return acc;
+}, {} as Record<ItemCategory, ItemType[]>);
+
+export const sampleItemTypeByCategory = (category: ItemCategory): ItemType => {
+	const types = ITEM_TYPES_BY_CATEGORY[category];
+	if(!types || types.length === 0) {
+		throw new Error(`No item types found for category ${category}`);
+	}
+	return types[Math.floor(Math.random() * types.length)];
 }
