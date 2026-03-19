@@ -1,6 +1,6 @@
 import * as Phaser from "phaser"
 import { Socket } from "socket.io-client";
-import { ActorRole, ActorStatus, ActorType, GameEventType, ItemCategory, ItemPickUpEvent, PlayerTaggedEvent, GameOverEvent, VisualActorState, Direction, MovementState, MAP, calcNextMovement, hasConnection, GameSnapshot, ACTOR_CONFIG, RoomPhase, GameEvent, WIDTH, ITEM_CONFIG, keyFromItemState, gridToPixel, movementToPixel, TILE_SIZE, gridToCenterPixel } from "@shared/GhostTag/core";
+import { ActorRole, ActorStatus, ActorType, GameEventType, ItemCategory, ItemPickUpEvent, GameOverEvent, VisualActorState, Direction, MovementState, MAP, calcNextMovement, hasConnection, GameSnapshot, ACTOR_CONFIG, RoomPhase, GameEvent, WIDTH, ITEM_CONFIG, keyFromItemState, gridToPixel, movementToPixel, TILE_SIZE, gridToCenterPixel } from "@shared/GhostTag/core";
 
 
 export default class MainScene extends Phaser.Scene {
