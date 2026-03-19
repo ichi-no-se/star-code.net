@@ -224,7 +224,7 @@ export const GHOST_SPEED = 3 * 60 / 40;
 
 export const COUNTDOWN_TIME = 5000; // ms
 // export const GAME_DURATION = 120000; // ms
-export const GAME_DURATION = 10000; // テスト用
+export const GAME_DURATION = 30000; // テスト用
 
 export const MAX_ITEMS_ON_FIELD = 15;
 
