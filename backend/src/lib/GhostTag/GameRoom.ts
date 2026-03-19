@@ -1,9 +1,18 @@
 import { Namespace } from "socket.io";
 import {
-	ActorRole, ActorStatus, ControllerType, GameState, RoomPhase, Direction, Session, MovementState,
+	ActorRole, ActorStatus, ControllerType, GameState, RoomPhase, Direction, Session, MovementState, ItemType,
 	GameSnapshot, GameEvent, calcNextMovement,
+	ITEM_GET_DISTANCE, ITEM_CONFIG,
 	ACTOR_CONFIG, COUNTDOWN_TIME,
-	GAME_DURATION
+	GAME_DURATION,
+	ItemDeck,
+	sampleItemTypeByCategory,
+	randomMapPosition,
+	MAX_ITEMS_ON_FIELD,
+	ActorType,
+	ItemCategory,
+	SCORE_ITEM_NORMAL, SCORE_ITEM_SPECIAL,
+	GameEventType
 } from "@shared/GhostTag/core";
 
 interface MovementReport {
@@ -19,14 +28,16 @@ export class GameRoom {
 	private gameState: GameState;
 	private receivedMovements: MovementReport[] = [];
 	private updateInterval: number = 1000 / 20; // 20 FPS
+	private itemDeck: ItemDeck;
 
 	constructor(private ns: Namespace, private roomId: string) {
 		this.sessions = new Map();
+		this.itemDeck = new ItemDeck();
 		this.gameState = {
 			roomPhase: RoomPhase.WAITING,
 			roomTimer: 0,
-			actors: []
-			// items: [] 将来的に追加
+			actors: [],
+			items: []
 		}
 		for (let i = 0; i < 4; i++) {
 			this.gameState.actors[i] = {
@@ -45,7 +56,8 @@ export class GameRoom {
 				status: ActorStatus.INACTIVE,
 				statusTimer: 0,
 				score: 0,
-				lastUpdateTime: performance.now()
+				lastUpdateTime: performance.now(),
+				inventory: null,
 			};
 		}
 		this.startGameLoop();
@@ -115,10 +127,91 @@ export class GameRoom {
 				break;
 			case RoomPhase.PLAYING:
 				this.gameState.roomTimer -= deltaTime;
+				// アイテム取得処理
+				for (const actor of this.gameState.actors) {
+					if (actor.status === ActorStatus.INACTIVE) {
+						// ここに来るのはおかしいが、念のため非アクティブは処理しない
+						// ゲーム中に途中退出すると非アクティブになってここに来る可能性がある
+						// 非アクティブにする代わりに CPU 制御に今後するのでここはどのみち踏まない予定
+						// TODO: 途中退出プレイヤーの処理（ここに書くわけではないが）
+						continue;
+					}
+					if (actor.status === ActorStatus.RESPAWN) {
+						continue; // リスポーン中はアイテムを取れない
+					}
+					for (let i = this.gameState.items.length - 1; i >= 0; i--) {
+						const item = this.gameState.items[i];
+						const distance = Math.abs(actor.movement.gridX + actor.movement.offsetX - item.gridX) + Math.abs(actor.movement.gridY + actor.movement.offsetY - item.gridY);
+						if (distance <= ITEM_GET_DISTANCE) {
+							const itemCategory = ITEM_CONFIG[item.type].category;
+							const actorType = ACTOR_CONFIG[actor.role].type;
+							let pickedUp = false;
+							if (actorType === ActorType.GHOST && itemCategory === ItemCategory.SCORE) {
+								pickedUp = true;
+								let scoreToAdd;
+								if (actor.status === ActorStatus.SPEED_UP) {
+									scoreToAdd = SCORE_ITEM_SPECIAL;
+								} else {
+									scoreToAdd = SCORE_ITEM_NORMAL;
+								}
+								actor.score += scoreToAdd;
+								events.push({
+									type: GameEventType.ITEM_PICK_UP,
+									role: actor.role,
+									itemState: item,
+									earnedScore: scoreToAdd,
+								})
+							}
+							if (actorType === ActorType.GHOST && itemCategory === ItemCategory.SCORE_SPECIAL) {
+								pickedUp = true;
+								let scoreToAdd;
+								if (actor.status === ActorStatus.SPEED_UP) {
+									scoreToAdd = SCORE_ITEM_SPECIAL;
+								} else {
+									scoreToAdd = SCORE_ITEM_NORMAL;
+								}
+								actor.score += scoreToAdd;
+								events.push({
+									type: GameEventType.ITEM_PICK_UP,
+									role: actor.role,
+									itemState: item,
+									earnedScore: scoreToAdd,
+								})
+							}
+							// その他のアイテム：アイテムを所持しているなら拾わない，そうでないなら拾う
+							if (actor.inventory === null && (itemCategory === ItemCategory.SPEED_UP || itemCategory === ItemCategory.STUN)) {
+								if(item.type !== ItemType.SPEED_UP && item.type !== ItemType.STUN) {
+									console.error(`Unexpected item type ${item.type} in category ${itemCategory}`);
+									continue;
+								}
+								pickedUp = true;
+								actor.inventory = item.type;
+								events.push({
+									type: GameEventType.ITEM_PICK_UP,
+									role: actor.role,
+									itemState: item,
+									earnedScore: 0,
+								})
+							}
+
+							if (pickedUp) {
+								this.gameState.items.splice(i, 1);
+							}
+						}
+					}
+				}
+
+				// 捕まえた判定処理
+				// TODO: そのうち書く
+
+				// アイテムスポーン処理
+				while (this.gameState.items.length < MAX_ITEMS_ON_FIELD) {
+					this.spawnItem();
+				}
 				if (this.gameState.roomTimer <= 0) {
 					// 結果のイベントを将来的に追加
 					events.push({
-						type: 'GAME_OVER',
+						type: GameEventType.GAME_OVER,
 						scores: this.gameState.actors.map(a => ({ role: a.role, score: a.score }))
 					});
 					// 全員を非アクティブにして待機状態に戻す
@@ -139,6 +232,9 @@ export class GameRoom {
 					}
 					this.gameState.roomPhase = RoomPhase.WAITING;
 					this.gameState.roomTimer = 0;
+					this.gameState.items = [];
+					this.itemDeck.reset();
+					console.log(`[GhostTag] Room ${this.roomId} game over`);
 				}
 				break;
 		}
@@ -147,7 +243,6 @@ export class GameRoom {
 			roomPhase: this.gameState.roomPhase,
 			roomTimer: this.gameState.roomTimer,
 			actors: this.gameState.actors.map(a => {
-				// TODO: アイテム処理は将来的に追加
 				// 補間処理
 				const timeSinceLastUpdate = performance.now() - a.lastUpdateTime;
 				const speed = ACTOR_CONFIG[a.role].speed;
@@ -161,13 +256,51 @@ export class GameRoom {
 					role: a.role,
 					controller: a.controller,
 					score: a.score,
+					inventory: a.inventory,
 				};
 			}),
-			events
-			// items: this.master.items.map(i => ({ ... })) 将来的に追加
+			events,
+			items: this.gameState.items
 		};
 
 		this.broadcastGameSnapshot(gameSnapshot);
+	}
+
+	private spawnItem() {
+		const newItemCategory = this.itemDeck.pick();
+		const newItemType = sampleItemTypeByCategory(newItemCategory);
+		// なるべく既存のアイテム，プレイヤーと被らない位置を選ぶ
+		let bestPos = randomMapPosition();
+		let maxMinDist = -1;
+		for (let attempt = 0; attempt < 10; attempt++) {
+			const pos = randomMapPosition();
+			let minDistanceToActorOrItem = Infinity;
+			for (const actor of this.gameState.actors) {
+				const actorPos = {
+					gridX: actor.movement.gridX,
+					gridY: actor.movement.gridY
+				};
+				const distance = Math.abs(pos.gridX - actorPos.gridX) + Math.abs(pos.gridY - actorPos.gridY);
+				if (distance < minDistanceToActorOrItem) {
+					minDistanceToActorOrItem = distance;
+				}
+			}
+			for (const item of this.gameState.items) {
+				const distance = Math.abs(pos.gridX - item.gridX) + Math.abs(pos.gridY - item.gridY);
+				if (distance < minDistanceToActorOrItem) {
+					minDistanceToActorOrItem = distance;
+				}
+			}
+			if (minDistanceToActorOrItem > maxMinDist) {
+				maxMinDist = minDistanceToActorOrItem;
+				bestPos = pos;
+			}
+		}
+		const newItem = {
+			type: newItemType,
+			...bestPos
+		};
+		this.gameState.items.push(newItem);
 	}
 
 	private broadcastGameSnapshot(gameSnapshot: GameSnapshot) {

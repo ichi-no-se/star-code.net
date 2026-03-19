@@ -1,12 +1,9 @@
 import * as Phaser from "phaser"
 import { Socket } from "socket.io-client";
-import { ActorRole, ActorStatus, VisualActorState, Direction, MovementState, MAP, calcNextMovement, hasConnection, GameSnapshot, ACTOR_CONFIG, MAP_HEIGHT, MAP_WIDTH, RoomPhase, GameEvent, WIDTH, HEIGHT } from "@shared/GhostTag/core";
+import { ActorRole, ActorStatus, ActorType, GameEventType, ItemCategory, ItemPickUpEvent, PlayerTaggedEvent, GameOverEvent, VisualActorState, Direction, MovementState, MAP, calcNextMovement, hasConnection, GameSnapshot, ACTOR_CONFIG, RoomPhase, GameEvent, WIDTH, ITEM_CONFIG, keyFromItemState, gridToPixel, movementToPixel, TILE_SIZE, gridToCenterPixel } from "@shared/GhostTag/core";
 
 
 export default class MainScene extends Phaser.Scene {
-    private static readonly TILE_SIZE = 40;
-    private static readonly MAP_ORIGIN_X = (WIDTH - MAP_WIDTH * this.TILE_SIZE) / 2;
-    private static readonly MAP_ORIGIN_Y = (HEIGHT - MAP_HEIGHT * this.TILE_SIZE) / 2;
 
     private static readonly EMIT_INTERVAL = 1000 / 20; // 20 FPS
 
@@ -21,7 +18,10 @@ export default class MainScene extends Phaser.Scene {
     private roomId!: string;
 
     private timerText!: Phaser.GameObjects.Text;
+    private itemSpritesMap!: Map<string, Phaser.GameObjects.Sprite>;
     private actorSprites!: (Phaser.GameObjects.Sprite | null)[];
+    private markerYouSprite!: Phaser.GameObjects.Sprite;
+    private markerOffsetY!: number; // マーカーの浮き上がりのアニメーション用
     private visualActorStates!: (VisualActorState | null)[]; // 描画用の位置
     private predictedActorMovements!: (MovementState | null)[]; // 手元での予測位置
     private lastPredictedActorMovementsUpdateTime!: number; // 予測位置を最後に更新した時間
@@ -33,6 +33,7 @@ export default class MainScene extends Phaser.Scene {
 
     private timeSinceLastEmit!: number;
     private currentRole!: ActorRole | null;
+    private currentRoomPhase!: RoomPhase;
     private isTransitioningToResultScene!: boolean; // 結果画面への遷移中かどうかを示すフラグ
 
     constructor() {
@@ -54,10 +55,18 @@ export default class MainScene extends Phaser.Scene {
                 this.load.image(`${spritePrefix}_${dir}_b`, `/ghost-tag/sprites/${spritePrefix}_${dir}_b.png`);
             }
         }
+
+        ITEM_CONFIG.forEach(({ spriteName }) => {
+            this.load.image(spriteName, `/ghost-tag/sprites/${spriteName}.png`);
+        });
+
+        this.load.image('marker_you', '/ghost-tag/sprites/marker_you.png');
+        this.load.image('ghost_alert_ring', '/ghost-tag/effects/ghost_alert_ring.png');
     }
 
     init(data: { roomId: string }) {
         this.roomId = data.roomId;
+        this.itemSpritesMap = new Map();
         this.actorSprites = [null, null, null, null];
         this.visualActorStates = [null, null, null, null];
         this.predictedActorMovements = [null, null, null, null];
@@ -67,6 +76,7 @@ export default class MainScene extends Phaser.Scene {
         this.receivedGameSnapshots = [];
         this.timeSinceLastEmit = 0;
         this.currentRole = null;
+        this.currentRoomPhase = RoomPhase.WAITING;
         this.isTransitioningToResultScene = false;
     }
     create() {
@@ -88,20 +98,18 @@ export default class MainScene extends Phaser.Scene {
         });
 
 
-        MAP.forEach((row, y) => {
-            row.forEach((tile, x) => {
-                const tileX = MainScene.MAP_ORIGIN_X + x * MainScene.TILE_SIZE;
-                const tileY = MainScene.MAP_ORIGIN_Y + y * MainScene.TILE_SIZE;
-
+        MAP.forEach((row, i) => {
+            row.forEach((tile, j) => {
+                const { x, y } = gridToPixel(j, i);
                 let textureKey = '';
                 if (tile === 0) {
-                    textureKey = this.getRoadTextureKey(x, y);
+                    textureKey = this.getRoadTextureKey(j, i);
                 }
                 else {
                     textureKey = `wall${tile}`;
                 }
                 if (textureKey) {
-                    this.add.image(tileX, tileY, textureKey).setOrigin(0, 0);
+                    this.add.image(x, y, textureKey).setOrigin(0, 0);
                 }
             });
         });
@@ -120,6 +128,20 @@ export default class MainScene extends Phaser.Scene {
             sprite.setVisible(false);
             this.actorSprites[role] = sprite;
         }
+
+        this.markerYouSprite = this.add.sprite(0, 0, 'marker_you').setOrigin(0, 0);
+        this.markerYouSprite.setVisible(false);
+
+        this.markerOffsetY = -TILE_SIZE + 5;
+        this.tweens.add({
+            targets: this,
+            markerOffsetY: -TILE_SIZE - 3,
+            duration: 1000,
+            ease: 'Sine.easeInOut',
+            yoyo: true,
+            repeat: -1
+        });
+
 
         this.events.once('update', () => this.postCreate());
     }
@@ -141,12 +163,6 @@ export default class MainScene extends Phaser.Scene {
         return `road_${connections || 'default'}`;
     }
 
-    private calcPlayerPosition(movementState: MovementState): { x: number, y: number } {
-        const x = MainScene.MAP_ORIGIN_X + (movementState.gridX + movementState.offsetX) * MainScene.TILE_SIZE;
-        const y = MainScene.MAP_ORIGIN_Y + (movementState.gridY + movementState.offsetY) * MainScene.TILE_SIZE;
-        return { x, y };
-    }
-
     private joinGamePlayerRequest(role: ActorRole) {
         if (!this.socket) return;
         this.socket.emit('joinGamePlayer', { role: role });
@@ -164,7 +180,6 @@ export default class MainScene extends Phaser.Scene {
         const hasNewSnapshot = this.receivedGameSnapshots.length > 0;
         let newRole: ActorRole | null = null;
         let latestRoomTimer: number | null = null;
-        let latestRoomPhase: RoomPhase | null = null;
         const events: GameEvent[] = [];
         for (const { snapshot, time: snapshotTime } of this.receivedGameSnapshots) {
             this.lastPredictedActorMovementsUpdateTime = snapshotTime;
@@ -181,8 +196,67 @@ export default class MainScene extends Phaser.Scene {
                 }
             }
             latestRoomTimer = snapshot.roomTimer;
-            latestRoomPhase = snapshot.roomPhase;
+            this.currentRoomPhase = snapshot.roomPhase;
             events.push(...snapshot.events);
+
+            // アイテムのスプライトを更新
+            // もし role が変わっている場合は，全てを作り直す（透明度が変わるため）
+            if (newRole !== this.currentRole) {
+                this.itemSpritesMap.forEach(sprite => sprite.destroy());
+                this.itemSpritesMap.clear();
+            }
+            const currentItemKeys = new Set<string>();
+            snapshot.items.forEach(item => {
+                const key = keyFromItemState(item);
+                currentItemKeys.add(key);
+                // 新たに出現したアイテムのスプライトを作成
+                if (!this.itemSpritesMap.has(key)) {
+                    const config = ITEM_CONFIG[item.type];
+                    if (config) {
+                        const { x, y } = gridToPixel(item.gridX, item.gridY);
+                        const sprite = this.add.sprite(x, y, config.spriteName).setOrigin(0, 0);
+                        let targetAlpha = 0.0;
+                        if (newRole === null) {
+                            targetAlpha = config.alphaConfig.spectator;
+                        }
+                        else if (ACTOR_CONFIG[newRole].type === ActorType.HUMAN) {
+                            targetAlpha = config.alphaConfig.human;
+                        }
+                        else if (ACTOR_CONFIG[newRole].type === ActorType.GHOST) {
+                            targetAlpha = config.alphaConfig.ghost;
+                        }
+                        else {
+                            console.error(`Unknown actor type for role ${newRole}: ${ACTOR_CONFIG[newRole].type}`);
+                        }
+                        sprite.setAlpha(0);
+                        this.tweens.add({
+                            targets: sprite,
+                            alpha: targetAlpha,
+                            duration: 100,
+                            ease: 'Linear',
+                        })
+                        this.itemSpritesMap.set(key, sprite);
+                    }
+                    else {
+                        console.error(`Unknown item type: ${item.type}`);
+                    }
+                }
+            });
+            // 存在しないアイテムのスプライトを削除
+            this.itemSpritesMap.forEach((sprite, key) => {
+                if (!currentItemKeys.has(key)) {
+                    this.tweens.add({
+                        targets: sprite,
+                        alpha: 0,
+                        duration: 100,
+                        ease: 'Linear',
+                        onComplete: () => {
+                            sprite.destroy();
+                        }
+                    })
+                    this.itemSpritesMap.delete(key);
+                }
+            });
         }
         this.receivedGameSnapshots = [];
 
@@ -194,9 +268,9 @@ export default class MainScene extends Phaser.Scene {
             this.currentRole = newRole;
 
             // タイマーの更新
-            if (latestRoomTimer !== null && latestRoomPhase !== null) {
+            if (latestRoomTimer !== null) {
                 const seconds = Math.ceil(latestRoomTimer / 1000);
-                switch (latestRoomPhase) {
+                switch (this.currentRoomPhase) {
                     case RoomPhase.WAITING:
                         this.timerText.setText(`Waiting...`);
                         break;
@@ -212,13 +286,49 @@ export default class MainScene extends Phaser.Scene {
             // イベントの処理
             events.forEach(event => {
                 switch (event.type) {
-                    case 'GAME_OVER':
+                    case GameEventType.ITEM_PICK_UP:
+                        // アイテム取得のエフェクトなどをここに書く
+                        const itemPickupEvent = event as ItemPickUpEvent;
+                        const itemState = itemPickupEvent.itemState;
+                        const itemType = itemState.type;
+                        const itemCategory = ITEM_CONFIG[itemType].category;
+                        switch (itemCategory) {
+                            case ItemCategory.SCORE:
+                            case ItemCategory.SCORE_SPECIAL:
+                                const { x, y } = gridToCenterPixel(itemState.gridX, itemState.gridY);
+                                const ring = this.add.sprite(x, y, 'ghost_alert_ring').setOrigin(0.5, 0.5);
+                                ring.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+                                ring.setScale(1.0);
+                                this.tweens.add({
+                                    targets: ring,
+                                    duration: 600,
+                                    ease: 'Stepped',
+                                    easeParams:[3],
+                                    scale: 4,
+                                    onComplete: () => {
+                                        ring.destroy();
+                                    }
+                                });
+                                break;
+                            case ItemCategory.SPEED_UP:
+                                // スピードアップアイテムのエフェクト
+                                break;
+                            case ItemCategory.STUN:
+                                // スタンアイテムのエフェクト
+                                break;
+                        }
+                        break;
+                    case GameEventType.PLAYER_TAGGED:
+                        // エフェクト処理など
+                        break;
+                    case GameEventType.GAME_OVER:
                         // 結果画面に遷移するなどの処理をここに書く
                         this.isTransitioningToResultScene = true;
                         this.input.enabled = false; // 入力を無効化して多重遷移を防止
-                        this.cameras.main.fadeOut(200, 0, 0, 0);
+                        this.cameras.main.fadeOut(100, 0, 0, 0);
+                        const scores = (event as GameOverEvent).scores;
                         this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-                            this.scene.start('ResultScene', { roomId: this.roomId, scores: event.scores });
+                            this.scene.start('ResultScene', { roomId: this.roomId, scores });
                         });
                         break;
                     // 将来的にアイテム取得やプレイヤーが捕まったイベントなどもここで処理する
@@ -237,7 +347,7 @@ export default class MainScene extends Phaser.Scene {
         }
 
         // プレイヤー役であれば入力を処理して位置を更新する
-        if (this.localMovement && this.currentRole !== null && latestRoomPhase !== RoomPhase.WAITING) {
+        if (this.localMovement && this.currentRole !== null && this.currentRoomPhase !== RoomPhase.WAITING) {
             if (this.cursors?.up.isDown || this.keyW?.isDown) {
                 this.localMovement.nextDir = Direction.UP;
             }
@@ -265,7 +375,7 @@ export default class MainScene extends Phaser.Scene {
         }
 
         // ゲーム開始時
-        if (latestRoomPhase === RoomPhase.STARTING) {
+        if (this.currentRoomPhase === RoomPhase.STARTING) {
             // すべての役の予測位置を初期化する
             Object.values(ACTOR_CONFIG).forEach(({ role, initialPos }) => {
                 this.predictedActorMovements[role] = { ...initialPos, currentDir: Direction.NONE, nextDir: Direction.NONE, offsetX: 0, offsetY: 0 };
@@ -280,11 +390,11 @@ export default class MainScene extends Phaser.Scene {
             const predictedMovement = this.predictedActorMovements[role];
             if (predictedMovement) {
                 if (this.currentRole === role && this.localMovement) {
-                    const { x, y } = this.calcPlayerPosition(this.localMovement);
+                    const { x, y } = movementToPixel(this.localMovement);
                     this.visualActorStates[role] = { x, y, dir: this.localMovement.currentDir };
                 }
                 else {
-                    const { x: targetX, y: targetY } = this.calcPlayerPosition(predictedMovement);
+                    const { x: targetX, y: targetY } = movementToPixel(predictedMovement);
                     if (this.visualActorStates[role]) {
                         // 補間して滑らかに移動させる
                         const { x, y } = this.visualActorStates[role]!;
@@ -318,6 +428,15 @@ export default class MainScene extends Phaser.Scene {
         }
 
         // 描画の更新
+        if (this.currentRole === null) {
+            this.markerYouSprite.setVisible(false);
+        }
+        else if (this.visualActorStates[this.currentRole]) {
+            const visualState = this.visualActorStates[this.currentRole]!;
+            this.markerYouSprite.setPosition(visualState.x, visualState.y + this.markerOffsetY);
+            this.markerYouSprite.setVisible(true);
+        }
+
         for (const { role, name, spritePrefix } of Object.values(ACTOR_CONFIG)) {
             const visualState = this.visualActorStates[role];
             const sprite = this.actorSprites[role];
