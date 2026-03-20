@@ -14,6 +14,8 @@ export default class MainScene extends Phaser.Scene {
     private keyA?: Phaser.Input.Keyboard.Key;
     private keyS?: Phaser.Input.Keyboard.Key;
     private keyD?: Phaser.Input.Keyboard.Key;
+    private keySpace?: Phaser.Input.Keyboard.Key;
+    private keyEnter?: Phaser.Input.Keyboard.Key;
     private keyEsc?: Phaser.Input.Keyboard.Key;
     private roomId!: string;
 
@@ -61,7 +63,7 @@ export default class MainScene extends Phaser.Scene {
         });
 
         this.load.image('marker_you', '/ghost-tag/sprites/marker_you.png');
-        this.load.image('ghost_alert_ring', '/ghost-tag/effects/ghost_alert_ring.png');
+        this.load.spritesheet('ghost_item_pick_up_effect', '/ghost-tag/effects/ghost_item_pick_up_effect.png', { frameWidth: 160, frameHeight: 160 });
     }
 
     init(data: { roomId: string }) {
@@ -86,6 +88,8 @@ export default class MainScene extends Phaser.Scene {
         this.keyS = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.keyD = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.keyEsc = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+        this.keySpace = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        this.keyEnter = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
 
         this.socket = this.registry.get('socket') as Socket;
         if (!this.socket) {
@@ -142,6 +146,12 @@ export default class MainScene extends Phaser.Scene {
             repeat: -1
         });
 
+        this.anims.create({
+            key: 'ghost_item_pick_up_effect_anim',
+            frames: this.anims.generateFrameNumbers('ghost_item_pick_up_effect', { start: 0, end: 7 }),
+            frameRate: 12,
+            repeat: 0
+        });
 
         this.events.once('update', () => this.postCreate());
     }
@@ -296,18 +306,10 @@ export default class MainScene extends Phaser.Scene {
                             case ItemCategory.SCORE:
                             case ItemCategory.SCORE_SPECIAL:
                                 const { x, y } = gridToCenterPixel(itemState.gridX, itemState.gridY);
-                                const ring = this.add.sprite(x, y, 'ghost_alert_ring').setOrigin(0.5, 0.5);
-                                ring.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
-                                ring.setScale(1.0);
-                                this.tweens.add({
-                                    targets: ring,
-                                    duration: 600,
-                                    ease: 'Stepped',
-                                    easeParams:[3],
-                                    scale: 4,
-                                    onComplete: () => {
-                                        ring.destroy();
-                                    }
+                                const effect = this.add.sprite(x, y, 'ghost_item_pick_up_effect').setOrigin(0.5, 0.5);
+                                effect.play('ghost_item_pick_up_effect_anim');
+                                effect.on('animationcomplete', () => {
+                                    effect.destroy();
                                 });
                                 break;
                             case ItemCategory.SPEED_UP:
@@ -347,7 +349,7 @@ export default class MainScene extends Phaser.Scene {
         }
 
         // プレイヤー役であれば入力を処理して位置を更新する
-        if (this.localMovement && this.currentRole !== null && this.currentRoomPhase !== RoomPhase.WAITING) {
+        if (this.localMovement && this.currentRole !== null && (this.currentRoomPhase === RoomPhase.WAITING || this.currentRoomPhase === RoomPhase.PLAYING)) {
             if (this.cursors?.up.isDown || this.keyW?.isDown) {
                 this.localMovement.nextDir = Direction.UP;
             }

@@ -354,6 +354,7 @@ export class GameRoom {
 		}
 		console.log(`[GhostTag] leaveGamePlayer: Socket ${socketId} left game player role ${slotId} in ${this.roomId}`);
 		const actor = this.gameState.actors[slotId];
+		// TODO この辺まずいので直す というか 毎ループごとに session から確認する方が堅実
 		actor.sessionId = null;
 		actor.controller = ControllerType.NONE;
 		actor.status = ActorStatus.INACTIVE;
@@ -370,7 +371,6 @@ export class GameRoom {
 	}
 
 	public removePlayer(socketId: string) {
-		this.leaveGamePlayer(socketId);
 		this.sessions.delete(socketId);
 		console.log(`[GhostTag] removePlayer: Socket ${socketId} removed from ${this.roomId}`);
 	}
