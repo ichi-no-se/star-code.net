@@ -28,7 +28,7 @@ export enum RoomPhase {
 export enum ActorStatus {
 	ACTIVE = 0,
 	INACTIVE = 1,
-	STUNNED = 2,
+	STUN_ATTACKING = 2,
 	SPEED_UP = 3,
 	RESPAWN = 4,
 }
@@ -57,11 +57,6 @@ export enum ItemType {
 }
 
 export type UsableItemType = ItemType.SPEED_UP | ItemType.STUN;
-
-export interface Session {
-	id: string;
-	joinedSlotId: number | null;
-}
 
 export interface VisualActorState {
 	x: number;
@@ -118,11 +113,9 @@ export interface ItemPickUpEvent extends BaseGameEvent {
 export interface PlayerTaggedEvent extends BaseGameEvent {
 	type: GameEventType.PLAYER_TAGGED;
 	taggerRole: ActorRole; // 捕まえた人
-	taggedRole: ActorRole; // 捕まったお化け
-	gridX: number;
-	offsetX: number;
-	gridY: number;
-	offsetY: number;
+	taggedRole: ActorRole; // 捕まったゴースト
+	taggedPosition: { gridX: number, offsetX: number, gridY: number, offsetY: number }; // 捕まった位置
+	respawnPosition: { gridX: number, gridY: number }; // ゴーストのリスポーン位置
 }
 
 export interface GameOverEvent extends BaseGameEvent {
@@ -162,6 +155,8 @@ export interface ActorState {
 
 	slotId: number; // 0 - 3
 	sessionId: string | null;
+	justJoined: boolean;
+
 	role: ActorRole;
 	controller: ControllerType;
 	inventory: UsableItemType | null;
@@ -186,6 +181,9 @@ export const ROOM_CONFIG = [
 
 export const WIDTH = 1920;
 export const HEIGHT = 1080;
+
+export const FONT_FAMILY_EN = '"Press Start 2P", monospace';
+export const FONT_FAMILY_JA = '"DotGothic16", monospace';
 
 // 0: 通行可能 その他: 通行不可
 export const MAP = [
@@ -214,15 +212,19 @@ export const MAP_HEIGHT = 18;
 
 export const TILE_SIZE = 40;
 export const MAP_ORIGIN_X = (WIDTH - MAP_WIDTH * TILE_SIZE) / 2;
-export const MAP_ORIGIN_Y = (HEIGHT - MAP_HEIGHT * TILE_SIZE) / 2;
+export const MAP_ORIGIN_Y = 30;
 
 
-export const HUMAN_SPEED = 4 * 60 / 40;
-export const GHOST_SPEED = 3 * 60 / 40;
+export const HUMAN_SPEED = 6
+export const GHOST_SPEED = 4.5
+export const HUMAN_BOOST_SPEED = 9
+export const GHOST_BOOST_SPEED = 7.5
 
 export const COUNTDOWN_TIME = 5000; // ms
 // export const GAME_DURATION = 120000; // ms
 export const GAME_DURATION = 30000; // テスト用
+
+export const RESPAWN_DURATION = 2500; // ms
 
 export const MAX_ITEMS_ON_FIELD = 15;
 
@@ -239,22 +241,34 @@ export const SCORE_TAG = 700;
 export const ITEM_GET_DISTANCE = 0.75; // アイテム取得の距離
 export const TAG_DISTANCE = 0.75; // 捕まえた判定の距離
 
+export const HUMAN_BOOST_DURATION = 2800; // スピードアップの継続時間
+export const GHOST_BOOST_DURATION = 4500;
+export const HUMAN_STUN_ATTACKING_DURATION = 1000; // スタン攻撃の継続時間
+export const GHOST_STUN_ATTACKING_DURATION = 2000;
+
+
 interface ActorConfig {
 	role: ActorRole;
 	name: string;
 	speed: number;
+	boostSpeed: number; // スピードアップ状態の速度
+	boostDuration: number;
+	stunAttackingDuration: number;
 	type: ActorType;
 	spritePrefix: string;
 	initialPos: { gridX: number, gridY: number };
-	buttonInitialPos: { x: number, y: number };
+	buttonOriginPos: { x: number, y: number };
 }
 
 export const ACTOR_CONFIG: ActorConfig[] = [
-	{ role: ActorRole.HUMAN_1, name: "Human 1", speed: HUMAN_SPEED, type: ActorType.HUMAN, spritePrefix: 'human_1', initialPos: { gridX: 1, gridY: 1 }, buttonInitialPos: { x: 20, y: 20 } },
-	{ role: ActorRole.HUMAN_2, name: "Human 2", speed: HUMAN_SPEED, type: ActorType.HUMAN, spritePrefix: 'human_2', initialPos: { gridX: 40, gridY: 16 }, buttonInitialPos: { x: 20, y: 60 } },
-	{ role: ActorRole.GHOST_1, name: "Ghost 1", speed: GHOST_SPEED, type: ActorType.GHOST, spritePrefix: 'ghost_1', initialPos: { gridX: 40, gridY: 1 }, buttonInitialPos: { x: 20, y: 100 } },
-	{ role: ActorRole.GHOST_2, name: "Ghost 2", speed: GHOST_SPEED, type: ActorType.GHOST, spritePrefix: 'ghost_2', initialPos: { gridX: 1, gridY: 16 }, buttonInitialPos: { x: 20, y: 140 } }
+	{ role: ActorRole.HUMAN_1, name: "Human 1", speed: HUMAN_SPEED, boostSpeed: HUMAN_BOOST_SPEED, boostDuration: HUMAN_BOOST_DURATION, stunAttackingDuration: HUMAN_STUN_ATTACKING_DURATION, type: ActorType.HUMAN, spritePrefix: 'human_1', initialPos: { gridX: 1, gridY: 1 }, buttonOriginPos: { x: 90, y: 780 } },
+	{ role: ActorRole.HUMAN_2, name: "Human 2", speed: HUMAN_SPEED, boostSpeed: HUMAN_BOOST_SPEED, boostDuration: HUMAN_BOOST_DURATION, stunAttackingDuration: HUMAN_STUN_ATTACKING_DURATION, type: ActorType.HUMAN, spritePrefix: 'human_2', initialPos: { gridX: 40, gridY: 16 }, buttonOriginPos: { x: 90, y: 900 } },
+	{ role: ActorRole.GHOST_1, name: "Ghost 1", speed: GHOST_SPEED, boostSpeed: GHOST_BOOST_SPEED, boostDuration: GHOST_BOOST_DURATION, stunAttackingDuration: GHOST_STUN_ATTACKING_DURATION, type: ActorType.GHOST, spritePrefix: 'ghost_1', initialPos: { gridX: 40, gridY: 1 }, buttonOriginPos: { x: 1190, y: 780 } },
+	{ role: ActorRole.GHOST_2, name: "Ghost 2", speed: GHOST_SPEED, boostSpeed: GHOST_BOOST_SPEED, boostDuration: GHOST_BOOST_DURATION, stunAttackingDuration: GHOST_STUN_ATTACKING_DURATION, type: ActorType.GHOST, spritePrefix: 'ghost_2', initialPos: { gridX: 1, gridY: 16 }, buttonOriginPos: { x: 1190, y: 900 } }
 ];
+
+export const HUMAN_ROLES = ACTOR_CONFIG.filter(c => c.type === ActorType.HUMAN).map(c => c.role);
+export const GHOST_ROLES = ACTOR_CONFIG.filter(c => c.type === ActorType.GHOST).map(c => c.role);
 
 interface ItemConfig {
 	type: ItemType;
@@ -267,7 +281,7 @@ interface ItemConfig {
 	}
 }
 
-const ITEM_SCORE_ALPHA_CONFIG = { ghost: 1, human: 0.3, spectator: 1 };
+const ITEM_SCORE_ALPHA_CONFIG = { ghost: 1, human: 0.5, spectator: 1 };
 const ITEM_SPEED_ALPHA_CONFIG = { ghost: 1, human: 1, spectator: 1 };
 const ITEM_STUN_ALPHA_CONFIG = { ghost: 1, human: 1, spectator: 1 };
 
@@ -555,7 +569,6 @@ export const randomMapPosition = (): { gridX: number, gridY: number } => {
 	while (true) {
 		const gridX = Math.floor(Math.random() * MAP_WIDTH);
 		const gridY = Math.floor(Math.random() * MAP_HEIGHT);
-		console.log(`Trying position (${gridX}, ${gridY})`);
 		if (MAP[gridY][gridX] === 0) {
 			return { gridX, gridY };
 		}
@@ -603,7 +616,6 @@ export class ItemDeck {
 		if (this.items.length === 0) {
 			this.refill();
 		}
-		console.log(`Picking item category ${this.items[this.items.length - 1]}, ${this.items.length - 1} items left in deck`);
 		return this.items.pop()!;
 	}
 
@@ -648,4 +660,15 @@ export const gridToCenterPixel = (gridX: number, gridY: number): { x: number, y:
 
 export const movementToPixel = (movement: MovementState): { x: number, y: number } => {
 	return gridToPixel(movement.gridX + movement.offsetX, movement.gridY + movement.offsetY);
+}
+
+export const calcSpeed = (role: ActorRole, status: ActorStatus, isStunned: boolean): number => {
+	if(isStunned || status === ActorStatus.RESPAWN) {
+		return 0;
+	}
+	const config = ACTOR_CONFIG[role];
+	if (status === ActorStatus.SPEED_UP) {
+		return config.boostSpeed;
+	}
+	return config.speed;
 }

@@ -44,14 +44,22 @@ export default class ResultScene extends Phaser.Scene {
 			.setOrigin(0.5)
 			.setInteractive()
 			.on('pointerdown', () => {
-				this.scene.start('MainScene', { roomId: this.roomId });
+				this.input.enabled = false;
+				this.cameras.main.fadeOut(100, 0, 0, 0);
+				this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+					this.scene.start('MainScene', { roomId: this.roomId });
+				});
 			});
 
 		this.add.text(WIDTH / 2, 450, 'Back to Lobby', { fontSize: '24px', color: '#0ff' })
 			.setOrigin(0.5)
 			.setInteractive()
 			.on('pointerdown', () => {
-				this.scene.start('LobbyScene');
+				this.input.enabled = false;
+				this.cameras.main.fadeOut(100, 0, 0, 0);
+				this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+					this.scene.start('LobbyScene');
+				});
 			});
 	}
 

@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";;
 import * as Phaser from "phaser"
-import {WIDTH, HEIGHT} from "@shared/GhostTag/core";
+import { WIDTH, HEIGHT } from "@shared/GhostTag/core";
+import BootScene from "./BootScene";
 import LobbyScene from "./LobbyScene";
 import MainScene from "./MainScene";
 import ResultScene from "./ResultScene";
@@ -32,8 +33,9 @@ export default function GameContainer() {
                 height: HEIGHT,
             },
             parent: containerRef.current,
-            scene: [LobbyScene, MainScene, ResultScene],
+            scene: [BootScene, LobbyScene, MainScene, ResultScene],
             pixelArt: true,
+            antialias: false,
             roundPixels: true
         };
         gameRef.current = new Phaser.Game(config);

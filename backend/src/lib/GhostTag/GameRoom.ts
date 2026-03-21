@@ -1,40 +1,27 @@
 import { Namespace } from "socket.io";
-import {
-	ActorRole, ActorStatus, ControllerType, GameState, RoomPhase, Direction, Session, MovementState, ItemType,
-	GameSnapshot, GameEvent, calcNextMovement,
-	ITEM_GET_DISTANCE, ITEM_CONFIG,
-	ACTOR_CONFIG, COUNTDOWN_TIME,
-	GAME_DURATION,
-	ItemDeck,
-	sampleItemTypeByCategory,
-	randomMapPosition,
-	MAX_ITEMS_ON_FIELD,
-	ActorType,
-	ItemCategory,
-	SCORE_ITEM_NORMAL, SCORE_ITEM_SPECIAL,
-	GameEventType
-} from "@shared/GhostTag/core";
+import * as Core from "@shared/GhostTag/core";
 
 interface MovementReport {
 	socketId: string;
-	role: ActorRole;
-	movement: MovementState;
+	role: Core.ActorRole;
+	movement: Core.MovementState;
 	time: number;
 }
 
 export class GameRoom {
-	private sessions: Map<string, Session>;
-	private intervalId: NodeJS.Timeout | null = null;
-	private gameState: GameState;
+	private sessions: Set<string>;
+	private intervalId: NodeJS.Timeout | null;
+	private gameState: Core.GameState;
 	private receivedMovements: MovementReport[] = [];
-	private updateInterval: number = 1000 / 20; // 20 FPS
-	private itemDeck: ItemDeck;
+	private itemDeck: Core.ItemDeck;
+	private readonly UPDATE_INTERVAL: number = 1000 / 20; // 20 FPS
 
 	constructor(private ns: Namespace, private roomId: string) {
-		this.sessions = new Map();
-		this.itemDeck = new ItemDeck();
+		this.sessions = new Set();
+		this.intervalId = null;
+		this.itemDeck = new Core.ItemDeck();
 		this.gameState = {
-			roomPhase: RoomPhase.WAITING,
+			roomPhase: Core.RoomPhase.WAITING,
 			roomTimer: 0,
 			actors: [],
 			items: []
@@ -43,17 +30,18 @@ export class GameRoom {
 			this.gameState.actors[i] = {
 				slotId: i,
 				sessionId: null,
+				justJoined: false,
 				role: i,
-				controller: ControllerType.NONE,
+				controller: Core.ControllerType.NONE,
 				movement: {
 					gridX: 0,
 					gridY: 0,
 					offsetX: 0,
 					offsetY: 0,
-					currentDir: Direction.NONE,
-					nextDir: Direction.NONE,
+					currentDir: Core.Direction.NONE,
+					nextDir: Core.Direction.NONE,
 				},
-				status: ActorStatus.INACTIVE,
+				status: Core.ActorStatus.INACTIVE,
 				statusTimer: 0,
 				score: 0,
 				lastUpdateTime: performance.now(),
@@ -63,10 +51,6 @@ export class GameRoom {
 		this.startGameLoop();
 	}
 
-	public findSession(socketId: string): Session | undefined {
-		return this.sessions.get(socketId);
-	}
-
 	private startGameLoop() {
 		let lastTime = performance.now();
 		this.intervalId = setInterval(() => {
@@ -74,120 +58,237 @@ export class GameRoom {
 			const deltaTime = now - lastTime;
 			lastTime = now;
 			this.updateGame(deltaTime);
-		}, this.updateInterval);
+		}, this.UPDATE_INTERVAL);
 	}
 
 	private updateGame(deltaTime: number) {
-		for (const { socketId, role, movement, time } of this.receivedMovements) {
-			const actor = this.gameState.actors.find(a => a.sessionId === socketId && a.role === role);
-			if (actor) {
-				actor.movement = movement;
-				actor.lastUpdateTime = time;
+		const now = performance.now();
+		// セッション管理
+		// 2 つ以上のキャラクターを同一セッションが占有している場合は両方とも切断する
+		for (let i = 0; i < this.gameState.actors.length; i++) {
+			const actor = this.gameState.actors[i];
+			const sessionId = actor.sessionId;
+			if (sessionId === null) {
+				continue;
 			}
+			for (let j = i + 1; j < this.gameState.actors.length; j++) {
+				const otherActor = this.gameState.actors[j];
+				if (otherActor.sessionId === sessionId) {
+					actor.sessionId = null;
+					otherActor.sessionId = null;
+				}
+			}
+		}
+		// セッションとキャラクターの対応の管理
+		for (const actor of this.gameState.actors) {
+			if (actor.sessionId !== null && !this.sessions.has(actor.sessionId)) {
+				actor.sessionId = null;
+				console.log(`[GhostTag] Actor ${actor.role} in room ${this.roomId} session ${actor.sessionId} not found in sessions, setting to null`);
+			}
+			if (actor.sessionId === null) {
+				switch (this.gameState.roomPhase) {
+					case Core.RoomPhase.WAITING:
+						if (actor.controller === Core.ControllerType.PLAYER) {
+							actor.controller = Core.ControllerType.NONE;
+							actor.status = Core.ActorStatus.INACTIVE;
+						}
+						else if (actor.controller === Core.ControllerType.CPU) {
+							actor.movement = {
+								...Core.ACTOR_CONFIG[actor.role].initialPos,
+								offsetX: 0,
+								offsetY: 0,
+								currentDir: Core.Direction.NONE,
+								nextDir: Core.Direction.NONE
+							};
+							actor.status = Core.ActorStatus.ACTIVE;
+						}
+						break;
+					case Core.RoomPhase.STARTING:
+						actor.controller = Core.ControllerType.CPU;
+						break;
+					case Core.RoomPhase.PLAYING:
+						actor.controller = Core.ControllerType.CPU;
+						break;
+				}
+			}
+			else {
+				if (actor.justJoined) {
+					switch (this.gameState.roomPhase) {
+						case Core.RoomPhase.WAITING:
+							actor.controller = Core.ControllerType.PLAYER;
+							actor.status = Core.ActorStatus.ACTIVE;
+							actor.movement = {
+								gridX: Core.ACTOR_CONFIG[actor.role].initialPos.gridX,
+								gridY: Core.ACTOR_CONFIG[actor.role].initialPos.gridY,
+								offsetX: 0,
+								offsetY: 0,
+								currentDir: Core.Direction.NONE,
+								nextDir: Core.Direction.NONE
+							};
+							console.log(`[GhostTag] Actor ${actor.role} in room ${this.roomId} initialized for new player ${actor.sessionId}`);
+							break;
+						case Core.RoomPhase.STARTING:
+							actor.controller = Core.ControllerType.PLAYER;
+							break;
+						case Core.RoomPhase.PLAYING:
+							actor.controller = Core.ControllerType.PLAYER;
+							break;
+					}
+				}
+			}
+			actor.justJoined = false;
+		}
+
+		// スタン状態の判定
+		let isGhostStunned = false;
+		for (const human of Core.HUMAN_ROLES) {
+			const humanActor = this.gameState.actors[human];
+			if (humanActor.status === Core.ActorStatus.STUN_ATTACKING) {
+				isGhostStunned = true;
+			}
+		}
+		let isHumanStunned = false;
+		for (const ghost of Core.GHOST_ROLES) {
+			const ghostActor = this.gameState.actors[ghost];
+			if (ghostActor.status === Core.ActorStatus.STUN_ATTACKING) {
+				isHumanStunned = true;
+			}
+		}
+		const isStunned = Core.ACTOR_CONFIG.map(({ type }) => { if (type === Core.ActorType.HUMAN) { return isHumanStunned } else { return isGhostStunned } });
+
+		// プレイヤーからの移動入力の反映
+		for (const { socketId, role, movement, time } of this.receivedMovements) {
+			const actor = this.gameState.actors[role];
+			if (actor === undefined || actor.sessionId !== socketId) {
+				continue;
+			}
+			// コントローラーが異なる，リスポーン中，スタン中，非アクティブ，ゲーム開始処理中は移動を反映しない
+			if (actor.controller !== Core.ControllerType.PLAYER || actor.status === Core.ActorStatus.RESPAWN || isStunned[actor.role] || actor.status === Core.ActorStatus.INACTIVE || this.gameState.roomPhase === Core.RoomPhase.STARTING) {
+				continue;
+			}
+			actor.movement = movement;
+			actor.lastUpdateTime = time;
 			// console.log(`[GhostTag] Received movement from ${socketId} at ${time}: ${JSON.stringify(movement)}`);
 		}
 		this.receivedMovements = [];
 
-		const events: GameEvent[] = [];
+		const events: Core.GameEvent[] = [];
 
 		switch (this.gameState.roomPhase) {
-			case RoomPhase.WAITING:
+			case Core.RoomPhase.WAITING:
 				this.gameState.roomTimer = 0;
 				// 全てのプレイヤーが揃ったらゲーム開始
 				let activePlayerCount = 0;
 				for (const actor of this.gameState.actors) {
-					if (actor.controller === ControllerType.PLAYER || actor.controller === ControllerType.CPU) {
+					if (actor.controller === Core.ControllerType.PLAYER || actor.controller === Core.ControllerType.CPU) {
 						activePlayerCount++;
 					}
 				}
 				if (activePlayerCount === 4) {
-					this.gameState.roomPhase = RoomPhase.STARTING;
-					this.gameState.roomTimer = COUNTDOWN_TIME;
-					for (const { role, initialPos } of ACTOR_CONFIG) {
+					this.gameState.roomPhase = Core.RoomPhase.STARTING;
+					this.gameState.roomTimer = Core.COUNTDOWN_TIME;
+					for (const { role, initialPos } of Core.ACTOR_CONFIG) {
 						this.gameState.actors[role].movement = {
 							gridX: initialPos.gridX,
 							gridY: initialPos.gridY,
 							offsetX: 0,
 							offsetY: 0,
-							currentDir: Direction.NONE,
-							nextDir: Direction.NONE
+							currentDir: Core.Direction.NONE,
+							nextDir: Core.Direction.NONE
 						};
-						this.gameState.actors[role].status = ActorStatus.ACTIVE;
+						this.gameState.actors[role].status = Core.ActorStatus.ACTIVE;
 					}
 					console.log(`[GhostTag] Room ${this.roomId} starting game with 4 players`);
 				}
 				break;
-			case RoomPhase.STARTING:
+			case Core.RoomPhase.STARTING:
 				this.gameState.roomTimer -= deltaTime;
 				if (this.gameState.roomTimer <= 0) {
-					this.gameState.roomPhase = RoomPhase.PLAYING;
-					this.gameState.roomTimer = GAME_DURATION;
+					this.gameState.roomPhase = Core.RoomPhase.PLAYING;
+					this.gameState.roomTimer = Core.GAME_DURATION;
 				}
 
 				break;
-			case RoomPhase.PLAYING:
+			case Core.RoomPhase.PLAYING:
 				this.gameState.roomTimer -= deltaTime;
+				// CPU の移動処理
+				for (const actor of this.gameState.actors) {
+					if (actor.controller === Core.ControllerType.CPU) {
+						if (actor.status === Core.ActorStatus.RESPAWN || actor.status === Core.ActorStatus.INACTIVE || isStunned[actor.role]) {
+							continue;
+						}
+						// とりあえずランダムウォーク
+						// TODO: いい感じにする
+						if (Math.random() < 0.1) {
+							const dir = Math.floor(Math.random() * 4) as Core.Direction;
+							actor.movement.nextDir = dir;
+						}
+						actor.movement = Core.calcNextMovement(actor.movement, Core.calcSpeed(actor.role, actor.status, isStunned[actor.role]) * (deltaTime / 1000));
+						actor.lastUpdateTime = now;
+						// アイテムを拾ったらすぐ使う
+						if (actor.inventory !== null) {
+							this.executeUseItem(actor.role);
+						}
+					}
+				}
 				// アイテム取得処理
 				for (const actor of this.gameState.actors) {
-					if (actor.status === ActorStatus.INACTIVE) {
-						// ここに来るのはおかしいが、念のため非アクティブは処理しない
-						// ゲーム中に途中退出すると非アクティブになってここに来る可能性がある
-						// 非アクティブにする代わりに CPU 制御に今後するのでここはどのみち踏まない予定
-						// TODO: 途中退出プレイヤーの処理（ここに書くわけではないが）
+					if (actor.status === Core.ActorStatus.INACTIVE) {
+						console.error(`Actor ${actor.role} is inactive during playing phase`);
 						continue;
 					}
-					if (actor.status === ActorStatus.RESPAWN) {
+					if (actor.status === Core.ActorStatus.RESPAWN) {
 						continue; // リスポーン中はアイテムを取れない
 					}
 					for (let i = this.gameState.items.length - 1; i >= 0; i--) {
 						const item = this.gameState.items[i];
 						const distance = Math.abs(actor.movement.gridX + actor.movement.offsetX - item.gridX) + Math.abs(actor.movement.gridY + actor.movement.offsetY - item.gridY);
-						if (distance <= ITEM_GET_DISTANCE) {
-							const itemCategory = ITEM_CONFIG[item.type].category;
-							const actorType = ACTOR_CONFIG[actor.role].type;
+						if (distance <= Core.ITEM_GET_DISTANCE) {
+							const itemCategory = Core.ITEM_CONFIG[item.type].category;
+							const actorType = Core.ACTOR_CONFIG[actor.role].type;
 							let pickedUp = false;
-							if (actorType === ActorType.GHOST && itemCategory === ItemCategory.SCORE) {
+							if (actorType === Core.ActorType.GHOST && itemCategory === Core.ItemCategory.SCORE) {
 								pickedUp = true;
 								let scoreToAdd;
-								if (actor.status === ActorStatus.SPEED_UP) {
-									scoreToAdd = SCORE_ITEM_SPECIAL;
+								if (actor.status === Core.ActorStatus.SPEED_UP) {
+									scoreToAdd = Core.SCORE_ITEM_SPECIAL;
 								} else {
-									scoreToAdd = SCORE_ITEM_NORMAL;
+									scoreToAdd = Core.SCORE_ITEM_NORMAL;
 								}
 								actor.score += scoreToAdd;
 								events.push({
-									type: GameEventType.ITEM_PICK_UP,
+									type: Core.GameEventType.ITEM_PICK_UP,
 									role: actor.role,
 									itemState: item,
 									earnedScore: scoreToAdd,
 								})
 							}
-							if (actorType === ActorType.GHOST && itemCategory === ItemCategory.SCORE_SPECIAL) {
+							if (actorType === Core.ActorType.GHOST && itemCategory === Core.ItemCategory.SCORE_SPECIAL) {
 								pickedUp = true;
 								let scoreToAdd;
-								if (actor.status === ActorStatus.SPEED_UP) {
-									scoreToAdd = SCORE_ITEM_SPECIAL;
+								if (actor.status === Core.ActorStatus.SPEED_UP) {
+									scoreToAdd = Core.SCORE_ITEM_SPECIAL;
 								} else {
-									scoreToAdd = SCORE_ITEM_NORMAL;
+									scoreToAdd = Core.SCORE_ITEM_NORMAL;
 								}
 								actor.score += scoreToAdd;
 								events.push({
-									type: GameEventType.ITEM_PICK_UP,
+									type: Core.GameEventType.ITEM_PICK_UP,
 									role: actor.role,
 									itemState: item,
 									earnedScore: scoreToAdd,
 								})
 							}
 							// その他のアイテム：アイテムを所持しているなら拾わない，そうでないなら拾う
-							if (actor.inventory === null && (itemCategory === ItemCategory.SPEED_UP || itemCategory === ItemCategory.STUN)) {
-								if(item.type !== ItemType.SPEED_UP && item.type !== ItemType.STUN) {
+							if (actor.inventory === null && (itemCategory === Core.ItemCategory.SPEED_UP || itemCategory === Core.ItemCategory.STUN)) {
+								if (item.type !== Core.ItemType.SPEED_UP && item.type !== Core.ItemType.STUN) {
 									console.error(`Unexpected item type ${item.type} in category ${itemCategory}`);
 									continue;
 								}
 								pickedUp = true;
 								actor.inventory = item.type;
 								events.push({
-									type: GameEventType.ITEM_PICK_UP,
+									type: Core.GameEventType.ITEM_PICK_UP,
 									role: actor.role,
 									itemState: item,
 									earnedScore: 0,
@@ -202,35 +303,99 @@ export class GameRoom {
 				}
 
 				// 捕まえた判定処理
-				// TODO: そのうち書く
+				for (const humanRole of Core.HUMAN_ROLES) {
+					const humanActor = this.gameState.actors[humanRole];
+					if (isStunned[humanActor.role]) {
+						continue;
+					}
+					if (humanActor.status === Core.ActorStatus.INACTIVE) {
+						console.error(`Human actor ${humanRole} is inactive during playing phase`);
+						continue;
+					}
+					for (const ghostRole of Core.GHOST_ROLES) {
+						const ghostActor = this.gameState.actors[ghostRole];
+						if (ghostActor.status === Core.ActorStatus.RESPAWN) {
+							continue; // リスポーン中は捕まえられない
+						}
+						if (ghostActor.status === Core.ActorStatus.INACTIVE) {
+							console.error(`Ghost actor ${ghostRole} is inactive during playing phase`);
+							continue;
+						}
+						const distance = Math.abs(humanActor.movement.gridX + humanActor.movement.offsetX - ghostActor.movement.gridX - ghostActor.movement.offsetX) + Math.abs(humanActor.movement.gridY + humanActor.movement.offsetY - ghostActor.movement.gridY - ghostActor.movement.offsetY);
+						if (distance <= Core.TAG_DISTANCE) {
+							humanActor.score += Core.SCORE_TAG;
+							const respawnPosition = this.randomGhostSpawnPosition();
+							ghostActor.movement = {
+								gridX: respawnPosition.gridX,
+								gridY: respawnPosition.gridY,
+								offsetX: 0,
+								offsetY: 0,
+								currentDir: Core.Direction.NONE,
+								nextDir: Core.Direction.NONE
+							};
+							ghostActor.status = Core.ActorStatus.RESPAWN;
+							ghostActor.statusTimer = Core.RESPAWN_DURATION;
+							const taggedEvent: Core.PlayerTaggedEvent = {
+								type: Core.GameEventType.PLAYER_TAGGED,
+								taggerRole: humanRole,
+								taggedRole: ghostRole,
+								taggedPosition: {
+									gridX: ghostActor.movement.gridX,
+									offsetX: ghostActor.movement.offsetX,
+									gridY: ghostActor.movement.gridY,
+									offsetY: ghostActor.movement.offsetY
+								},
+								respawnPosition: {
+									gridX: respawnPosition.gridX,
+									gridY: respawnPosition.gridY
+								}
+							};
+							events.push(taggedEvent);
+						}
+					}
+				}
 
 				// アイテムスポーン処理
-				while (this.gameState.items.length < MAX_ITEMS_ON_FIELD) {
+				while (this.gameState.items.length < Core.MAX_ITEMS_ON_FIELD) {
 					this.spawnItem();
 				}
+
+				// プレイヤーの状態（スタン，スピードアップ，リスポーン）の経過時間処理
+				for (const actor of this.gameState.actors) {
+					if (actor.status === Core.ActorStatus.STUN_ATTACKING || actor.status === Core.ActorStatus.SPEED_UP || actor.status === Core.ActorStatus.RESPAWN) {
+						actor.statusTimer -= deltaTime;
+						if (actor.statusTimer <= 0) {
+							actor.statusTimer = 0;
+							actor.status = Core.ActorStatus.ACTIVE;
+							actor.inventory = null;
+						}
+					}
+				}
+
 				if (this.gameState.roomTimer <= 0) {
-					// 結果のイベントを将来的に追加
+					// 結果のイベントを送る
 					events.push({
-						type: GameEventType.GAME_OVER,
+						type: Core.GameEventType.GAME_OVER,
 						scores: this.gameState.actors.map(a => ({ role: a.role, score: a.score }))
 					});
 					// 全員を非アクティブにして待機状態に戻す
 					for (const actor of this.gameState.actors) {
-						actor.status = ActorStatus.INACTIVE;
-						actor.controller = ControllerType.NONE;
+						actor.status = Core.ActorStatus.INACTIVE;
+						actor.controller = Core.ControllerType.NONE;
 						actor.sessionId = null;
 						actor.movement = {
 							gridX: 0,
 							gridY: 0,
 							offsetX: 0,
 							offsetY: 0,
-							currentDir: Direction.NONE,
-							nextDir: Direction.NONE
+							currentDir: Core.Direction.NONE,
+							nextDir: Core.Direction.NONE
 						};
 						actor.statusTimer = 0;
 						actor.score = 0;
+						actor.inventory = null;
 					}
-					this.gameState.roomPhase = RoomPhase.WAITING;
+					this.gameState.roomPhase = Core.RoomPhase.WAITING;
 					this.gameState.roomTimer = 0;
 					this.gameState.items = [];
 					this.itemDeck.reset();
@@ -239,15 +404,15 @@ export class GameRoom {
 				break;
 		}
 
-		const gameSnapshot: GameSnapshot = {
+		const gameSnapshot: Core.GameSnapshot = {
 			roomPhase: this.gameState.roomPhase,
 			roomTimer: this.gameState.roomTimer,
 			actors: this.gameState.actors.map(a => {
 				// 補間処理
-				const timeSinceLastUpdate = performance.now() - a.lastUpdateTime;
-				const speed = ACTOR_CONFIG[a.role].speed;
-				const distance = speed * (timeSinceLastUpdate / 1000);
-				const predictedMovement = calcNextMovement(a.movement, distance);
+				const timeSinceLastUpdate = now - a.lastUpdateTime;
+				const currentSpeed = Core.calcSpeed(a.role, a.status, isStunned[a.role]);
+				const distance = currentSpeed * (timeSinceLastUpdate / 1000);
+				const predictedMovement = Core.calcNextMovement(a.movement, distance);
 				return {
 					movement: predictedMovement,
 					status: a.status,
@@ -268,12 +433,12 @@ export class GameRoom {
 
 	private spawnItem() {
 		const newItemCategory = this.itemDeck.pick();
-		const newItemType = sampleItemTypeByCategory(newItemCategory);
+		const newItemType = Core.sampleItemTypeByCategory(newItemCategory);
 		// なるべく既存のアイテム，プレイヤーと被らない位置を選ぶ
-		let bestPos = randomMapPosition();
+		let bestPos = Core.randomMapPosition();
 		let maxMinDist = -1;
 		for (let attempt = 0; attempt < 10; attempt++) {
-			const pos = randomMapPosition();
+			const pos = Core.randomMapPosition();
 			let minDistanceToActorOrItem = Infinity;
 			for (const actor of this.gameState.actors) {
 				const actorPos = {
@@ -303,71 +468,137 @@ export class GameRoom {
 		this.gameState.items.push(newItem);
 	}
 
-	private broadcastGameSnapshot(gameSnapshot: GameSnapshot) {
+	private randomGhostSpawnPosition(): { gridX: number; gridY: number } {
+		// ゴーストのスポーン位置は人間からなるべく遠い位置にする
+		let bestPos = Core.randomMapPosition();
+		let maxMinDistToHuman = -1;
+		for (let attempt = 0; attempt < 5; attempt++) {
+			let intersectionWithExistingItem = false;
+			let pos: { gridX: number; gridY: number };
+			do {
+				pos = Core.randomMapPosition();
+				intersectionWithExistingItem = this.gameState.items.some(item => item.gridX === pos.gridX && item.gridY === pos.gridY);
+			} while (intersectionWithExistingItem);
+			let minDistanceToHuman = Infinity;
+			for (const actor of this.gameState.actors) {
+				if (Core.ACTOR_CONFIG[actor.role].type === Core.ActorType.HUMAN) {
+					const actorPos = {
+						gridX: actor.movement.gridX,
+						gridY: actor.movement.gridY
+					};
+					const distance = Math.abs(pos.gridX - actorPos.gridX) + Math.abs(pos.gridY - actorPos.gridY);
+					if (distance < minDistanceToHuman) {
+						minDistanceToHuman = distance;
+					}
+				}
+			}
+			if (minDistanceToHuman > maxMinDistToHuman) {
+				maxMinDistToHuman = minDistanceToHuman;
+				bestPos = pos;
+			}
+		}
+		return bestPos;
+	}
+
+	private broadcastGameSnapshot(gameSnapshot: Core.GameSnapshot) {
 		this.ns.to(this.roomId).emit("gameSnapshot", gameSnapshot);
 	}
 
-	public joinGamePlayer(socketId: string, role: ActorRole) {
-		const session = this.sessions.get(socketId);
-		if (!session) {
+	public joinGamePlayer(socketId: string, role: Core.ActorRole) {
+		if (!this.sessions.has(socketId)) {
 			console.log(`[GhostTag] joinGamePlayer: Session not found for socket ${socketId}`);
 			return;
 		}
-		const slotId = session.joinedSlotId;
-		if (slotId !== null) {
-			this.leaveGamePlayer(socketId);
-		}
-		const actor = this.gameState.actors.find(a => a.role === role);
-		if (!actor) {
+		this.leaveGamePlayer(socketId); // 既にどこかの役割についている場合は一旦切断する
+		const actor = this.gameState.actors[role];
+		if (actor === undefined) {
 			console.log(`[GhostTag] joinGamePlayer: Actor not found for role ${role}`);
 			return;
 		}
-		if (actor.sessionId) {
+		if (actor.sessionId !== null) {
 			console.log(`[GhostTag] joinGamePlayer: Actor for role ${role} is already occupied by session ${actor.sessionId}`);
 			return;
 		}
 		console.log(`[GhostTag] joinGamePlayer: Socket ${socketId} joined as role ${role} in ${this.roomId}`);
 		actor.sessionId = socketId;
-		actor.controller = ControllerType.PLAYER;
-		actor.status = ActorStatus.ACTIVE;
-		session.joinedSlotId = actor.slotId;
-		console.log(`${JSON.stringify(actor)}`);
-		actor.movement = {
-			gridX: ACTOR_CONFIG[role].initialPos.gridX,
-			gridY: ACTOR_CONFIG[role].initialPos.gridY,
-			offsetX: 0,
-			offsetY: 0,
-			currentDir: Direction.NONE,
-			nextDir: Direction.NONE
-		};
+		actor.justJoined = true;
+	}
+
+	public changePlayerToCPU(socketId: string, role: Core.ActorRole) {
+		if (!this.sessions.has(socketId)) {
+			console.log(`[GhostTag] changePlayerToCPU: Session not found for socket ${socketId}`);
+			return;
+		}
+		const actor = this.gameState.actors[role];
+		if (actor === undefined) {
+			console.log(`[GhostTag] changePlayerToCPU: Actor not found for role ${role}`);
+			return;
+		}
+		if (actor.sessionId === null) {
+			actor.controller = Core.ControllerType.CPU;
+			console.log(`[GhostTag] changePlayerToCPU: Socket ${socketId} changed to CPU for role ${role} in ${this.roomId}`);
+		}
+		else if (actor.sessionId === socketId) {
+			actor.sessionId = null;
+			actor.controller = Core.ControllerType.CPU;
+			console.log(`[GhostTag] changePlayerToCPU: Socket ${socketId} changed to CPU for role ${role} in ${this.roomId}`);
+		}
+		else {
+			console.log(`[GhostTag] changePlayerToCPU: Socket ${socketId} attempted to change to CPU for role ${role} in ${this.roomId}, but that role is occupied by another session ${actor.sessionId}`);
+		}
 	}
 
 	public leaveGamePlayer(socketId: string) {
-		const session = this.sessions.get(socketId);
-		if (!session) {
+		if (!this.sessions.has(socketId)) {
 			console.log(`[GhostTag] leaveGamePlayer: Session not found for socket ${socketId}`);
 			return;
 		}
-		const slotId = session.joinedSlotId;
-		if (slotId === null) {
+		const actors = this.gameState.actors.filter(a => a.sessionId === socketId);
+		// 本来は 0 か 1 のはずだが，念のため複数あった場合は全て切断する
+		for (const actor of actors) {
+			console.log(`[GhostTag] leaveGamePlayer: Socket ${socketId} left from role ${actor.role} in ${this.roomId}`);
+			actor.sessionId = null;
+		}
+	}
+
+	private executeUseItem(role: Core.ActorRole) {
+		const actor = this.gameState.actors[role];
+		if (actor.inventory === null || actor.status === Core.ActorStatus.STUN_ATTACKING || actor.status === Core.ActorStatus.SPEED_UP || actor.status === Core.ActorStatus.RESPAWN) {
 			return;
 		}
-		console.log(`[GhostTag] leaveGamePlayer: Socket ${socketId} left game player role ${slotId} in ${this.roomId}`);
-		const actor = this.gameState.actors[slotId];
-		// TODO この辺まずいので直す というか 毎ループごとに session から確認する方が堅実
-		actor.sessionId = null;
-		actor.controller = ControllerType.NONE;
-		actor.status = ActorStatus.INACTIVE;
-		session.joinedSlotId = null;
+		const itemType = actor.inventory;
+		switch (itemType) {
+			case Core.ItemType.SPEED_UP:
+				actor.status = Core.ActorStatus.SPEED_UP;
+				actor.statusTimer = Core.ACTOR_CONFIG[actor.role].boostDuration;
+				break;
+			case Core.ItemType.STUN:
+				actor.status = Core.ActorStatus.STUN_ATTACKING;
+				actor.statusTimer = Core.ACTOR_CONFIG[actor.role].stunAttackingDuration;
+				break;
+		}
+	}
+
+	public useItemRequest(socketId: string, role: Core.ActorRole) {
+		if (!this.sessions.has(socketId)) {
+			console.log(`[GhostTag] useItemRequest: Session not found for socket ${socketId}`);
+			return;
+		}
+		const actor = this.gameState.actors[role];
+		if (actor === undefined) {
+			console.log(`[GhostTag] useItemRequest: Actor not found for role ${role}`);
+			return;
+		}
+		if (actor.sessionId !== socketId) {
+			console.log(`[GhostTag] useItemRequest: Socket ${socketId} attempted to use item for role ${role} in ${this.roomId}, but that role is occupied by another session ${actor.sessionId}`);
+			return;
+		}
+		this.executeUseItem(role);
 	}
 
 	public addPlayer(socketId: string) {
 		console.log(`[GhostTag] addPlayer: Socket ${socketId} added to ${this.roomId}`);
-		const newSession: Session = {
-			id: socketId,
-			joinedSlotId: null
-		};
-		this.sessions.set(socketId, newSession);
+		this.sessions.add(socketId);
 	}
 
 	public removePlayer(socketId: string) {
@@ -375,7 +606,7 @@ export class GameRoom {
 		console.log(`[GhostTag] removePlayer: Socket ${socketId} removed from ${this.roomId}`);
 	}
 
-	public receivePlayerMovement(socketId: string, role: ActorRole, movement: MovementState) {
+	public receivePlayerMovement(socketId: string, role: Core.ActorRole, movement: Core.MovementState) {
 		this.receivedMovements.push({ socketId, role, movement, time: performance.now() });
 	}
 
@@ -385,5 +616,9 @@ export class GameRoom {
 
 	public getRoomId(): string {
 		return this.roomId;
+	}
+
+	public findSession(socketId: string): boolean {
+		return this.sessions.has(socketId);
 	}
 }

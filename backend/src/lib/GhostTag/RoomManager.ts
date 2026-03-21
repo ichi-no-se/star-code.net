@@ -89,6 +89,21 @@ export class RoomManager {
 		room.joinGamePlayer(socket.id, role);
 	}
 
+	public handleChangeToCPU(socket: Socket, role: ActorRole) {
+		const rooms = this.getGameRoomsForSocketId(socket.id);
+		if (rooms.length === 0) {
+			console.log(`[GhostTag] handleChangeToCPU: Socket ${socket.id} is not in any game room.`);
+			return;
+		}
+		else if (rooms.length >= 2) {
+			console.log(`[GhostTag] handleChangeToCPU: Socket ${socket.id} is in multiple game rooms, which should not happen.`);
+			this.leaveCurrentRoom(socket);
+			return;
+		}
+		const room = rooms[0];
+		room.changePlayerToCPU(socket.id, role);
+	}
+
 	public handleLeaveGamePlayer(socket: Socket) {
 		const rooms = this.getGameRoomsForSocketId(socket.id);
 		if (rooms.length === 0) {
@@ -102,6 +117,21 @@ export class RoomManager {
 		}
 		const room = rooms[0];
 		room.leaveGamePlayer(socket.id);
+	}
+
+	public handleUseItemRequest(socket: Socket, role: ActorRole) {
+		const rooms = this.getGameRoomsForSocketId(socket.id);
+		if (rooms.length === 0) {
+			console.log(`[GhostTag] handleUseItemRequest: Socket ${socket.id} is not in any game room.`);
+			return;
+		}
+		else if (rooms.length >= 2) {
+			console.log(`[GhostTag] handleUseItem: Socket ${socket.id} is in multiple game rooms, which should not happen.`);
+			this.leaveCurrentRoom(socket);
+			return;
+		}
+		const room = rooms[0];
+		room.useItemRequest(socket.id, role);
 	}
 
 	public handleReportMovement(socket: Socket, role: ActorRole, movement: MovementState) {

@@ -1,6 +1,6 @@
 import * as Phaser from "phaser"
 import { Socket } from "socket.io-client";
-import { ActorRole, ActorStatus, ActorType, GameEventType, ItemCategory, ItemPickUpEvent, GameOverEvent, VisualActorState, Direction, MovementState, MAP, calcNextMovement, hasConnection, GameSnapshot, ACTOR_CONFIG, RoomPhase, GameEvent, WIDTH, ITEM_CONFIG, keyFromItemState, gridToPixel, movementToPixel, TILE_SIZE, gridToCenterPixel } from "@shared/GhostTag/core";
+import * as Core from "@shared/GhostTag/core";
 
 
 export default class MainScene extends Phaser.Scene {
@@ -24,18 +24,24 @@ export default class MainScene extends Phaser.Scene {
     private actorSprites!: (Phaser.GameObjects.Sprite | null)[];
     private markerYouSprite!: Phaser.GameObjects.Sprite;
     private markerOffsetY!: number; // マーカーの浮き上がりのアニメーション用
-    private visualActorStates!: (VisualActorState | null)[]; // 描画用の位置
-    private predictedActorMovements!: (MovementState | null)[]; // 手元での予測位置
+    private visualActorStates!: (Core.VisualActorState | null)[]; // 描画用の位置
+    private predictedActorMovements!: (Core.MovementState | null)[]; // 手元での予測位置
     private lastPredictedActorMovementsUpdateTime!: number; // 予測位置を最後に更新した時間
-    private actorJoinButtons!: (Phaser.GameObjects.Text | null)[];
+    private actorJoinButtons!: Phaser.GameObjects.Text[];
+    private actorChangeToCPUButtons!: Phaser.GameObjects.Text[];
+    private actorItemStateTexts!: Phaser.GameObjects.Text[]; // アイテム所持状態表示用テキスト
 
-    private localMovement!: MovementState | null; // 操作キャラの手元での位置
+    private localMovement!: Core.MovementState | null; // 操作キャラの手元での位置
 
-    private receivedGameSnapshots!: { snapshot: GameSnapshot, time: number }[]; // 受信したスナップショットと受信時間の履歴
+    private receivedGameSnapshots!: { snapshot: Core.GameSnapshot, time: number }[]; // 受信したスナップショットと受信時刻の履歴
 
     private timeSinceLastEmit!: number;
-    private currentRole!: ActorRole | null;
-    private currentRoomPhase!: RoomPhase;
+    private currentRole!: Core.ActorRole | null;
+    private currentRoomPhase!: Core.RoomPhase;
+    private currentActorControllers!: Core.ControllerType[];
+    private currentActorStatuses!: Core.ActorStatus[];
+    private currentActorInventories!: (Core.UsableItemType | null)[];
+    private currentActorStatusTimers!: number[];
     private isTransitioningToResultScene!: boolean; // 結果画面への遷移中かどうかを示すフラグ
 
     constructor() {
@@ -52,13 +58,13 @@ export default class MainScene extends Phaser.Scene {
         }
         const dirs = ['u', 'd', 'l', 'r'];
         for (const dir of dirs) {
-            for (const { spritePrefix } of Object.values(ACTOR_CONFIG)) {
+            for (const { spritePrefix } of Object.values(Core.ACTOR_CONFIG)) {
                 this.load.image(`${spritePrefix}_${dir}_a`, `/ghost-tag/sprites/${spritePrefix}_${dir}_a.png`);
                 this.load.image(`${spritePrefix}_${dir}_b`, `/ghost-tag/sprites/${spritePrefix}_${dir}_b.png`);
             }
         }
 
-        ITEM_CONFIG.forEach(({ spriteName }) => {
+        Core.ITEM_CONFIG.forEach(({ spriteName }) => {
             this.load.image(spriteName, `/ghost-tag/sprites/${spriteName}.png`);
         });
 
@@ -73,15 +79,19 @@ export default class MainScene extends Phaser.Scene {
         this.visualActorStates = [null, null, null, null];
         this.predictedActorMovements = [null, null, null, null];
         this.lastPredictedActorMovementsUpdateTime = performance.now();
-        this.actorJoinButtons = [null, null, null, null];
         this.localMovement = null;
         this.receivedGameSnapshots = [];
         this.timeSinceLastEmit = 0;
         this.currentRole = null;
-        this.currentRoomPhase = RoomPhase.WAITING;
+        this.currentRoomPhase = Core.RoomPhase.WAITING;
+        this.currentActorControllers = [Core.ControllerType.NONE, Core.ControllerType.NONE, Core.ControllerType.NONE, Core.ControllerType.NONE];
+        this.currentActorStatuses = [Core.ActorStatus.INACTIVE, Core.ActorStatus.INACTIVE, Core.ActorStatus.INACTIVE, Core.ActorStatus.INACTIVE];
+        this.currentActorInventories = [null, null, null, null];
+        this.currentActorStatusTimers = [0, 0, 0, 0];
         this.isTransitioningToResultScene = false;
     }
     create() {
+        this.cameras.main.fadeIn(200, 0, 0, 0);
         this.cursors = this.input.keyboard?.createCursorKeys();
         this.keyW = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyA = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.A);
@@ -102,9 +112,9 @@ export default class MainScene extends Phaser.Scene {
         });
 
 
-        MAP.forEach((row, i) => {
+        Core.MAP.forEach((row, i) => {
             row.forEach((tile, j) => {
-                const { x, y } = gridToPixel(j, i);
+                const { x, y } = Core.gridToPixel(j, i);
                 let textureKey = '';
                 if (tile === 0) {
                     textureKey = this.getRoadTextureKey(j, i);
@@ -118,16 +128,25 @@ export default class MainScene extends Phaser.Scene {
             });
         });
         // 仮の UI 後でちゃんとしたのに差し替える
-        this.timerText = this.add.text(WIDTH / 2, 20, 'Loading...', { fontSize: '40px', color: '#fff' }).setOrigin(0.5, 0);
-        const protoButtonStyle = { fontSize: '20px', color: '#0f0' };
-        for (const { role, name, buttonInitialPos } of Object.values(ACTOR_CONFIG)) {
-            const button = this.add.text(buttonInitialPos.x, buttonInitialPos.y, `Join as ${name}`, protoButtonStyle)
+        this.timerText = this.add.text(Core.WIDTH / 2, 780, 'Loading...', { fontSize: '40px', color: '#fff', fontFamily: Core.FONT_FAMILY_EN }).setOrigin(0.5, 0);
+        const protoButtonStyle = { fontSize: '20px', color: '#0f0', fontFamily: Core.FONT_FAMILY_EN };
+        this.actorJoinButtons = [];
+        this.actorChangeToCPUButtons = [];
+        this.actorItemStateTexts = [];
+        for (const { role, name, buttonOriginPos } of Object.values(Core.ACTOR_CONFIG)) {
+            const joinButton = this.add.text(buttonOriginPos.x, buttonOriginPos.y, `Join as ${name}`, protoButtonStyle)
                 .setInteractive({ useHandCursor: true })
                 .on('pointerdown', () => { this.joinGamePlayerRequest(role); });
-            this.actorJoinButtons[role] = button;
+            this.actorJoinButtons[role] = joinButton;
+            const changeToCPUButton = this.add.text(buttonOriginPos.x, buttonOriginPos.y + 30, `Change ${name} to CPU`, protoButtonStyle)
+                .setInteractive({ useHandCursor: true })
+                .on('pointerdown', () => { this.changeToCPURequest(role); });
+            this.actorChangeToCPUButtons[role] = changeToCPUButton;
+            const itemStateText = this.add.text(buttonOriginPos.x, buttonOriginPos.y + 60, 'Item: None, StatusTimer: 0', { fontSize: '18px', color: '#ff0', fontFamily: Core.FONT_FAMILY_EN });
+            this.actorItemStateTexts[role] = itemStateText;
         }
 
-        for (const { role, spritePrefix } of Object.values(ACTOR_CONFIG)) {
+        for (const { role, spritePrefix } of Object.values(Core.ACTOR_CONFIG)) {
             const sprite = this.add.sprite(0, 0, `${spritePrefix}_d_a`).setOrigin(0, 0);
             sprite.setVisible(false);
             this.actorSprites[role] = sprite;
@@ -136,10 +155,10 @@ export default class MainScene extends Phaser.Scene {
         this.markerYouSprite = this.add.sprite(0, 0, 'marker_you').setOrigin(0, 0);
         this.markerYouSprite.setVisible(false);
 
-        this.markerOffsetY = -TILE_SIZE + 5;
+        this.markerOffsetY = -Core.TILE_SIZE + 5;
         this.tweens.add({
             targets: this,
-            markerOffsetY: -TILE_SIZE - 3,
+            markerOffsetY: -Core.TILE_SIZE - 3,
             duration: 1000,
             ease: 'Sine.easeInOut',
             yoyo: true,
@@ -159,23 +178,28 @@ export default class MainScene extends Phaser.Scene {
     private postCreate() {
         if (!this.socket) return;
         this.socket.emit('joinRoom', { roomId: this.roomId });
-        this.socket.on('gameSnapshot', (snapshot: GameSnapshot) => {
+        this.socket.on('gameSnapshot', (snapshot: Core.GameSnapshot) => {
             this.receivedGameSnapshots.push({ snapshot, time: performance.now() });
         });
     }
 
     private getRoadTextureKey(x: number, y: number): string {
         let connections = '';
-        if (hasConnection(x, y, Direction.UP)) connections += 'u';
-        if (hasConnection(x, y, Direction.DOWN)) connections += 'd';
-        if (hasConnection(x, y, Direction.LEFT)) connections += 'l';
-        if (hasConnection(x, y, Direction.RIGHT)) connections += 'r';
+        if (Core.hasConnection(x, y, Core.Direction.UP)) connections += 'u';
+        if (Core.hasConnection(x, y, Core.Direction.DOWN)) connections += 'd';
+        if (Core.hasConnection(x, y, Core.Direction.LEFT)) connections += 'l';
+        if (Core.hasConnection(x, y, Core.Direction.RIGHT)) connections += 'r';
         return `road_${connections || 'default'}`;
     }
 
-    private joinGamePlayerRequest(role: ActorRole) {
+    private joinGamePlayerRequest(role: Core.ActorRole) {
         if (!this.socket) return;
         this.socket.emit('joinGamePlayer', { role: role });
+    }
+
+    private changeToCPURequest(role: Core.ActorRole) {
+        if (!this.socket) return;
+        this.socket.emit('changeToCPU', { role: role });
     }
 
     private leaveGamePlayerRequest() {
@@ -188,14 +212,14 @@ export default class MainScene extends Phaser.Scene {
         if (this.isTransitioningToResultScene) return;
         const now = performance.now();
         const hasNewSnapshot = this.receivedGameSnapshots.length > 0;
-        let newRole: ActorRole | null = null;
+        let newRole: Core.ActorRole | null = null;
         let latestRoomTimer: number | null = null;
-        const events: GameEvent[] = [];
+        const events: Core.GameEvent[] = [];
         for (const { snapshot, time: snapshotTime } of this.receivedGameSnapshots) {
             this.lastPredictedActorMovementsUpdateTime = snapshotTime;
-            for (const { role } of Object.values(ACTOR_CONFIG)) {
+            for (const { role } of Object.values(Core.ACTOR_CONFIG)) {
                 const receivedActorState = snapshot.actors[role]; // 受信した状態
-                if (receivedActorState.status === ActorStatus.INACTIVE) {
+                if (receivedActorState.status === Core.ActorStatus.INACTIVE) {
                     this.predictedActorMovements[role] = null;
                 }
                 else {
@@ -204,6 +228,10 @@ export default class MainScene extends Phaser.Scene {
                 if (receivedActorState.sessionId === this.socket.id) {
                     newRole = role;
                 }
+                this.currentActorControllers[role] = snapshot.actors[role].controller;
+                this.currentActorStatuses[role] = snapshot.actors[role].status;
+                this.currentActorInventories[role] = snapshot.actors[role].inventory;
+                this.currentActorStatusTimers[role] = snapshot.actors[role].statusTimer;
             }
             latestRoomTimer = snapshot.roomTimer;
             this.currentRoomPhase = snapshot.roomPhase;
@@ -216,27 +244,27 @@ export default class MainScene extends Phaser.Scene {
                 this.itemSpritesMap.clear();
             }
             const currentItemKeys = new Set<string>();
-            snapshot.items.forEach(item => {
-                const key = keyFromItemState(item);
+            for (const item of snapshot.items) {
+                const key = Core.keyFromItemState(item);
                 currentItemKeys.add(key);
                 // 新たに出現したアイテムのスプライトを作成
                 if (!this.itemSpritesMap.has(key)) {
-                    const config = ITEM_CONFIG[item.type];
+                    const config = Core.ITEM_CONFIG[item.type];
                     if (config) {
-                        const { x, y } = gridToPixel(item.gridX, item.gridY);
+                        const { x, y } = Core.gridToPixel(item.gridX, item.gridY);
                         const sprite = this.add.sprite(x, y, config.spriteName).setOrigin(0, 0);
                         let targetAlpha = 0.0;
                         if (newRole === null) {
                             targetAlpha = config.alphaConfig.spectator;
                         }
-                        else if (ACTOR_CONFIG[newRole].type === ActorType.HUMAN) {
+                        else if (Core.ACTOR_CONFIG[newRole].type === Core.ActorType.HUMAN) {
                             targetAlpha = config.alphaConfig.human;
                         }
-                        else if (ACTOR_CONFIG[newRole].type === ActorType.GHOST) {
+                        else if (Core.ACTOR_CONFIG[newRole].type === Core.ActorType.GHOST) {
                             targetAlpha = config.alphaConfig.ghost;
                         }
                         else {
-                            console.error(`Unknown actor type for role ${newRole}: ${ACTOR_CONFIG[newRole].type}`);
+                            console.error(`Unknown actor type for role ${newRole}: ${Core.ACTOR_CONFIG[newRole].type}`);
                         }
                         sprite.setAlpha(0);
                         this.tweens.add({
@@ -251,7 +279,7 @@ export default class MainScene extends Phaser.Scene {
                         console.error(`Unknown item type: ${item.type}`);
                     }
                 }
-            });
+            };
             // 存在しないアイテムのスプライトを削除
             this.itemSpritesMap.forEach((sprite, key) => {
                 if (!currentItemKeys.has(key)) {
@@ -281,13 +309,13 @@ export default class MainScene extends Phaser.Scene {
             if (latestRoomTimer !== null) {
                 const seconds = Math.ceil(latestRoomTimer / 1000);
                 switch (this.currentRoomPhase) {
-                    case RoomPhase.WAITING:
+                    case Core.RoomPhase.WAITING:
                         this.timerText.setText(`Waiting...`);
                         break;
-                    case RoomPhase.STARTING:
+                    case Core.RoomPhase.STARTING:
                         this.timerText.setText(`Starting... ${seconds}`);
                         break;
-                    case RoomPhase.PLAYING:
+                    case Core.RoomPhase.PLAYING:
                         this.timerText.setText(`Time: ${seconds}`);
                         break;
                 }
@@ -296,107 +324,134 @@ export default class MainScene extends Phaser.Scene {
             // イベントの処理
             events.forEach(event => {
                 switch (event.type) {
-                    case GameEventType.ITEM_PICK_UP:
+                    case Core.GameEventType.ITEM_PICK_UP:
                         // アイテム取得のエフェクトなどをここに書く
-                        const itemPickupEvent = event as ItemPickUpEvent;
+                        const itemPickupEvent = event as Core.ItemPickUpEvent;
                         const itemState = itemPickupEvent.itemState;
                         const itemType = itemState.type;
-                        const itemCategory = ITEM_CONFIG[itemType].category;
+                        const itemCategory = Core.ITEM_CONFIG[itemType].category;
                         switch (itemCategory) {
-                            case ItemCategory.SCORE:
-                            case ItemCategory.SCORE_SPECIAL:
-                                const { x, y } = gridToCenterPixel(itemState.gridX, itemState.gridY);
+                            case Core.ItemCategory.SCORE:
+                            case Core.ItemCategory.SCORE_SPECIAL:
+                                const { x, y } = Core.gridToCenterPixel(itemState.gridX, itemState.gridY);
                                 const effect = this.add.sprite(x, y, 'ghost_item_pick_up_effect').setOrigin(0.5, 0.5);
                                 effect.play('ghost_item_pick_up_effect_anim');
                                 effect.on('animationcomplete', () => {
                                     effect.destroy();
                                 });
+                                // TODO: 自分ならスコア加算のエフェクトを出す
                                 break;
-                            case ItemCategory.SPEED_UP:
+                            case Core.ItemCategory.SPEED_UP:
                                 // スピードアップアイテムのエフェクト
                                 break;
-                            case ItemCategory.STUN:
+                            case Core.ItemCategory.STUN:
                                 // スタンアイテムのエフェクト
                                 break;
                         }
                         break;
-                    case GameEventType.PLAYER_TAGGED:
-                        // エフェクト処理など
+                    case Core.GameEventType.PLAYER_TAGGED:
+                        // TODO: エフェクト処理
+                        if (event.taggedRole === this.currentRole) {
+                            this.localMovement = { ...event.respawnPosition, currentDir: Core.Direction.NONE, nextDir: Core.Direction.NONE, offsetX: 0, offsetY: 0 };
+                        }
                         break;
-                    case GameEventType.GAME_OVER:
-                        // 結果画面に遷移するなどの処理をここに書く
+                    case Core.GameEventType.GAME_OVER:
+                        // 結果画面に遷移
                         this.isTransitioningToResultScene = true;
                         this.input.enabled = false; // 入力を無効化して多重遷移を防止
                         this.cameras.main.fadeOut(100, 0, 0, 0);
-                        const scores = (event as GameOverEvent).scores;
+                        const scores = (event as Core.GameOverEvent).scores;
                         this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
                             this.scene.start('ResultScene', { roomId: this.roomId, scores });
                         });
                         break;
-                    // 将来的にアイテム取得やプレイヤーが捕まったイベントなどもここで処理する
                 }
             }
             );
         }
+        // スタン状態の判定
+        let isGhostStunned = false;
+        for (const human of Core.HUMAN_ROLES) {
+            const status = this.currentActorStatuses[human];
+            if (status === Core.ActorStatus.STUN_ATTACKING) {
+                isGhostStunned = true;
+            }
+        }
+        let isHumanStunned = false;
+        for (const ghost of Core.GHOST_ROLES) {
+            const status = this.currentActorStatuses[ghost];
+            if (status === Core.ActorStatus.STUN_ATTACKING) {
+                isHumanStunned = true;
+            }
+        }
+        const isStunned = Core.ACTOR_CONFIG.map(({ type }) => { if (type === Core.ActorType.HUMAN) { return isHumanStunned } else { return isGhostStunned } });
+
+
         // 予測位置の更新
         const sinceLastUpdate = now - this.lastPredictedActorMovementsUpdateTime;
         this.lastPredictedActorMovementsUpdateTime = now;
-        for (const { role, speed } of Object.values(ACTOR_CONFIG)) {
+        for (const { role } of Object.values(Core.ACTOR_CONFIG)) {
             const predictedMovement = this.predictedActorMovements[role];
-            if (predictedMovement) {
-                Object.assign(predictedMovement, calcNextMovement(predictedMovement, speed * (sinceLastUpdate / 1000)));
+            if (predictedMovement !== null) {
+                const currentSpeed = Core.calcSpeed(role, this.currentActorStatuses[role], isStunned[role]);
+                Object.assign(predictedMovement, Core.calcNextMovement(predictedMovement, currentSpeed * (sinceLastUpdate / 1000)));
             }
         }
 
         // プレイヤー役であれば入力を処理して位置を更新する
-        if (this.localMovement && this.currentRole !== null && (this.currentRoomPhase === RoomPhase.WAITING || this.currentRoomPhase === RoomPhase.PLAYING)) {
+        if (this.localMovement && this.currentRole !== null && (this.currentRoomPhase === Core.RoomPhase.WAITING || this.currentRoomPhase === Core.RoomPhase.PLAYING) && this.currentActorControllers[this.currentRole] === Core.ControllerType.PLAYER && this.currentActorStatuses[this.currentRole] !== Core.ActorStatus.RESPAWN) {
             if (this.cursors?.up.isDown || this.keyW?.isDown) {
-                this.localMovement.nextDir = Direction.UP;
+                this.localMovement.nextDir = Core.Direction.UP;
             }
             else if (this.cursors?.down.isDown || this.keyS?.isDown) {
-                this.localMovement.nextDir = Direction.DOWN;
+                this.localMovement.nextDir = Core.Direction.DOWN;
             }
             else if (this.cursors?.left.isDown || this.keyA?.isDown) {
-                this.localMovement.nextDir = Direction.LEFT;
+                this.localMovement.nextDir = Core.Direction.LEFT;
             }
             else if (this.cursors?.right.isDown || this.keyD?.isDown) {
-                this.localMovement.nextDir = Direction.RIGHT;
+                this.localMovement.nextDir = Core.Direction.RIGHT;
             }
 
-            const speed = ACTOR_CONFIG[this.currentRole].speed; // 仮実装 アイテムなどの追加により将来的に変動する可能性がある
+            const currentSpeed = Core.calcSpeed(this.currentRole, this.currentActorStatuses[this.currentRole], isStunned[this.currentRole]);
 
-            const distance = speed * delta / 1000;
-            this.localMovement = calcNextMovement(this.localMovement, distance);
+            const distance = currentSpeed * delta / 1000;
+            this.localMovement = Core.calcNextMovement(this.localMovement, distance);
             this.timeSinceLastEmit += delta;
             while (this.timeSinceLastEmit >= MainScene.EMIT_INTERVAL) {
                 this.socket.emit('reportMovement', { role: this.currentRole, movement: this.localMovement });
                 this.timeSinceLastEmit -= MainScene.EMIT_INTERVAL;
             }
             // 予測位置を上書き
-            this.predictedActorMovements[this.currentRole] = this.localMovement;
+            this.predictedActorMovements[this.currentRole] = structuredClone(this.localMovement);
+
+            // アイテム使用の入力
+            if ((this.keySpace?.isDown || this.keyEnter?.isDown) && this.currentActorInventories[this.currentRole] !== null && this.currentActorStatuses[this.currentRole] === Core.ActorStatus.ACTIVE) {
+                this.socket.emit('useItemRequest', { role: this.currentRole });
+            }
         }
 
         // ゲーム開始時
-        if (this.currentRoomPhase === RoomPhase.STARTING) {
+        if (this.currentRoomPhase === Core.RoomPhase.STARTING) {
             // すべての役の予測位置を初期化する
-            Object.values(ACTOR_CONFIG).forEach(({ role, initialPos }) => {
-                this.predictedActorMovements[role] = { ...initialPos, currentDir: Direction.NONE, nextDir: Direction.NONE, offsetX: 0, offsetY: 0 };
+            Object.values(Core.ACTOR_CONFIG).forEach(({ role, initialPos }) => {
+                this.predictedActorMovements[role] = { ...initialPos, currentDir: Core.Direction.NONE, nextDir: Core.Direction.NONE, offsetX: 0, offsetY: 0 };
             });
             if (this.localMovement !== null && this.currentRole !== null) {
-                this.localMovement = { ...ACTOR_CONFIG[this.currentRole].initialPos, currentDir: Direction.NONE, nextDir: Direction.NONE, offsetX: 0, offsetY: 0 };
+                this.localMovement = { ...Core.ACTOR_CONFIG[this.currentRole].initialPos, currentDir: Core.Direction.NONE, nextDir: Core.Direction.NONE, offsetX: 0, offsetY: 0 };
             }
         }
 
         // VisualActorState の更新
-        for (const { role } of Object.values(ACTOR_CONFIG)) {
+        for (const { role } of Object.values(Core.ACTOR_CONFIG)) {
             const predictedMovement = this.predictedActorMovements[role];
-            if (predictedMovement) {
+            if (predictedMovement !== null) {
                 if (this.currentRole === role && this.localMovement) {
-                    const { x, y } = movementToPixel(this.localMovement);
+                    const { x, y } = Core.movementToPixel(this.localMovement);
                     this.visualActorStates[role] = { x, y, dir: this.localMovement.currentDir };
                 }
                 else {
-                    const { x: targetX, y: targetY } = movementToPixel(predictedMovement);
+                    const { x: targetX, y: targetY } = Core.movementToPixel(predictedMovement);
                     if (this.visualActorStates[role]) {
                         // 補間して滑らかに移動させる
                         const { x, y } = this.visualActorStates[role]!;
@@ -439,43 +494,77 @@ export default class MainScene extends Phaser.Scene {
             this.markerYouSprite.setVisible(true);
         }
 
-        for (const { role, name, spritePrefix } of Object.values(ACTOR_CONFIG)) {
+        for (const { role, name, spritePrefix } of Object.values(Core.ACTOR_CONFIG)) {
             const visualState = this.visualActorStates[role];
             const sprite = this.actorSprites[role];
             const joinButton = this.actorJoinButtons[role];
-            if (!sprite || !joinButton) continue;
-            if (visualState) {
-                if (this.currentRole === role) {
-                    joinButton.setText(`Leave ${name}`);
-                    joinButton.off('pointerdown');
-                    joinButton.on('pointerdown', () => { this.leaveGamePlayerRequest(); });
-                }
-                else {
-                    joinButton.setText(`Taken: ${name}`);
-                    joinButton.off('pointerdown');
-                }
+            const cpuButton = this.actorChangeToCPUButtons[role];
+            const itemStateText = this.actorItemStateTexts[role];
+            if (!sprite || !joinButton || !cpuButton || !itemStateText) continue;
 
+            let itemStateTextContent = 'Item: ';
+            const inventory = this.currentActorInventories[role];
+            if (inventory) {
+                const config = Core.ITEM_CONFIG[inventory];
+                const itemName = config.spriteName;
+                itemStateTextContent += itemName;
+            }
+            else {
+                itemStateTextContent += 'None';
+            }
+            itemStateTextContent += `, StatusTimer: ${Math.ceil(this.currentActorStatusTimers[role] / 1000)}`;
+            itemStateText.setText(itemStateTextContent);
+            switch (this.currentActorControllers[role]) {
+                case Core.ControllerType.NONE:
+                    joinButton.setText(`Join as ${name}`);
+                    joinButton.off('pointerdown');
+                    joinButton.on('pointerdown', () => { this.joinGamePlayerRequest(role); });
+                    cpuButton.setText(`Change ${name} to CPU`);
+                    cpuButton.off('pointerdown');
+                    cpuButton.on('pointerdown', () => { this.changeToCPURequest(role); });
+                    break;
+                case Core.ControllerType.PLAYER:
+                    if (this.currentRole === role) {
+                        joinButton.setText(`Leave ${name}`);
+                        joinButton.off('pointerdown');
+                        joinButton.on('pointerdown', () => { this.leaveGamePlayerRequest(); });
+                        cpuButton.setText(`Change ${name} to CPU`);
+                        cpuButton.off('pointerdown');
+                        cpuButton.on('pointerdown', () => { this.changeToCPURequest(role); });
+                    }
+                    else {
+                        joinButton.setText(`Taken: ${name}`);
+                        joinButton.off('pointerdown');
+                        // 他のプレイヤーが操作中の役はCPU に変更できない
+                        cpuButton.setText(`Taken: ${name}`);
+                        cpuButton.off('pointerdown');
+                    }
+                    break;
+                case Core.ControllerType.CPU:
+                    joinButton.setText(`Join as ${name}`); // 仮の表示
+                    joinButton.off('pointerdown');
+                    joinButton.on('pointerdown', () => { this.joinGamePlayerRequest(role); });
+                    cpuButton.setText(`CPU: ${name}`); // 仮の表示
+                    cpuButton.off('pointerdown');
+                    break;
+            }
+            if (visualState === null) {
+                sprite.setVisible(false);
+            }
+            else {
                 sprite.setVisible(true);
                 const { x, y } = visualState;
                 sprite.setPosition(x, y);
 
                 let textureKey = '';
-                if (visualState.dir === Direction.UP) textureKey = `${spritePrefix}_u`;
-                else if (visualState.dir === Direction.DOWN) textureKey = `${spritePrefix}_d`;
-                else if (visualState.dir === Direction.LEFT) textureKey = `${spritePrefix}_l`;
-                else if (visualState.dir === Direction.RIGHT) textureKey = `${spritePrefix}_r`;
+                if (visualState.dir === Core.Direction.UP) textureKey = `${spritePrefix}_u`;
+                else if (visualState.dir === Core.Direction.DOWN) textureKey = `${spritePrefix}_d`;
+                else if (visualState.dir === Core.Direction.LEFT) textureKey = `${spritePrefix}_l`;
+                else if (visualState.dir === Core.Direction.RIGHT) textureKey = `${spritePrefix}_r`;
                 else textureKey = `${spritePrefix}_d`;
 
                 const textureSuffix = Math.floor((time / 200) % 2) === 0 ? '_a' : '_b';
                 sprite.setTexture(textureKey + textureSuffix);
-
-            }
-            else {
-                joinButton.setText(`Join as ${name}`);
-                joinButton.off('pointerdown');
-                joinButton.on('pointerdown', () => { this.joinGamePlayerRequest(role); });
-
-                sprite.setVisible(false);
             }
         }
     }

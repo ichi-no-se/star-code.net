@@ -1,6 +1,6 @@
 import * as Phaser from "phaser"
 import { Socket, io } from "socket.io-client";
-import { ROOM_CONFIG } from "@shared/GhostTag/core";
+import { ROOM_CONFIG, FONT_FAMILY_EN } from "@shared/GhostTag/core";
 
 export default class LobbyScene extends Phaser.Scene {
     private socket: Socket | null = null;
@@ -11,6 +11,7 @@ export default class LobbyScene extends Phaser.Scene {
     }
 
     create() {
+        this.cameras.main.fadeIn(200, 0, 0, 0);
         this.socket = this.registry.get('socket') as Socket;
         if (!this.socket) {
             const url = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001') + '/ghost-tag';
@@ -18,12 +19,16 @@ export default class LobbyScene extends Phaser.Scene {
             this.registry.set('socket', socket);
             this.socket = socket;
         }
-        this.add.text(20, 20, 'Lobby - Click a room to join', { fontSize: '24px', color: '#fff' });
+        this.add.text(20, 20, 'Lobby - Click a room to join', { fontFamily: FONT_FAMILY_EN, fontSize: '24px', color: '#fff' });
         ROOM_CONFIG.forEach(({ id, name }, index) => {
-            const button = this.add.text(20, 80 + index * 40, `${name} (0)`, { fontSize: '20px', color: '#0f0' })
+            const button = this.add.text(20, 80 + index * 40, `${name} (0)`, { fontFamily: FONT_FAMILY_EN, fontSize: '20px', color: '#0f0' })
                 .setInteractive()
                 .on('pointerdown', () => {
-                    this.scene.start('MainScene', { roomId: id });
+                    this.input.enabled = false;
+                    this.cameras.main.fadeOut(100, 0, 0, 0);
+                    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+                        this.scene.start('MainScene', { roomId: id });
+                    });
                 });
             this.roomButtons.set(id, button);
         });

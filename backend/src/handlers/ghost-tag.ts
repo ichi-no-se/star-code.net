@@ -25,6 +25,20 @@ export const ghostTagHandler = (ns: Namespace) => {
 			}
 			manager.handleJoinGamePlayer(socket, data.role);
 		});
+		socket.on("changeToCPU", (data: any) => {
+			if(!isValidActorRole(data?.role)) {
+				console.log(`[GhostTag] Invalid changeToCPU data from socket ${socket.id}:`, data);
+				return;
+			}
+			manager.handleChangeToCPU(socket, data.role);
+		});
+		socket.on("useItemRequest"	, (data: any) => {
+			if(!isValidActorRole(data?.role)) {
+				console.log(`[GhostTag] Invalid useItemRequest data from socket ${socket.id}:`, data);
+				return;
+			}
+			manager.handleUseItemRequest(socket, data.role);
+		});
 		socket.on("leaveGamePlayer", () => manager.handleLeaveGamePlayer(socket));
 		socket.on("reportMovement", (data: any) => {
 			if(!isValidActorRole(data?.role) || !isValidMovementState(data?.movement)) {
