@@ -2,9 +2,18 @@ import * as Phaser from "phaser"
 import { Socket } from "socket.io-client";
 import * as Core from "@shared/GhostTag/core";
 
+enum RenderDepth {
+    FLOOR = 0,
+    ITEM = 5,
+    LIGHT = 10,
+    ACTOR_GHOST = 15,
+    ACTOR_HUMAN = 20,
+    EFFECT = 25,
+    MARKER = 30,
+    UI = 50,
+}
 
 export default class MainScene extends Phaser.Scene {
-
     private static readonly EMIT_INTERVAL = 1000 / 20; // 20 FPS
 
     private socket!: Socket | null;
@@ -43,6 +52,10 @@ export default class MainScene extends Phaser.Scene {
     private currentActorInventories!: (Core.UsableItemType | null)[];
     private currentActorStatusTimers!: number[];
     private isTransitioningToResultScene!: boolean; // 結果画面への遷移中かどうかを示すフラグ
+
+
+    private lightGraphicsList!: (Phaser.GameObjects.Graphics | null)[]; // ライトの当たる範囲を描画する Graphics オブジェクト
+    private visionMask!: Phaser.GameObjects.Graphics; // Ghost が Human から見える領域
 
     constructor() {
         super({ key: 'MainScene' });
@@ -123,12 +136,12 @@ export default class MainScene extends Phaser.Scene {
                     textureKey = `wall${tile}`;
                 }
                 if (textureKey) {
-                    this.add.image(x, y, textureKey).setOrigin(0, 0);
+                    this.add.image(x, y, textureKey).setOrigin(0, 0).setDepth(RenderDepth.FLOOR);
                 }
             });
         });
         // 仮の UI 後でちゃんとしたのに差し替える
-        this.timerText = this.add.text(Core.WIDTH / 2, 780, 'Loading...', { fontSize: '40px', color: '#fff', fontFamily: Core.FONT_FAMILY_EN }).setOrigin(0.5, 0);
+        this.timerText = this.add.text(Core.WIDTH / 2, 780, 'Loading...', { fontSize: '40px', color: '#fff', fontFamily: Core.FONT_FAMILY_EN }).setOrigin(0.5, 0).setDepth(RenderDepth.UI);
         const protoButtonStyle = { fontSize: '20px', color: '#0f0', fontFamily: Core.FONT_FAMILY_EN };
         this.actorJoinButtons = [];
         this.actorChangeToCPUButtons = [];
@@ -136,23 +149,25 @@ export default class MainScene extends Phaser.Scene {
         for (const { role, name, buttonOriginPos } of Object.values(Core.ACTOR_CONFIG)) {
             const joinButton = this.add.text(buttonOriginPos.x, buttonOriginPos.y, `Join as ${name}`, protoButtonStyle)
                 .setInteractive({ useHandCursor: true })
-                .on('pointerdown', () => { this.joinGamePlayerRequest(role); });
+                .on('pointerdown', () => { this.joinGamePlayerRequest(role); }).setDepth(RenderDepth.UI);
             this.actorJoinButtons[role] = joinButton;
             const changeToCPUButton = this.add.text(buttonOriginPos.x, buttonOriginPos.y + 30, `Change ${name} to CPU`, protoButtonStyle)
                 .setInteractive({ useHandCursor: true })
-                .on('pointerdown', () => { this.changeToCPURequest(role); });
+                .on('pointerdown', () => { this.changeToCPURequest(role); }).setDepth(RenderDepth.UI);
             this.actorChangeToCPUButtons[role] = changeToCPUButton;
-            const itemStateText = this.add.text(buttonOriginPos.x, buttonOriginPos.y + 60, 'Item: None, StatusTimer: 0', { fontSize: '18px', color: '#ff0', fontFamily: Core.FONT_FAMILY_EN });
+            const itemStateText = this.add.text(buttonOriginPos.x, buttonOriginPos.y + 60, 'Item: None, StatusTimer: 0', { fontSize: '18px', color: '#ff0', fontFamily: Core.FONT_FAMILY_EN }).setDepth(RenderDepth.UI);
             this.actorItemStateTexts[role] = itemStateText;
         }
 
         for (const { role, spritePrefix } of Object.values(Core.ACTOR_CONFIG)) {
             const sprite = this.add.sprite(0, 0, `${spritePrefix}_d_a`).setOrigin(0, 0);
+            const depth = Core.ACTOR_CONFIG[role].type === Core.ActorType.HUMAN ? RenderDepth.ACTOR_HUMAN : RenderDepth.ACTOR_GHOST;
+            sprite.setDepth(depth);
             sprite.setVisible(false);
             this.actorSprites[role] = sprite;
         }
 
-        this.markerYouSprite = this.add.sprite(0, 0, 'marker_you').setOrigin(0, 0);
+        this.markerYouSprite = this.add.sprite(0, 0, 'marker_you').setOrigin(0, 0).setDepth(RenderDepth.MARKER);
         this.markerYouSprite.setVisible(false);
 
         this.markerOffsetY = -Core.TILE_SIZE + 5;
@@ -172,6 +187,9 @@ export default class MainScene extends Phaser.Scene {
             repeat: 0
         });
 
+        this.lightGraphicsList = [this.add.graphics().setDepth(RenderDepth.LIGHT), this.add.graphics().setDepth(RenderDepth.LIGHT), null, null]; // Ghost は null
+        this.visionMask = this.add.graphics().setVisible(false);
+
         this.events.once('update', () => this.postCreate());
     }
 
@@ -180,6 +198,9 @@ export default class MainScene extends Phaser.Scene {
         this.socket.emit('joinRoom', { roomId: this.roomId });
         this.socket.on('gameSnapshot', (snapshot: Core.GameSnapshot) => {
             this.receivedGameSnapshots.push({ snapshot, time: performance.now() });
+        });
+        this.events.once('shutdown', () => {
+            this.leaveGamePlayerRequest();
         });
     }
 
@@ -266,7 +287,7 @@ export default class MainScene extends Phaser.Scene {
                         else {
                             console.error(`Unknown actor type for role ${newRole}: ${Core.ACTOR_CONFIG[newRole].type}`);
                         }
-                        sprite.setAlpha(0);
+                        sprite.setAlpha(0).setDepth(RenderDepth.ITEM);
                         this.tweens.add({
                             targets: sprite,
                             alpha: targetAlpha,
@@ -305,22 +326,6 @@ export default class MainScene extends Phaser.Scene {
             }
             this.currentRole = newRole;
 
-            // タイマーの更新
-            if (latestRoomTimer !== null) {
-                const seconds = Math.ceil(latestRoomTimer / 1000);
-                switch (this.currentRoomPhase) {
-                    case Core.RoomPhase.WAITING:
-                        this.timerText.setText(`Waiting...`);
-                        break;
-                    case Core.RoomPhase.STARTING:
-                        this.timerText.setText(`Starting... ${seconds}`);
-                        break;
-                    case Core.RoomPhase.PLAYING:
-                        this.timerText.setText(`Time: ${seconds}`);
-                        break;
-                }
-            }
-
             // イベントの処理
             events.forEach(event => {
                 switch (event.type) {
@@ -334,7 +339,7 @@ export default class MainScene extends Phaser.Scene {
                             case Core.ItemCategory.SCORE:
                             case Core.ItemCategory.SCORE_SPECIAL:
                                 const { x, y } = Core.gridToCenterPixel(itemState.gridX, itemState.gridY);
-                                const effect = this.add.sprite(x, y, 'ghost_item_pick_up_effect').setOrigin(0.5, 0.5);
+                                const effect = this.add.sprite(x, y, 'ghost_item_pick_up_effect').setOrigin(0.5, 0.5).setDepth(RenderDepth.EFFECT);
                                 effect.play('ghost_item_pick_up_effect_anim');
                                 effect.on('animationcomplete', () => {
                                     effect.destroy();
@@ -364,10 +369,26 @@ export default class MainScene extends Phaser.Scene {
                         this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
                             this.scene.start('ResultScene', { roomId: this.roomId, scores });
                         });
-                        break;
+                        return; // 以降の処理は行わない
                 }
             }
             );
+
+            // タイマーの更新
+            if (latestRoomTimer !== null) {
+                const seconds = Math.ceil(latestRoomTimer / 1000);
+                switch (this.currentRoomPhase) {
+                    case Core.RoomPhase.WAITING:
+                        this.timerText.setText(`Waiting...`);
+                        break;
+                    case Core.RoomPhase.STARTING:
+                        this.timerText.setText(`Starting... ${seconds}`);
+                        break;
+                    case Core.RoomPhase.PLAYING:
+                        this.timerText.setText(`Time: ${seconds}`);
+                        break;
+                }
+            }
         }
         // スタン状態の判定
         let isGhostStunned = false;
@@ -494,13 +515,42 @@ export default class MainScene extends Phaser.Scene {
             this.markerYouSprite.setVisible(true);
         }
 
+        // ライトの描画
+        if (this.currentRoomPhase === Core.RoomPhase.PLAYING) {
+            this.visionMask.clear();
+            this.visionMask.fillStyle(0x000000, 1);
+            for (const humanRole of Core.HUMAN_ROLES) {
+                const lightGraphics = this.lightGraphicsList[humanRole];
+                const visualState = this.visualActorStates[humanRole];
+                if (lightGraphics && visualState) {
+                    const points = this.calcLightPoints(visualState);
+                    if (points) {
+                        lightGraphics.clear();
+                        lightGraphics.fillStyle(0xffff55, 0.4);
+                        lightGraphics.fillPoints(points);
+                        this.visionMask.fillPoints(points);
+                    }
+                }
+            }
+        }
+        else {
+            // ゲーム中以外はライトの描画を消す
+            this.lightGraphicsList.forEach(graphics => {
+                if (graphics) {
+                    graphics.clear();
+                }
+            });
+            this.visionMask.clear();
+        }
+
         for (const { role, name, spritePrefix } of Object.values(Core.ACTOR_CONFIG)) {
             const visualState = this.visualActorStates[role];
             const sprite = this.actorSprites[role];
             const joinButton = this.actorJoinButtons[role];
             const cpuButton = this.actorChangeToCPUButtons[role];
             const itemStateText = this.actorItemStateTexts[role];
-            if (!sprite || !joinButton || !cpuButton || !itemStateText) continue;
+            const status = this.currentActorStatuses[role];
+            if (sprite === null) continue;
 
             let itemStateTextContent = 'Item: ';
             const inventory = this.currentActorInventories[role];
@@ -552,7 +602,29 @@ export default class MainScene extends Phaser.Scene {
                 sprite.setVisible(false);
             }
             else {
-                sprite.setVisible(true);
+                switch (status) {
+                    case Core.ActorStatus.ACTIVE:
+                        sprite.setVisible(true);
+                        break;
+                    case Core.ActorStatus.INACTIVE:
+                        sprite.setVisible(false);
+                        break;
+                    case Core.ActorStatus.STUN_ATTACKING:
+                        sprite.setVisible(true);
+                        break;
+                    case Core.ActorStatus.SPEED_UP:
+                        // TODO: textureKey を変える
+                        sprite.setVisible(true);
+                        break;
+                    case Core.ActorStatus.RESPAWN:
+                        // TODO: エフェクト入れる ここかは微妙
+                        sprite.setVisible(false);
+                        break;
+                }
+                if (isStunned[role]) {
+                    // TODO: スタン状態の見た目を変える
+                    // Speed up より優先される
+                }
                 const { x, y } = visualState;
                 sprite.setPosition(x, y);
 
@@ -565,7 +637,53 @@ export default class MainScene extends Phaser.Scene {
 
                 const textureSuffix = Math.floor((time / 200) % 2) === 0 ? '_a' : '_b';
                 sprite.setTexture(textureKey + textureSuffix);
+
+                // もし プレイ中 かつ プレイヤーが Human かつ 描画中の役が Ghost なら，ライトの当たる範囲のみ見えるようにする
+                if (this.currentRoomPhase === Core.RoomPhase.PLAYING && this.currentRole !== null && Core.ACTOR_CONFIG[this.currentRole].type === Core.ActorType.HUMAN && Core.ACTOR_CONFIG[role].type === Core.ActorType.GHOST) {
+                    const mask = this.visionMask.createGeometryMask();
+                    sprite.setMask(mask);
+                }
+                else {
+                    sprite.clearMask();
+                }
             }
         }
+    }
+
+    private calcLightPoints(visualState: Core.VisualActorState): Phaser.Math.Vector2[] | null {
+        const dir = visualState.dir === Core.Direction.NONE ? Core.Direction.DOWN : visualState.dir; // 方向がない場合は下向きとみなす
+        const { dx, dy } = Core.DIRECTION_CONFIG[dir];
+
+        const cx = visualState.x + Core.TILE_SIZE / 2;
+        const cy = visualState.y + Core.TILE_SIZE / 2;
+
+        let gridX = Math.floor((cx - Core.MAP_ORIGIN_X) / Core.TILE_SIZE);
+        let gridY = Math.floor((cy - Core.MAP_ORIGIN_Y) / Core.TILE_SIZE);
+        if (gridX < 0 || gridX >= Core.MAP_WIDTH || gridY < 0 || gridY >= Core.MAP_HEIGHT || Core.MAP[gridY][gridX] !== 0) {
+            // もし現在の位置がマップ外か壁の中なら、ライトを表示しない
+            return null;
+        }
+
+        // ライトが到達しうるマスを計算
+        while (Core.hasConnection(gridX, gridY, dir)) {
+            gridX += dx;
+            gridY += dy;
+        }
+        const reachGridCenter = Core.gridToCenterPixel(gridX, gridY);
+
+        const leftCornerVec = { x: (dx + dy) * Core.TILE_SIZE / 2, y: (-dx + dy) * Core.TILE_SIZE / 2 };
+        const rightCornerVec = { x: (dx - dy) * Core.TILE_SIZE / 2, y: (dx + dy) * Core.TILE_SIZE / 2 };
+
+        const { x: rx, y: ry } = reachGridCenter;
+
+        const centerOffset = {x: (dx * Core.TILE_SIZE / 4), y: (dy * Core.TILE_SIZE / 4)};
+
+        return [
+            new Phaser.Math.Vector2(cx + centerOffset.x, cy + centerOffset.y),
+            new Phaser.Math.Vector2(cx + leftCornerVec.x, cy + leftCornerVec.y),
+            new Phaser.Math.Vector2(rx + leftCornerVec.x, ry + leftCornerVec.y),
+            new Phaser.Math.Vector2(rx + rightCornerVec.x, ry + rightCornerVec.y),
+            new Phaser.Math.Vector2(cx + rightCornerVec.x, cy + rightCornerVec.y),
+        ];
     }
 }

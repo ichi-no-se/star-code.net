@@ -335,6 +335,7 @@ export class GameRoom {
 							};
 							ghostActor.status = Core.ActorStatus.RESPAWN;
 							ghostActor.statusTimer = Core.RESPAWN_DURATION;
+							ghostActor.inventory = null; // 捕まったらアイテムも消える
 							const taggedEvent: Core.PlayerTaggedEvent = {
 								type: Core.GameEventType.PLAYER_TAGGED,
 								taggerRole: humanRole,
@@ -434,30 +435,46 @@ export class GameRoom {
 	private spawnItem() {
 		const newItemCategory = this.itemDeck.pick();
 		const newItemType = Core.sampleItemTypeByCategory(newItemCategory);
-		// なるべく既存のアイテム，プレイヤーと被らない位置を選ぶ
+		// なるべく既存のアイテムと被らない位置を選ぶ
 		let bestPos = Core.randomMapPosition();
 		let maxMinDist = -1;
+
+		const ITEM_SPAWN_SAFE_DISTANCE = 2; // アイテムがスポーンする位置は既存のキャラクターからこの距離以上離す
 		for (let attempt = 0; attempt < 10; attempt++) {
-			const pos = Core.randomMapPosition();
-			let minDistanceToActorOrItem = Infinity;
+			let pos: { gridX: number; gridY: number };
+			// キャラクターと被らないようにする
+			let intersectionWithExistingActor: boolean;
+			do {
+				pos = Core.randomMapPosition();
+				intersectionWithExistingActor = false;
+				for (const actor of this.gameState.actors) {
+					const { gridX, offsetX, gridY, offsetY } = actor.movement;
+					const distance = Math.abs(pos.gridX - (gridX + offsetX)) + Math.abs(pos.gridY - (gridY + offsetY));
+					if (distance < ITEM_SPAWN_SAFE_DISTANCE) {
+						intersectionWithExistingActor = true;
+						break;
+					}
+				}
+			} while (intersectionWithExistingActor);
+			let minDistanceToItem = Infinity;
 			for (const actor of this.gameState.actors) {
 				const actorPos = {
 					gridX: actor.movement.gridX,
 					gridY: actor.movement.gridY
 				};
 				const distance = Math.abs(pos.gridX - actorPos.gridX) + Math.abs(pos.gridY - actorPos.gridY);
-				if (distance < minDistanceToActorOrItem) {
-					minDistanceToActorOrItem = distance;
+				if (distance < minDistanceToItem) {
+					minDistanceToItem = distance;
 				}
 			}
 			for (const item of this.gameState.items) {
 				const distance = Math.abs(pos.gridX - item.gridX) + Math.abs(pos.gridY - item.gridY);
-				if (distance < minDistanceToActorOrItem) {
-					minDistanceToActorOrItem = distance;
+				if (distance < minDistanceToItem) {
+					minDistanceToItem = distance;
 				}
 			}
-			if (minDistanceToActorOrItem > maxMinDist) {
-				maxMinDist = minDistanceToActorOrItem;
+			if (minDistanceToItem > maxMinDist) {
+				maxMinDist = minDistanceToItem;
 				bestPos = pos;
 			}
 		}

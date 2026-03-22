@@ -296,240 +296,94 @@ export const ITEM_CONFIG: ItemConfig[] = [
 	{ type: ItemType.STUN, category: ItemCategory.STUN, spriteName: 'item_stun', alphaConfig: ITEM_STUN_ALPHA_CONFIG }
 ];
 
-export const hasConnection = (x: number, y: number, dir: Direction): boolean => {
-	if (dir === Direction.UP) return MAP[y - 1]?.[x] === 0;
-	if (dir === Direction.DOWN) return MAP[y + 1]?.[x] === 0;
-	if (dir === Direction.LEFT) return MAP[y]?.[x - 1] === 0;
-	if (dir === Direction.RIGHT) return MAP[y]?.[x + 1] === 0;
-	return false;
+export type ActiveDirection = Exclude<Direction, Direction.NONE>;
+
+export interface DirectionConfig {
+	axis: 'x' | 'y';
+	sign: 1 | -1;
+	dx: -1 | 0 | 1;
+	dy: -1 | 0 | 1;
+	suffix: 'u' | 'd' | 'l' | 'r';
+	opposite: ActiveDirection;
+}
+
+export const DIRECTION_CONFIG: Record<ActiveDirection, DirectionConfig> = {
+	[Direction.UP]: { axis: 'y', sign: -1, dx: 0, dy: -1, suffix: 'u', opposite: Direction.DOWN },
+	[Direction.DOWN]: { axis: 'y', sign: 1, dx: 0, dy: 1, suffix: 'd', opposite: Direction.UP },
+	[Direction.LEFT]: { axis: 'x', sign: -1, dx: -1, dy: 0, suffix: 'l', opposite: Direction.RIGHT },
+	[Direction.RIGHT]: { axis: 'x', sign: 1, dx: 1, dy: 0, suffix: 'r', opposite: Direction.LEFT }
+};
+
+
+export const hasConnection = (gridX: number, gridY: number, dir: Direction): boolean => {
+	if(dir === Direction.NONE) return false;
+	const { dx, dy } = DIRECTION_CONFIG[dir];
+	return MAP[gridY + dy]?.[gridX + dx] === 0;
 }
 
 export const calcNextMovement = (currentMovement: MovementState, distance: number): MovementState => {
-	let { gridX, gridY, offsetX, offsetY, currentDir, nextDir } = currentMovement;
+	let state = structuredClone(currentMovement);
 	while (distance > 0) {
-		if (currentDir === Direction.NONE) {
-			if (nextDir !== Direction.NONE) {
-				currentDir = nextDir;
-				nextDir = Direction.NONE;
+		if (state.currentDir === Direction.NONE) {
+			if (state.nextDir !== Direction.NONE) {
+				state.currentDir = state.nextDir;
+				state.nextDir = Direction.NONE;
+			}
+			else {
+				break;
+			}
+		}
+		const { axis, sign, opposite } = DIRECTION_CONFIG[state.currentDir as ActiveDirection];
+		const offsetAxis = axis === 'x' ? 'offsetX' : 'offsetY';
+		const otherOffsetAxis = axis === 'x' ? 'offsetY' : 'offsetX';
+		const offsetGridAxis = axis === 'x' ? 'gridX' : 'gridY';
+
+		state[otherOffsetAxis] = 0; // 移動方向と垂直なオフセットは常に 0
+
+		if (state.nextDir === opposite) {
+			state.currentDir = state.nextDir;
+			state.nextDir = Direction.NONE;
+			continue;
+		}
+
+		const relativeOffset = state[offsetAxis] * sign; // 移動方向に対する相対的なオフセット
+		if (relativeOffset < 0) {
+			// タイル中心に向かって移動
+			const distanceToCenter = -relativeOffset; // タイル中心までの距離
+			const moveDist = Math.min(distance, distanceToCenter);
+			state[offsetAxis] += sign * moveDist;
+			distance -= moveDist;
+		}
+		else if (relativeOffset === 0) {
+			// タイル中心にいる場合
+			if (hasConnection(state.gridX, state.gridY, state.nextDir)) {
+				state.currentDir = state.nextDir;
+				state.nextDir = Direction.NONE;
+			}
+			else if (hasConnection(state.gridX, state.gridY, state.currentDir)) {
+				const moveDist = Math.min(distance, 0.5);
+				state[offsetAxis] += sign * moveDist;
+				distance -= moveDist;
 			}
 			else {
 				distance = 0;
 			}
 		}
-		else if (currentDir === Direction.UP) {
-			offsetX = 0;
-			if (nextDir === Direction.DOWN) {
-				currentDir = Direction.DOWN;
-				nextDir = Direction.NONE;
-			}
-			else if (offsetY < 0) {
-				if (hasConnection(gridX, gridY, Direction.UP)) {
-					if (offsetY - distance >= -0.5) {
-						offsetY -= distance;
-						distance = 0;
-					}
-					else {
-						distance -= (offsetY + 0.5);
-						offsetY = 0.5;
-						gridY -= 1;
-					}
-				}
-				else {
-					offsetY = 0;
-				}
-			}
-			else if (offsetY === 0) {
-				if (hasConnection(gridX, gridY, nextDir)) {
-					currentDir = nextDir;
-					nextDir = Direction.NONE;
-				}
-				else if (hasConnection(gridX, gridY, Direction.UP)) {
-					if (distance <= 0.5) {
-						offsetY -= distance;
-						distance = 0;
-					}
-					else {
-						distance -= 0.5;
-						offsetY = 0.5;
-						gridY -= 1;
-					}
-				}
-				else {
-					distance = 0;
-				}
+		else {
+			// タイル中心から離れている場合
+			const distanceToEdge = 0.5 - relativeOffset; // タイル端までの距離
+			if (distance < distanceToEdge) {
+				state[offsetAxis] += sign * distance;
+				distance = 0;
 			}
 			else {
-				if (offsetY - distance >= 0) {
-					offsetY -= distance;
-					distance = 0;
-				}
-				else {
-					distance -= offsetY;
-					offsetY = 0;
-				}
-			}
-		}
-		else if (currentDir === Direction.DOWN) {
-			offsetX = 0;
-			if (nextDir === Direction.UP) {
-				currentDir = Direction.UP;
-				nextDir = Direction.NONE;
-			}
-			else if (offsetY > 0) {
-				if (hasConnection(gridX, gridY, Direction.DOWN)) {
-					if (offsetY + distance <= 0.5) {
-						offsetY += distance;
-						distance = 0;
-					}
-					else {
-						distance -= 0.5 - offsetY;
-						offsetY = -0.5;
-						gridY += 1;
-					}
-				}
-				else {
-					offsetY = 0;
-				}
-			}
-			else if (offsetY === 0) {
-				if (hasConnection(gridX, gridY, nextDir)) {
-					currentDir = nextDir;
-					nextDir = Direction.NONE;
-				}
-				else if (hasConnection(gridX, gridY, Direction.DOWN)) {
-					if (distance <= 0.5) {
-						offsetY += distance;
-						distance = 0;
-					}
-					else {
-						distance -= 0.5;
-						offsetY = -0.5;
-						gridY += 1;
-					}
-				}
-				else {
-					distance = 0;
-				}
-			}
-			else {
-				if (offsetY + distance <= 0) {
-					offsetY += distance;
-					distance = 0;
-				}
-				else {
-					distance -= -offsetY;
-					offsetY = 0;
-				}
-			}
-		}
-		else if (currentDir === Direction.LEFT) {
-			offsetY = 0;
-			if (nextDir === Direction.RIGHT) {
-				currentDir = Direction.RIGHT;
-				nextDir = Direction.NONE;
-			}
-			else if (offsetX < 0) {
-				if (hasConnection(gridX, gridY, Direction.LEFT)) {
-					if (offsetX - distance >= -0.5) {
-						offsetX -= distance;
-						distance = 0;
-					}
-					else {
-						distance -= (offsetX + 0.5);
-						offsetX = 0.5;
-						gridX -= 1;
-					}
-				}
-				else {
-					offsetX = 0;
-				}
-			}
-			else if (offsetX === 0) {
-				if (hasConnection(gridX, gridY, nextDir)) {
-					currentDir = nextDir;
-					nextDir = Direction.NONE;
-				}
-				else if (hasConnection(gridX, gridY, Direction.LEFT)) {
-					if (distance <= 0.5) {
-						offsetX -= distance;
-						distance = 0;
-					}
-					else {
-						distance -= 0.5;
-						offsetX = 0.5;
-						gridX -= 1;
-					}
-				}
-				else {
-					distance = 0;
-				}
-			}
-			else {
-				if (offsetX - distance >= 0) {
-					offsetX -= distance;
-					distance = 0;
-				}
-				else {
-					distance -= offsetX;
-					offsetX = 0;
-				}
-			}
-		}
-		else if (currentDir === Direction.RIGHT) {
-			offsetY = 0;
-			if (nextDir === Direction.LEFT) {
-				currentDir = Direction.LEFT;
-				nextDir = Direction.NONE;
-			}
-			else if (offsetX > 0) {
-				if (hasConnection(gridX, gridY, Direction.RIGHT)) {
-					if (offsetX + distance <= 0.5) {
-						offsetX += distance;
-						distance = 0;
-					}
-					else {
-						distance -= 0.5 - offsetX;
-						offsetX = -0.5;
-						gridX += 1;
-					}
-				}
-				else {
-					offsetX = 0;
-				}
-			}
-			else if (offsetX === 0) {
-				if (hasConnection(gridX, gridY, nextDir)) {
-					currentDir = nextDir;
-					nextDir = Direction.NONE;
-				}
-				else if (hasConnection(gridX, gridY, Direction.RIGHT)) {
-					if (distance <= 0.5) {
-						offsetX += distance;
-						distance = 0;
-					}
-					else {
-						distance -= 0.5;
-						offsetX = -0.5;
-						gridX += 1;
-					}
-				}
-				else {
-					distance = 0;
-				}
-			}
-			else {
-				if (offsetX + distance <= 0) {
-					offsetX += distance;
-					distance = 0;
-				}
-				else {
-					distance -= -offsetX;
-					offsetX = 0;
-				}
+				distance -= distanceToEdge;
+				state[offsetAxis] = -0.5 * sign;
+				state[offsetGridAxis] += sign;
 			}
 		}
 	}
-	return { gridX, gridY, offsetX, offsetY, currentDir, nextDir };
+	return state;
 }
 
 export const isValidDirection = (data: any): data is Direction => {
