@@ -62,7 +62,7 @@ export default class MainScene extends Phaser.Scene {
     }
 
     preload() {
-        for (let i = 1; i <= 5; i++) {
+        for (let i = 1; i <= 14; i++) {
             this.load.image(`wall${i}`, `/ghost-tag/tiles/wall_${i}.png`);
         }
         const roadTypes = ['ud', 'udl', 'udlr', 'udr', 'ul', 'ulr', 'ur', 'dl', 'dlr', 'dr', 'lr', 'default'];
@@ -83,6 +83,7 @@ export default class MainScene extends Phaser.Scene {
 
         this.load.image('marker_you', '/ghost-tag/sprites/marker_you.png');
         this.load.spritesheet('ghost_item_pick_up_effect', '/ghost-tag/effects/ghost_item_pick_up_effect.png', { frameWidth: 160, frameHeight: 160 });
+        this.load.spritesheet('human_item_pick_up_effect', '/ghost-tag/effects/human_item_pick_up_effect.png', { frameWidth: 80, frameHeight: 80 });
     }
 
     init(data: { roomId: string }) {
@@ -183,7 +184,14 @@ export default class MainScene extends Phaser.Scene {
         this.anims.create({
             key: 'ghost_item_pick_up_effect_anim',
             frames: this.anims.generateFrameNumbers('ghost_item_pick_up_effect', { start: 0, end: 7 }),
-            frameRate: 12,
+            frameRate: 15,
+            repeat: 0
+        });
+
+        this.anims.create({
+            key: 'human_item_pick_up_effect_anim',
+            frames: this.anims.generateFrameNumbers('human_item_pick_up_effect', { start: 0, end: 7 }),
+            frameRate: 30,
             repeat: 0
         });
 
@@ -335,6 +343,30 @@ export default class MainScene extends Phaser.Scene {
                         const itemState = itemPickupEvent.itemState;
                         const itemType = itemState.type;
                         const itemCategory = Core.ITEM_CONFIG[itemType].category;
+
+                        const { x, y } = Core.gridToCenterPixel(itemState.gridX, itemState.gridY);
+                        if (Core.ACTOR_CONFIG[event.role].type === Core.ActorType.HUMAN) {
+                            const effect = this.add.sprite(x, y, 'human_item_pick_up_effect').setOrigin(0.5, 0.5).setDepth(RenderDepth.EFFECT);
+                            effect.play('human_item_pick_up_effect_anim');
+                            effect.on('animationcomplete', () => {
+                                effect.destroy();
+                            });
+                        }
+                        else if (Core.ACTOR_CONFIG[event.role].type === Core.ActorType.GHOST) {
+                            const effect = this.add.sprite(x, y, 'ghost_item_pick_up_effect').setOrigin(0.5, 0.5).setDepth(RenderDepth.EFFECT);
+                            effect.play('ghost_item_pick_up_effect_anim');
+                            effect.on('animationcomplete', () => {
+                                effect.destroy();
+                            });
+                        }
+
+                        if (event.role === this.currentRole) {
+                            if (itemCategory === Core.ItemCategory.SCORE || itemCategory === Core.ItemCategory.SCORE_SPECIAL) {
+                                // 自分がスコアアイテムを取った場合はスコア加算のエフェクトを出す
+                            }
+                        }
+
+                        /*
                         switch (itemCategory) {
                             case Core.ItemCategory.SCORE:
                             case Core.ItemCategory.SCORE_SPECIAL:
@@ -352,7 +384,7 @@ export default class MainScene extends Phaser.Scene {
                             case Core.ItemCategory.STUN:
                                 // スタンアイテムのエフェクト
                                 break;
-                        }
+                        }*/
                         break;
                     case Core.GameEventType.PLAYER_TAGGED:
                         // TODO: エフェクト処理
