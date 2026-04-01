@@ -4,6 +4,9 @@ import { useEffect, useRef } from "react";;
 import * as Phaser from "phaser"
 import { WIDTH, HEIGHT } from "@shared/GhostTag/core";
 import BootScene from "./BootScene";
+import TitleScene from "./TitleScene";
+import HowToPlayScene from "./HowToPlayScene";
+import CreditScene from "./CreditScene";
 import LobbyScene from "./LobbyScene";
 import MainScene from "./MainScene";
 import ResultScene from "./ResultScene";
@@ -33,7 +36,7 @@ export default function GameContainer() {
                 height: HEIGHT,
             },
             parent: containerRef.current,
-            scene: [BootScene, LobbyScene, MainScene, ResultScene],
+            scene: [BootScene, TitleScene, HowToPlayScene, CreditScene, LobbyScene, MainScene, ResultScene],
             pixelArt: true,
             antialias: false,
             roundPixels: true

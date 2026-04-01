@@ -96,7 +96,7 @@ export enum GameEventType {
 	ITEM_PICK_UP = 0,
 	PLAYER_TAGGED = 1,
 	GAME_OVER = 2,
-	ITEM_USE = 3, // アイテム使用イベント（未実装）
+	ITEM_USE = 3,
 }
 
 export interface BaseGameEvent {
@@ -107,7 +107,7 @@ export interface ItemPickUpEvent extends BaseGameEvent {
 	type: GameEventType.ITEM_PICK_UP;
 	role: ActorRole;
 	itemState: ItemState;
-	earnedScore?: number;
+	earnedScore?: ItemScore; // アイテム取得で得たスコア（アイテムが得点アイテムの場合）
 }
 
 export interface PlayerTaggedEvent extends BaseGameEvent {
@@ -231,12 +231,14 @@ export const MAX_ITEMS_ON_FIELD = 15;
 // 得点
 export const SCORE_ITEM_NORMAL = 100;
 export const SCORE_ITEM_SPECIAL = 200;
-// スピードアップ中の得点アイテム取得時のボーナス
-export const SCORE_SPEED_UP_NORMAL = 50;
-export const SCORE_SPEED_UP_SPECIAL = 100;
+// スピードアップ中の得点アイテム取得
+export const SCORE_SPEED_UP_NORMAL = 150;
+export const SCORE_SPEED_UP_SPECIAL = 300;
 
 // 捕まえた時の得点
 export const SCORE_TAG = 700;
+
+export type ItemScore = typeof SCORE_ITEM_NORMAL | typeof SCORE_ITEM_SPECIAL | typeof SCORE_SPEED_UP_NORMAL | typeof SCORE_SPEED_UP_SPECIAL;
 
 export const ITEM_GET_DISTANCE = 0.75; // アイテム取得の距離
 export const TAG_DISTANCE = 0.75; // 捕まえた判定の距離
@@ -255,16 +257,16 @@ interface ActorConfig {
 	boostDuration: number;
 	stunAttackingDuration: number;
 	type: ActorType;
-	spritePrefix: string;
+	spriteName: string;
 	initialPos: { gridX: number, gridY: number };
 	buttonOriginPos: { x: number, y: number };
 }
 
 export const ACTOR_CONFIG: ActorConfig[] = [
-	{ role: ActorRole.HUMAN_1, name: "Human 1", speed: HUMAN_SPEED, boostSpeed: HUMAN_BOOST_SPEED, boostDuration: HUMAN_BOOST_DURATION, stunAttackingDuration: HUMAN_STUN_ATTACKING_DURATION, type: ActorType.HUMAN, spritePrefix: 'human_1', initialPos: { gridX: 1, gridY: 1 }, buttonOriginPos: { x: 90, y: 780 } },
-	{ role: ActorRole.HUMAN_2, name: "Human 2", speed: HUMAN_SPEED, boostSpeed: HUMAN_BOOST_SPEED, boostDuration: HUMAN_BOOST_DURATION, stunAttackingDuration: HUMAN_STUN_ATTACKING_DURATION, type: ActorType.HUMAN, spritePrefix: 'human_2', initialPos: { gridX: 40, gridY: 16 }, buttonOriginPos: { x: 90, y: 900 } },
-	{ role: ActorRole.GHOST_1, name: "Ghost 1", speed: GHOST_SPEED, boostSpeed: GHOST_BOOST_SPEED, boostDuration: GHOST_BOOST_DURATION, stunAttackingDuration: GHOST_STUN_ATTACKING_DURATION, type: ActorType.GHOST, spritePrefix: 'ghost_1', initialPos: { gridX: 40, gridY: 1 }, buttonOriginPos: { x: 1190, y: 780 } },
-	{ role: ActorRole.GHOST_2, name: "Ghost 2", speed: GHOST_SPEED, boostSpeed: GHOST_BOOST_SPEED, boostDuration: GHOST_BOOST_DURATION, stunAttackingDuration: GHOST_STUN_ATTACKING_DURATION, type: ActorType.GHOST, spritePrefix: 'ghost_2', initialPos: { gridX: 1, gridY: 16 }, buttonOriginPos: { x: 1190, y: 900 } }
+	{ role: ActorRole.HUMAN_1, name: "Human 1", speed: HUMAN_SPEED, boostSpeed: HUMAN_BOOST_SPEED, boostDuration: HUMAN_BOOST_DURATION, stunAttackingDuration: HUMAN_STUN_ATTACKING_DURATION, type: ActorType.HUMAN, spriteName: 'human_1', initialPos: { gridX: 1, gridY: 1 }, buttonOriginPos: { x: 90, y: 780 } },
+	{ role: ActorRole.HUMAN_2, name: "Human 2", speed: HUMAN_SPEED, boostSpeed: HUMAN_BOOST_SPEED, boostDuration: HUMAN_BOOST_DURATION, stunAttackingDuration: HUMAN_STUN_ATTACKING_DURATION, type: ActorType.HUMAN, spriteName: 'human_2', initialPos: { gridX: 40, gridY: 16 }, buttonOriginPos: { x: 90, y: 900 } },
+	{ role: ActorRole.GHOST_1, name: "Ghost 1", speed: GHOST_SPEED, boostSpeed: GHOST_BOOST_SPEED, boostDuration: GHOST_BOOST_DURATION, stunAttackingDuration: GHOST_STUN_ATTACKING_DURATION, type: ActorType.GHOST, spriteName: 'ghost_1', initialPos: { gridX: 40, gridY: 1 }, buttonOriginPos: { x: 1190, y: 780 } },
+	{ role: ActorRole.GHOST_2, name: "Ghost 2", speed: GHOST_SPEED, boostSpeed: GHOST_BOOST_SPEED, boostDuration: GHOST_BOOST_DURATION, stunAttackingDuration: GHOST_STUN_ATTACKING_DURATION, type: ActorType.GHOST, spriteName: 'ghost_2', initialPos: { gridX: 1, gridY: 16 }, buttonOriginPos: { x: 1190, y: 900 } }
 ];
 
 export const HUMAN_ROLES = ACTOR_CONFIG.filter(c => c.type === ActorType.HUMAN).map(c => c.role);
@@ -305,18 +307,21 @@ export interface DirectionConfig {
 	dy: -1 | 0 | 1;
 	suffix: 'u' | 'd' | 'l' | 'r';
 	opposite: ActiveDirection;
+	frameOffset: number;
+	lightPixelOffsetX: number;
+	lightPixelOffsetY: number;
 }
 
 export const DIRECTION_CONFIG: Record<ActiveDirection, DirectionConfig> = {
-	[Direction.UP]: { axis: 'y', sign: -1, dx: 0, dy: -1, suffix: 'u', opposite: Direction.DOWN },
-	[Direction.DOWN]: { axis: 'y', sign: 1, dx: 0, dy: 1, suffix: 'd', opposite: Direction.UP },
-	[Direction.LEFT]: { axis: 'x', sign: -1, dx: -1, dy: 0, suffix: 'l', opposite: Direction.RIGHT },
-	[Direction.RIGHT]: { axis: 'x', sign: 1, dx: 1, dy: 0, suffix: 'r', opposite: Direction.LEFT }
+	[Direction.UP]: { axis: 'y', sign: -1, dx: 0, dy: -1, suffix: 'u', opposite: Direction.DOWN, frameOffset: 0, lightPixelOffsetX: 13, lightPixelOffsetY: 18 },
+	[Direction.DOWN]: { axis: 'y', sign: 1, dx: 0, dy: 1, suffix: 'd', opposite: Direction.UP, frameOffset: 2, lightPixelOffsetX: 24, lightPixelOffsetY: 30 },
+	[Direction.LEFT]: { axis: 'x', sign: -1, dx: -1, dy: 0, suffix: 'l', opposite: Direction.RIGHT, frameOffset: 4, lightPixelOffsetX: 11, lightPixelOffsetY: 21 },
+	[Direction.RIGHT]: { axis: 'x', sign: 1, dx: 1, dy: 0, suffix: 'r', opposite: Direction.LEFT, frameOffset: 6, lightPixelOffsetX: 31, lightPixelOffsetY: 21 },
 };
 
 
 export const hasConnection = (gridX: number, gridY: number, dir: Direction): boolean => {
-	if(dir === Direction.NONE) return false;
+	if (dir === Direction.NONE) return false;
 	const { dx, dy } = DIRECTION_CONFIG[dir];
 	return MAP[gridY + dy]?.[gridX + dx] === 0;
 }
@@ -517,7 +522,7 @@ export const movementToPixel = (movement: MovementState): { x: number, y: number
 }
 
 export const calcSpeed = (role: ActorRole, status: ActorStatus, isStunned: boolean): number => {
-	if(isStunned || status === ActorStatus.RESPAWN) {
+	if (isStunned || status === ActorStatus.RESPAWN) {
 		return 0;
 	}
 	const config = ACTOR_CONFIG[role];

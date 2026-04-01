@@ -13,7 +13,7 @@ export default class ResultScene extends Phaser.Scene {
 		this.scores = data.scores;
 	}
 	create() {
-		this.cameras.main.fadeIn(200, 0, 0, 0);
+		this.cameras.main.fadeIn(100, 0, 0, 0);
 
 		const humanScore = this.scores.filter(score => ACTOR_CONFIG[score.role].type === ActorType.HUMAN).reduce((sum, score) => sum + score.score, 0);
 		const ghostScore = this.scores.filter(score => ACTOR_CONFIG[score.role].type === ActorType.GHOST).reduce((sum, score) => sum + score.score, 0);

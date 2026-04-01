@@ -249,9 +249,9 @@ export class GameRoom {
 							let pickedUp = false;
 							if (actorType === Core.ActorType.GHOST && itemCategory === Core.ItemCategory.SCORE) {
 								pickedUp = true;
-								let scoreToAdd;
+								let scoreToAdd: Core.ItemScore;
 								if (actor.status === Core.ActorStatus.SPEED_UP) {
-									scoreToAdd = Core.SCORE_ITEM_SPECIAL;
+									scoreToAdd = Core.SCORE_SPEED_UP_NORMAL;
 								} else {
 									scoreToAdd = Core.SCORE_ITEM_NORMAL;
 								}
@@ -265,11 +265,11 @@ export class GameRoom {
 							}
 							if (actorType === Core.ActorType.GHOST && itemCategory === Core.ItemCategory.SCORE_SPECIAL) {
 								pickedUp = true;
-								let scoreToAdd;
+								let scoreToAdd: Core.ItemScore;
 								if (actor.status === Core.ActorStatus.SPEED_UP) {
-									scoreToAdd = Core.SCORE_ITEM_SPECIAL;
+									scoreToAdd = Core.SCORE_SPEED_UP_SPECIAL;
 								} else {
-									scoreToAdd = Core.SCORE_ITEM_NORMAL;
+									scoreToAdd = Core.SCORE_ITEM_SPECIAL;
 								}
 								actor.score += scoreToAdd;
 								events.push({
@@ -291,7 +291,6 @@ export class GameRoom {
 									type: Core.GameEventType.ITEM_PICK_UP,
 									role: actor.role,
 									itemState: item,
-									earnedScore: 0,
 								})
 							}
 
@@ -325,14 +324,7 @@ export class GameRoom {
 						if (distance <= Core.TAG_DISTANCE) {
 							humanActor.score += Core.SCORE_TAG;
 							const respawnPosition = this.randomGhostSpawnPosition();
-							ghostActor.movement = {
-								gridX: respawnPosition.gridX,
-								gridY: respawnPosition.gridY,
-								offsetX: 0,
-								offsetY: 0,
-								currentDir: Core.Direction.NONE,
-								nextDir: Core.Direction.NONE
-							};
+
 							ghostActor.status = Core.ActorStatus.RESPAWN;
 							ghostActor.statusTimer = Core.RESPAWN_DURATION;
 							ghostActor.inventory = null; // 捕まったらアイテムも消える
@@ -350,6 +342,14 @@ export class GameRoom {
 									gridX: respawnPosition.gridX,
 									gridY: respawnPosition.gridY
 								}
+							};
+							ghostActor.movement = {
+								gridX: respawnPosition.gridX,
+								gridY: respawnPosition.gridY,
+								offsetX: 0,
+								offsetY: 0,
+								currentDir: Core.Direction.NONE,
+								nextDir: Core.Direction.NONE
 							};
 							events.push(taggedEvent);
 						}

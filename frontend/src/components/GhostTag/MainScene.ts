@@ -15,6 +15,8 @@ enum RenderDepth {
 
 export default class MainScene extends Phaser.Scene {
     private static readonly EMIT_INTERVAL = 1000 / 20; // 20 FPS
+    private static readonly FRAME_OFFSET_BOOST = 8;
+    private static readonly FRAME_OFFSET_STUNNED = 16;
 
     private socket!: Socket | null;
 
@@ -62,28 +64,6 @@ export default class MainScene extends Phaser.Scene {
     }
 
     preload() {
-        for (let i = 1; i <= 14; i++) {
-            this.load.image(`wall${i}`, `/ghost-tag/tiles/wall_${i}.png`);
-        }
-        const roadTypes = ['ud', 'udl', 'udlr', 'udr', 'ul', 'ulr', 'ur', 'dl', 'dlr', 'dr', 'lr', 'default'];
-        for (const roadType of roadTypes) {
-            this.load.image(`road_${roadType}`, `/ghost-tag/tiles/road_${roadType}.png`);
-        }
-        const dirs = ['u', 'd', 'l', 'r'];
-        for (const dir of dirs) {
-            for (const { spritePrefix } of Object.values(Core.ACTOR_CONFIG)) {
-                this.load.image(`${spritePrefix}_${dir}_a`, `/ghost-tag/sprites/${spritePrefix}_${dir}_a.png`);
-                this.load.image(`${spritePrefix}_${dir}_b`, `/ghost-tag/sprites/${spritePrefix}_${dir}_b.png`);
-            }
-        }
-
-        Core.ITEM_CONFIG.forEach(({ spriteName }) => {
-            this.load.image(spriteName, `/ghost-tag/sprites/${spriteName}.png`);
-        });
-
-        this.load.image('marker_you', '/ghost-tag/sprites/marker_you.png');
-        this.load.spritesheet('ghost_item_pick_up_effect', '/ghost-tag/effects/ghost_item_pick_up_effect.png', { frameWidth: 160, frameHeight: 160 });
-        this.load.spritesheet('human_item_pick_up_effect', '/ghost-tag/effects/human_item_pick_up_effect.png', { frameWidth: 80, frameHeight: 80 });
     }
 
     init(data: { roomId: string }) {
@@ -105,15 +85,15 @@ export default class MainScene extends Phaser.Scene {
         this.isTransitioningToResultScene = false;
     }
     create() {
-        this.cameras.main.fadeIn(200, 0, 0, 0);
+        this.cameras.main.fadeIn(100, 0, 0, 0);
         this.cursors = this.input.keyboard?.createCursorKeys();
         this.keyW = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyA = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyS = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.keyD = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-        this.keyEsc = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
         this.keySpace = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
         this.keyEnter = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+        this.keyEsc = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
 
         this.socket = this.registry.get('socket') as Socket;
         if (!this.socket) {
@@ -122,7 +102,7 @@ export default class MainScene extends Phaser.Scene {
         }
 
         this.keyEsc?.on('down', () => {
-            this.scene.start('LobbyScene');
+            this.scene.start('TitleScene');
         });
 
 
@@ -160,15 +140,35 @@ export default class MainScene extends Phaser.Scene {
             this.actorItemStateTexts[role] = itemStateText;
         }
 
-        for (const { role, spritePrefix } of Object.values(Core.ACTOR_CONFIG)) {
-            const sprite = this.add.sprite(0, 0, `${spritePrefix}_d_a`).setOrigin(0, 0);
+        // キャラクターアニメーション作成
+        for (const { spriteName } of Object.values(Core.ACTOR_CONFIG)) {
+            for (const { suffix, frameOffset } of Object.values(Core.DIRECTION_CONFIG)) {
+                this.anims.create({
+                    key: `${spriteName}_${suffix}_normal`,
+                    frames: this.anims.generateFrameNumbers(spriteName, { start: frameOffset, end: frameOffset + 1 }),
+                    frameRate: 4,
+                    repeat: -1
+                });
+                this.anims.create({
+                    key: `${spriteName}_${suffix}_boost`,
+                    frames: this.anims.generateFrameNumbers(spriteName, {
+                        start: frameOffset + MainScene.FRAME_OFFSET_BOOST, end: frameOffset + MainScene.FRAME_OFFSET_BOOST + 1
+                    }),
+                    frameRate: 6,
+                    repeat: -1
+                });
+            }
+        }
+        for (const { role, spriteName } of Object.values(Core.ACTOR_CONFIG)) {
+            const sprite = this.add.sprite(0, 0, `${spriteName}`).setOrigin(0, 0);
+            sprite.setFrame(2); // 下向き
             const depth = Core.ACTOR_CONFIG[role].type === Core.ActorType.HUMAN ? RenderDepth.ACTOR_HUMAN : RenderDepth.ACTOR_GHOST;
             sprite.setDepth(depth);
             sprite.setVisible(false);
             this.actorSprites[role] = sprite;
         }
 
-        this.markerYouSprite = this.add.sprite(0, 0, 'marker_you').setOrigin(0, 0).setDepth(RenderDepth.MARKER);
+        this.markerYouSprite = this.add.sprite(0, 0, 'marker_you').setOrigin(0, 0).setDepth(RenderDepth.MARKER).setScale(1.0);
         this.markerYouSprite.setVisible(false);
 
         this.markerOffsetY = -Core.TILE_SIZE + 5;
@@ -258,12 +258,23 @@ export default class MainScene extends Phaser.Scene {
                     newRole = role;
                 }
                 this.currentActorControllers[role] = snapshot.actors[role].controller;
+                // もし誰かがスタンアイテムを使用したならば，効果音を鳴らす
+                if(this.currentActorStatuses[role] !== Core.ActorStatus.STUN_ATTACKING && snapshot.actors[role].status === Core.ActorStatus.STUN_ATTACKING) {
+                    this.sound.play('stun');
+                }
+                // もし自分が加速アイテムを使用したならば，効果音を鳴らす
+                if(this.currentActorStatuses[role] !== Core.ActorStatus.SPEED_UP && snapshot.actors[role].status === Core.ActorStatus.SPEED_UP && role === newRole) {
+                    this.sound.play('boost');
+                }
                 this.currentActorStatuses[role] = snapshot.actors[role].status;
                 this.currentActorInventories[role] = snapshot.actors[role].inventory;
                 this.currentActorStatusTimers[role] = snapshot.actors[role].statusTimer;
             }
             latestRoomTimer = snapshot.roomTimer;
-            this.currentRoomPhase = snapshot.roomPhase;
+            // ゲーム中からは遷移させない（イベントとしてリザルトに飛ぶので）
+            if (this.currentRoomPhase !== Core.RoomPhase.PLAYING) {
+                this.currentRoomPhase = snapshot.roomPhase;
+            }
             events.push(...snapshot.events);
 
             // アイテムのスプライトを更新
@@ -338,70 +349,146 @@ export default class MainScene extends Phaser.Scene {
             events.forEach(event => {
                 switch (event.type) {
                     case Core.GameEventType.ITEM_PICK_UP:
-                        // アイテム取得のエフェクトなどをここに書く
-                        const itemPickupEvent = event as Core.ItemPickUpEvent;
-                        const itemState = itemPickupEvent.itemState;
-                        const itemType = itemState.type;
-                        const itemCategory = Core.ITEM_CONFIG[itemType].category;
+                        {
+                            this.sound.play('item_get');
+                            const itemPickupEvent = event as Core.ItemPickUpEvent;
+                            const itemState = itemPickupEvent.itemState;
+                            const itemType = itemState.type;
+                            const itemCategory = Core.ITEM_CONFIG[itemType].category;
 
-                        const { x, y } = Core.gridToCenterPixel(itemState.gridX, itemState.gridY);
-                        if (Core.ACTOR_CONFIG[event.role].type === Core.ActorType.HUMAN) {
-                            const effect = this.add.sprite(x, y, 'human_item_pick_up_effect').setOrigin(0.5, 0.5).setDepth(RenderDepth.EFFECT);
-                            effect.play('human_item_pick_up_effect_anim');
-                            effect.on('animationcomplete', () => {
-                                effect.destroy();
-                            });
-                        }
-                        else if (Core.ACTOR_CONFIG[event.role].type === Core.ActorType.GHOST) {
-                            const effect = this.add.sprite(x, y, 'ghost_item_pick_up_effect').setOrigin(0.5, 0.5).setDepth(RenderDepth.EFFECT);
-                            effect.play('ghost_item_pick_up_effect_anim');
-                            effect.on('animationcomplete', () => {
-                                effect.destroy();
-                            });
-                        }
-
-                        if (event.role === this.currentRole) {
-                            if (itemCategory === Core.ItemCategory.SCORE || itemCategory === Core.ItemCategory.SCORE_SPECIAL) {
-                                // 自分がスコアアイテムを取った場合はスコア加算のエフェクトを出す
+                            const { x, y } = Core.gridToCenterPixel(itemState.gridX, itemState.gridY);
+                            if (Core.ACTOR_CONFIG[event.role].type === Core.ActorType.HUMAN) {
+                                const effect = this.add.sprite(x, y, 'human_item_pick_up_effect').setOrigin(0.5, 0.5).setDepth(RenderDepth.EFFECT);
+                                effect.play('human_item_pick_up_effect_anim');
+                                effect.on('animationcomplete', () => {
+                                    effect.destroy();
+                                });
                             }
-                        }
-
-                        /*
-                        switch (itemCategory) {
-                            case Core.ItemCategory.SCORE:
-                            case Core.ItemCategory.SCORE_SPECIAL:
-                                const { x, y } = Core.gridToCenterPixel(itemState.gridX, itemState.gridY);
+                            else if (Core.ACTOR_CONFIG[event.role].type === Core.ActorType.GHOST) {
                                 const effect = this.add.sprite(x, y, 'ghost_item_pick_up_effect').setOrigin(0.5, 0.5).setDepth(RenderDepth.EFFECT);
                                 effect.play('ghost_item_pick_up_effect_anim');
                                 effect.on('animationcomplete', () => {
                                     effect.destroy();
                                 });
-                                // TODO: 自分ならスコア加算のエフェクトを出す
-                                break;
-                            case Core.ItemCategory.SPEED_UP:
-                                // スピードアップアイテムのエフェクト
-                                break;
-                            case Core.ItemCategory.STUN:
-                                // スタンアイテムのエフェクト
-                                break;
-                        }*/
-                        break;
-                    case Core.GameEventType.PLAYER_TAGGED:
-                        // TODO: エフェクト処理
-                        if (event.taggedRole === this.currentRole) {
-                            this.localMovement = { ...event.respawnPosition, currentDir: Core.Direction.NONE, nextDir: Core.Direction.NONE, offsetX: 0, offsetY: 0 };
+                            }
+
+                            if (event.role === this.currentRole) {
+                                if (itemCategory === Core.ItemCategory.SCORE || itemCategory === Core.ItemCategory.SCORE_SPECIAL) {
+                                    // 自分がスコアアイテムを取った場合スコア加算のエフェクトを出す
+                                    let key = '';
+                                    switch (itemPickupEvent.earnedScore) {
+                                        case Core.SCORE_ITEM_NORMAL:
+                                            key = 'score_100';
+                                            break;
+                                        case Core.SCORE_ITEM_SPECIAL:
+                                            key = 'score_150';
+                                            break;
+                                        case Core.SCORE_SPEED_UP_NORMAL:
+                                            key = 'score_200';
+                                            break;
+                                        case Core.SCORE_SPEED_UP_SPECIAL:
+                                            key = 'score_300';
+                                            break;
+                                    }
+                                    this.spawnScoreEffect(x, y, key);
+                                }
+                            }
+                            break;
                         }
-                        break;
+                    case Core.GameEventType.PLAYER_TAGGED:
+                        {
+                            this.sound.play('tag');
+                            const { x, y } = Core.gridToCenterPixel(event.taggedPosition.gridX, event.taggedPosition.gridY);
+                            const directions = [{ x: -1, y: -1 }, { x: 1, y: -1 }, { x: -1, y: 1 }, { x: 1, y: 1 }];
+                            const taggedSprite = this.actorSprites[event.taggedRole];
+                            if (taggedSprite === null) {
+                                console.error(`Tagged sprite not found for role ${event.taggedRole}`);
+                                break;
+                            }
+                            const spriteKey = taggedSprite.texture.key;
+
+                            directions.forEach((dir) => {
+                                let frame: number;
+                                if (dir.x === -1) {
+                                    frame = Core.DIRECTION_CONFIG[Core.Direction.LEFT].frameOffset;
+                                }
+                                else {
+                                    frame = Core.DIRECTION_CONFIG[Core.Direction.RIGHT].frameOffset;
+                                }
+                                const characterEffect = this.add.sprite(x, y, spriteKey, frame).setDepth(RenderDepth.EFFECT).setOrigin(0.5, 0.5).setAlpha(1.0);
+                                this.tweens.add({
+                                    targets: characterEffect,
+                                    x: characterEffect.x + dir.x * 60,
+                                    y: characterEffect.y + dir.y * 60,
+                                    alpha: 0.0,
+                                    scale: 1.5,
+                                    duration: 1000,
+                                    ease: 'Linear',
+                                    onComplete: () => {
+                                        characterEffect.destroy();
+                                    }
+                                });
+                            });
+                            if (this.currentRole === null || Core.ACTOR_CONFIG[this.currentRole].type !== Core.ActorType.HUMAN) {
+                                // 復活エフェクト
+                                const { x: respawnX, y: respawnY } = Core.gridToCenterPixel(event.respawnPosition.gridX, event.respawnPosition.gridY);
+                                directions.forEach(dir => {
+                                    // 復活エフェクト
+                                    let frame: number;
+                                    if (dir.x === -1) {
+                                        frame = Core.DIRECTION_CONFIG[Core.Direction.RIGHT].frameOffset;
+                                    }
+                                    else {
+                                        frame = Core.DIRECTION_CONFIG[Core.Direction.LEFT].frameOffset;
+                                    }
+                                    const RESPAWN_EFFECT_DURATION = 1500;
+                                    this.time.delayedCall(Core.RESPAWN_DURATION - RESPAWN_EFFECT_DURATION, () => {
+                                        if (this.scene.isActive()) {
+                                            const characterEffect = this.add.sprite(respawnX + dir.x * 60, respawnY + dir.y * 60, spriteKey, frame).setDepth(RenderDepth.EFFECT).setOrigin(0.5, 0.5).setAlpha(0.0).setScale(1.5);
+                                            this.tweens.add({
+                                                targets: characterEffect,
+                                                x: respawnX,
+                                                y: respawnY,
+                                                alpha: 1.0,
+                                                scale: 1.0,
+                                                duration: RESPAWN_EFFECT_DURATION,
+                                                ease: 'Linear',
+                                                onComplete: () => {
+                                                    this.tweens.add({
+                                                        targets: characterEffect,
+                                                        alpha: 0.0,
+                                                        duration: 100,
+                                                        ease: 'Linear',
+                                                        onComplete: () => {
+                                                            characterEffect.destroy();
+                                                        },
+                                                    });
+                                                },
+                                            });
+                                        }
+                                    });
+                                });
+                            }
+                            if (event.taggedRole === this.currentRole) {
+                                this.localMovement = { ...event.respawnPosition, currentDir: Core.Direction.NONE, nextDir: Core.Direction.NONE, offsetX: 0, offsetY: 0 };
+                            }
+                            if (event.taggerRole === this.currentRole) {
+                                this.spawnScoreEffect(x, y, 'score_700');
+                            }
+                            break;
+                        }
                     case Core.GameEventType.GAME_OVER:
-                        // 結果画面に遷移
-                        this.isTransitioningToResultScene = true;
-                        this.input.enabled = false; // 入力を無効化して多重遷移を防止
-                        this.cameras.main.fadeOut(100, 0, 0, 0);
-                        const scores = (event as Core.GameOverEvent).scores;
-                        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-                            this.scene.start('ResultScene', { roomId: this.roomId, scores });
-                        });
-                        return; // 以降の処理は行わない
+                        {
+                            // 結果画面に遷移
+                            this.isTransitioningToResultScene = true;
+                            this.input.enabled = false; // 入力を無効化して多重遷移を防止
+                            this.cameras.main.fadeOut(100, 0, 0, 0);
+                            const scores = (event as Core.GameOverEvent).scores;
+                            this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+                                this.scene.start('ResultScene', { roomId: this.roomId, scores });
+                            });
+                            return; // 以降の処理は行わない
+                        }
                 }
             }
             );
@@ -548,7 +635,7 @@ export default class MainScene extends Phaser.Scene {
         }
 
         // ライトの描画
-        if (this.currentRoomPhase === Core.RoomPhase.PLAYING) {
+        if (this.currentRoomPhase === Core.RoomPhase.PLAYING && !isHumanStunned) {
             this.visionMask.clear();
             this.visionMask.fillStyle(0x000000, 1);
             for (const humanRole of Core.HUMAN_ROLES) {
@@ -558,7 +645,7 @@ export default class MainScene extends Phaser.Scene {
                     const points = this.calcLightPoints(visualState);
                     if (points) {
                         lightGraphics.clear();
-                        lightGraphics.fillStyle(0xffff55, 0.4);
+                        lightGraphics.fillStyle(0xffffdd, 0.2);
                         lightGraphics.fillPoints(points);
                         this.visionMask.fillPoints(points);
                     }
@@ -575,7 +662,7 @@ export default class MainScene extends Phaser.Scene {
             this.visionMask.clear();
         }
 
-        for (const { role, name, spritePrefix } of Object.values(Core.ACTOR_CONFIG)) {
+        for (const { role, name, spriteName } of Object.values(Core.ACTOR_CONFIG)) {
             const visualState = this.visualActorStates[role];
             const sprite = this.actorSprites[role];
             const joinButton = this.actorJoinButtons[role];
@@ -645,33 +732,39 @@ export default class MainScene extends Phaser.Scene {
                         sprite.setVisible(true);
                         break;
                     case Core.ActorStatus.SPEED_UP:
-                        // TODO: textureKey を変える
                         sprite.setVisible(true);
                         break;
                     case Core.ActorStatus.RESPAWN:
-                        // TODO: エフェクト入れる ここかは微妙
                         sprite.setVisible(false);
                         break;
                 }
-                if (isStunned[role]) {
-                    // TODO: スタン状態の見た目を変える
-                    // Speed up より優先される
-                }
+
+                const dir = visualState.dir === Core.Direction.NONE ? Core.Direction.DOWN : visualState.dir; // 方向がない場合は下向きとみなす
+                const dirConfig = Core.DIRECTION_CONFIG[dir];
+
                 const { x, y } = visualState;
                 sprite.setPosition(x, y);
-
-                let textureKey = '';
-                if (visualState.dir === Core.Direction.UP) textureKey = `${spritePrefix}_u`;
-                else if (visualState.dir === Core.Direction.DOWN) textureKey = `${spritePrefix}_d`;
-                else if (visualState.dir === Core.Direction.LEFT) textureKey = `${spritePrefix}_l`;
-                else if (visualState.dir === Core.Direction.RIGHT) textureKey = `${spritePrefix}_r`;
-                else textureKey = `${spritePrefix}_d`;
-
-                const textureSuffix = Math.floor((time / 200) % 2) === 0 ? '_a' : '_b';
-                sprite.setTexture(textureKey + textureSuffix);
-
-                // もし プレイ中 かつ プレイヤーが Human かつ 描画中の役が Ghost なら，ライトの当たる範囲のみ見えるようにする
-                if (this.currentRoomPhase === Core.RoomPhase.PLAYING && this.currentRole !== null && Core.ACTOR_CONFIG[this.currentRole].type === Core.ActorType.HUMAN && Core.ACTOR_CONFIG[role].type === Core.ActorType.GHOST) {
+                if (isStunned[role]) {
+                    // Stun は Speed up より優先される
+                    sprite.stop();
+                    sprite.setFrame(dirConfig.frameOffset + MainScene.FRAME_OFFSET_STUNNED);
+                }
+                else if ((this.currentRoomPhase === Core.RoomPhase.PLAYING || this.currentRoomPhase === Core.RoomPhase.WAITING) && visualState.dir !== Core.Direction.NONE) {
+                    // 動いているときはアニメーションさせる
+                    const animKeyBase = spriteName + '_' + dirConfig.suffix + '_';
+                    if (status === Core.ActorStatus.SPEED_UP) {
+                        sprite.anims.play(animKeyBase + 'boost', true);
+                    }
+                    else {
+                        sprite.anims.play(animKeyBase + 'normal', true);
+                    }
+                }
+                else {
+                    sprite.stop();
+                    sprite.setFrame(dirConfig.frameOffset);
+                }
+                // もし プレイ中 かつ プレイヤーが Human かつ 描画中の役が Ghost かつ Stun 状態でないなら，ライトの当たる範囲のみ見えるようにする
+                if (this.currentRoomPhase === Core.RoomPhase.PLAYING && this.currentRole !== null && Core.ACTOR_CONFIG[this.currentRole].type === Core.ActorType.HUMAN && Core.ACTOR_CONFIG[role].type === Core.ActorType.GHOST && !isStunned[role]) {
                     const mask = this.visionMask.createGeometryMask();
                     sprite.setMask(mask);
                 }
@@ -682,12 +775,39 @@ export default class MainScene extends Phaser.Scene {
         }
     }
 
+    private spawnScoreEffect(x: number, y: number, key: string) {
+        const scoreEffect = this.add.image(x, y, key);
+        scoreEffect.setOrigin(0.5, 1.0).setDepth(RenderDepth.EFFECT).setAlpha(0.0).setScale(2.0);
+        this.tweens.add({
+            targets: scoreEffect,
+            y: scoreEffect.y - 30,
+            alpha: { from: 0.0, to: 1.0 },
+            duration: 700,
+            ease: 'Cubic.easeOut',
+            onComplete: () => {
+                this.tweens.add({
+                    targets: scoreEffect,
+                    alpha: 0.0,
+                    duration: 400,
+                    ease: 'Linear',
+                    onComplete: () => {
+                        scoreEffect.destroy();
+                    }
+                });
+            }
+        });
+    }
+
+
     private calcLightPoints(visualState: Core.VisualActorState): Phaser.Math.Vector2[] | null {
         const dir = visualState.dir === Core.Direction.NONE ? Core.Direction.DOWN : visualState.dir; // 方向がない場合は下向きとみなす
-        const { dx, dy } = Core.DIRECTION_CONFIG[dir];
+        const { dx, dy, axis, lightPixelOffsetX, lightPixelOffsetY } = Core.DIRECTION_CONFIG[dir];
 
         const cx = visualState.x + Core.TILE_SIZE / 2;
         const cy = visualState.y + Core.TILE_SIZE / 2;
+
+        const lightX = visualState.x + lightPixelOffsetX;
+        const lightY = visualState.y + lightPixelOffsetY;
 
         let gridX = Math.floor((cx - Core.MAP_ORIGIN_X) / Core.TILE_SIZE);
         let gridY = Math.floor((cy - Core.MAP_ORIGIN_Y) / Core.TILE_SIZE);
@@ -703,19 +823,41 @@ export default class MainScene extends Phaser.Scene {
         }
         const reachGridCenter = Core.gridToCenterPixel(gridX, gridY);
 
-        const leftCornerVec = { x: (dx + dy) * Core.TILE_SIZE / 2, y: (-dx + dy) * Core.TILE_SIZE / 2 };
-        const rightCornerVec = { x: (dx - dy) * Core.TILE_SIZE / 2, y: (dx + dy) * Core.TILE_SIZE / 2 };
+        const leftCornerVec = { x: dx + dy, y: -dx + dy };
+        const rightCornerVec = { x: dx - dy, y: dx + dy };
 
         const { x: rx, y: ry } = reachGridCenter;
+        const farLeft = { x: rx + leftCornerVec.x * Core.TILE_SIZE / 2, y: ry + leftCornerVec.y * Core.TILE_SIZE / 2 }; // 進行方向から見て左奥角
+        const farRight = { x: rx + rightCornerVec.x * Core.TILE_SIZE / 2, y: ry + rightCornerVec.y * Core.TILE_SIZE / 2 }; // 進行方向から見て右奥角
 
-        const centerOffset = {x: (dx * Core.TILE_SIZE / 4), y: (dy * Core.TILE_SIZE / 4)};
+        const distToWallLeft = Math.abs(axis === 'x' ? lightY - farLeft.y : lightX - farLeft.x);
+        const distToWallRight = Math.abs(axis === 'x' ? lightY - farRight.y : lightX - farRight.x);
+        const distToWallFront = Math.abs(axis === 'x' ? lightX - farLeft.x : lightY - farLeft.y);
 
-        return [
-            new Phaser.Math.Vector2(cx + centerOffset.x, cy + centerOffset.y),
-            new Phaser.Math.Vector2(cx + leftCornerVec.x, cy + leftCornerVec.y),
-            new Phaser.Math.Vector2(rx + leftCornerVec.x, ry + leftCornerVec.y),
-            new Phaser.Math.Vector2(rx + rightCornerVec.x, ry + rightCornerVec.y),
-            new Phaser.Math.Vector2(cx + rightCornerVec.x, cy + rightCornerVec.y),
+        const points = [
+            new Phaser.Math.Vector2(lightX, lightY),
         ];
+
+        if (distToWallFront > distToWallLeft) {
+            const nearLeft = { x: lightX + leftCornerVec.x * distToWallLeft, y: lightY + leftCornerVec.y * distToWallLeft };
+            points.push(new Phaser.Math.Vector2(nearLeft.x, nearLeft.y));
+            points.push(new Phaser.Math.Vector2(farLeft.x, farLeft.y));
+        }
+        else {
+            const leftPoint = { x: lightX + leftCornerVec.x * distToWallFront, y: lightY + leftCornerVec.y * distToWallFront };
+            points.push(new Phaser.Math.Vector2(leftPoint.x, leftPoint.y));
+        }
+
+        if (distToWallFront > distToWallRight) {
+            const nearRight = { x: lightX + rightCornerVec.x * distToWallRight, y: lightY + rightCornerVec.y * distToWallRight };
+            points.push(new Phaser.Math.Vector2(farRight.x, farRight.y));
+            points.push(new Phaser.Math.Vector2(nearRight.x, nearRight.y));
+        }
+        else {
+            const rightPoint = { x: lightX + rightCornerVec.x * distToWallFront, y: lightY + rightCornerVec.y * distToWallFront };
+            points.push(new Phaser.Math.Vector2(rightPoint.x, rightPoint.y));
+        }
+
+        return points;
     }
 }
