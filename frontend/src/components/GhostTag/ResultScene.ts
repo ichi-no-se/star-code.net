@@ -13,7 +13,7 @@ export default class ResultScene extends Phaser.Scene {
 		this.scores = data.scores;
 	}
 	create() {
-		this.cameras.main.fadeIn(100, 0, 0, 0);
+		this.cameras.main.fadeIn(400, 0, 0, 0);
 
 		const humanScore = this.scores.filter(score => ACTOR_CONFIG[score.role].type === ActorType.HUMAN).reduce((sum, score) => sum + score.score, 0);
 		const ghostScore = this.scores.filter(score => ACTOR_CONFIG[score.role].type === ActorType.GHOST).reduce((sum, score) => sum + score.score, 0);
@@ -34,7 +34,7 @@ export default class ResultScene extends Phaser.Scene {
 			resultText = "It's a Tie!";
 			color = '#ddd';
 		}
-		
+
 		this.add.text(WIDTH / 2, 100, 'Game Over', { fontSize: '96px', color: '#eee', fontFamily: FONT_FAMILY_EN }).setOrigin(0.5);
 		this.add.text(WIDTH / 2, 250, resultText, { fontSize: '80px', color: color, fontFamily: FONT_FAMILY_EN }).setOrigin(0.5);
 

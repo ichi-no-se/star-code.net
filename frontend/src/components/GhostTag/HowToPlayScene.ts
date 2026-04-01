@@ -14,7 +14,7 @@ export default class HowToPlayScene extends Phaser.Scene {
 		this.add.text(100, 270, 'アイテム使用：スペースキー / エンターキー', { fontFamily: FONT_FAMILY_JA, fontSize: '32px', color: '#eee' });
 
 		this.add.text(50, 330, 'ルール', { fontFamily: FONT_FAMILY_JA, fontSize: '48px', color: '#eee' });
-		this.add.text(100, 400, '人間：ゴーストを捕まえる（＋７００点）', { fontFamily: FONT_FAMILY_JA, fontSize: '32px', color: '#eee' });
+		this.add.text(100, 400, '人間：ゴーストを捕まえる（＋５００点）', { fontFamily: FONT_FAMILY_JA, fontSize: '32px', color: '#eee' });
 
 		const charHuman1 = this.add.sprite(300, 520, ACTOR_CONFIG[ActorRole.HUMAN_1].spriteName).setOrigin(0.5, 0.5);
 		const frameRight = DIRECTION_CONFIG[Direction.RIGHT].frameOffset

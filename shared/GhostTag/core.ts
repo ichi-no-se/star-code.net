@@ -235,12 +235,12 @@ export const SCORE_SPEED_UP_NORMAL = 150;
 export const SCORE_SPEED_UP_SPECIAL = 300;
 
 // 捕まえた時の得点
-export const SCORE_TAG = 700;
+export const SCORE_TAG = 500;
 
 export type ItemScore = typeof SCORE_ITEM_NORMAL | typeof SCORE_ITEM_SPECIAL | typeof SCORE_SPEED_UP_NORMAL | typeof SCORE_SPEED_UP_SPECIAL;
 
-export const ITEM_GET_DISTANCE = 0.75; // アイテム取得の距離
-export const TAG_DISTANCE = 0.75; // 捕まえた判定の距離
+export const ITEM_GET_DISTANCE = 1.5; // アイテム取得の距離
+export const TAG_DISTANCE = 1.0; // 捕まえた判定の距離
 
 export const HUMAN_BOOST_DURATION = 2800; // スピードアップの継続時間
 export const GHOST_BOOST_DURATION = 4500;
