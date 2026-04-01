@@ -553,7 +553,7 @@ export default class MainScene extends Phaser.Scene {
                                 this.localMovement = { ...event.respawnPosition, currentDir: Core.Direction.NONE, nextDir: Core.Direction.NONE, offsetX: 0, offsetY: 0 };
                             }
                             if (event.taggerRole === this.currentRole) {
-                                this.spawnScoreEffect(x, y, 'score_700');
+                                this.spawnScoreEffect(x, y, 'score_500');
                             }
                             break;
                         }

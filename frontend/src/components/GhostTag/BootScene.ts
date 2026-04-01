@@ -33,7 +33,7 @@ export default class BootScene extends Phaser.Scene {
 		this.load.image('score_150', '/ghost-tag/effects/score_150.png');
 		this.load.image('score_200', '/ghost-tag/effects/score_200.png');
 		this.load.image('score_300', '/ghost-tag/effects/score_300.png');
-		this.load.image('score_700', '/ghost-tag/effects/score_700.png');
+		this.load.image('score_500', '/ghost-tag/effects/score_500.png');
 
 		this.load.audio('boost', '/ghost-tag/sounds/boost.wav');
 		this.load.audio('item_get', '/ghost-tag/sounds/item_get.wav');
