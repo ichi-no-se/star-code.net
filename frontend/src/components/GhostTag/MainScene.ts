@@ -461,10 +461,10 @@ export default class MainScene extends Phaser.Scene {
                                             key = 'score_100';
                                             break;
                                         case Core.SCORE_ITEM_SPECIAL:
-                                            key = 'score_150';
+                                            key = 'score_200';
                                             break;
                                         case Core.SCORE_SPEED_UP_NORMAL:
-                                            key = 'score_200';
+                                            key = 'score_150';
                                             break;
                                         case Core.SCORE_SPEED_UP_SPECIAL:
                                             key = 'score_300';
