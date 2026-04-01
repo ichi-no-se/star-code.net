@@ -336,8 +336,8 @@ export default class MainScene extends Phaser.Scene {
                 if (this.currentActorStatuses[role] !== Core.ActorStatus.STUN_ATTACKING && snapshot.actors[role].status === Core.ActorStatus.STUN_ATTACKING) {
                     this.sound.play('stun');
                 }
-                // もし自分が加速アイテムを使用したならば，効果音を鳴らす
-                if (this.currentActorStatuses[role] !== Core.ActorStatus.SPEED_UP && snapshot.actors[role].status === Core.ActorStatus.SPEED_UP && role === newRole) {
+                // もし誰かが加速アイテムを使用したならば，効果音を鳴らす
+                if (this.currentActorStatuses[role] !== Core.ActorStatus.SPEED_UP && snapshot.actors[role].status === Core.ActorStatus.SPEED_UP) {
                     this.sound.play('boost');
                 }
                 this.currentActorStatuses[role] = snapshot.actors[role].status;

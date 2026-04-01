@@ -10,15 +10,14 @@ interface MovementReport {
 
 export class GameRoom {
 	private sessions: Set<string>;
-	private intervalId: NodeJS.Timeout | null;
 	private gameState: Core.GameState;
 	private receivedMovements: MovementReport[] = [];
 	private itemDeck: Core.ItemDeck;
 	private readonly UPDATE_INTERVAL: number = 1000 / 20; // 20 FPS
+	private suspicionHeatMap: number[][]; // CPU がゴーストを追うためのヒートマップ
 
 	constructor(private ns: Namespace, private roomId: string) {
 		this.sessions = new Set();
-		this.intervalId = null;
 		this.itemDeck = new Core.ItemDeck();
 		this.gameState = {
 			roomPhase: Core.RoomPhase.WAITING,
@@ -48,12 +47,20 @@ export class GameRoom {
 				inventory: null,
 			};
 		}
+		this.suspicionHeatMap = [];
+		for(let y = 0; y < Core.MAP_HEIGHT; y++) {
+			this.suspicionHeatMap[y] = [];
+			for(let x = 0; x < Core.MAP_WIDTH; x++) {
+				this.suspicionHeatMap[y][x] = 0;
+			}
+		}
+
 		this.startGameLoop();
 	}
 
 	private startGameLoop() {
 		let lastTime = performance.now();
-		this.intervalId = setInterval(() => {
+		setInterval(() => {
 			const now = performance.now();
 			const deltaTime = now - lastTime;
 			lastTime = now;
@@ -206,28 +213,104 @@ export class GameRoom {
 				if (this.gameState.roomTimer <= 0) {
 					this.gameState.roomPhase = Core.RoomPhase.PLAYING;
 					this.gameState.roomTimer = Core.GAME_DURATION;
-				}
 
+					// ヒートマップの初期化
+					for (let y = 0; y < Core.MAP_HEIGHT; y++) {
+						this.suspicionHeatMap[y] = [];
+						for (let x = 0; x < Core.MAP_WIDTH; x++) {
+							this.suspicionHeatMap[y][x] = Math.random() * 0.1;
+						}
+					}
+				}
 				break;
 			case Core.RoomPhase.PLAYING:
 				this.gameState.roomTimer -= deltaTime;
 				// CPU の移動処理
+				// ヒートマップの更新
+				for (const role of Core.HUMAN_ROLES) {
+					this.suspicionHeatMap[this.gameState.actors[role].movement.gridY][this.gameState.actors[role].movement.gridX] = 0;
+				}
+				if (isGhostStunned) {
+					for (const role of Core.GHOST_ROLES) {
+						this.suspicionHeatMap[this.gameState.actors[role].movement.gridY][this.gameState.actors[role].movement.gridX] = 1;
+					}
+				}
+				if (!isHumanStunned) {
+					const visibleGrids = new Set<string>();
+					for (const role of Core.HUMAN_ROLES) {
+						const humanActor = this.gameState.actors[role];
+						let dir = humanActor.movement.currentDir;
+						if (dir === Core.Direction.NONE) {
+							dir = Core.Direction.DOWN;
+						}
+						let gridX = humanActor.movement.gridX;
+						let gridY = humanActor.movement.gridY;
+						while (true) {
+							gridX += Core.DIRECTION_CONFIG[dir].dx;
+							gridY += Core.DIRECTION_CONFIG[dir].dy;
+							if (gridX < 0 || gridX >= Core.MAP_WIDTH || gridY < 0 || gridY >= Core.MAP_HEIGHT || Core.MAP[gridY][gridX] !== 0) {
+								break;
+							}
+							visibleGrids.add(`${gridX},${gridY}`);
+							this.suspicionHeatMap[gridY][gridX] *= 0.98; // 視界に入っているグリッドの疑いを減らす
+						}
+					}
+					for (const role of Core.GHOST_ROLES) {
+						const ghostActor = this.gameState.actors[role];
+						if (ghostActor.status === Core.ActorStatus.RESPAWN || ghostActor.status === Core.ActorStatus.INACTIVE) {
+							continue;
+						}
+						if (visibleGrids.has(`${ghostActor.movement.gridX},${ghostActor.movement.gridY}`)) {
+							this.suspicionHeatMap[ghostActor.movement.gridY][ghostActor.movement.gridX] = 1;
+						}
+					}
+				}
+
+				const nextHeatMap: number[][] = [];
+				for (let y = 0; y < Core.MAP_HEIGHT; y++) {
+					nextHeatMap[y] = [];
+					for (let x = 0; x < Core.MAP_WIDTH; x++) {
+						if (Core.MAP[y][x] !== 0) {
+							nextHeatMap[y][x] = 0;
+							continue;
+						}
+						let count = 1;
+						let heat = this.suspicionHeatMap[y][x];
+						for (const { dx,dy} of Object.values(Core.DIRECTION_CONFIG)) {
+							const nextX = x + dx;
+							const nextY = y + dy;
+							if (nextX >= 0 && nextX < Core.MAP_WIDTH && nextY >= 0 && nextY < Core.MAP_HEIGHT && Core.MAP[nextY][nextX] === 0) {
+								count++;
+								heat += this.suspicionHeatMap[nextY][nextX];
+							}
+						}
+						nextHeatMap[y][x] = heat / count;
+					}
+				}
+				this.suspicionHeatMap = nextHeatMap;
+
 				for (const actor of this.gameState.actors) {
 					if (actor.controller === Core.ControllerType.CPU) {
 						if (actor.status === Core.ActorStatus.RESPAWN || actor.status === Core.ActorStatus.INACTIVE || isStunned[actor.role]) {
 							continue;
 						}
-						// とりあえずランダムウォーク
-						// TODO: いい感じにする
-						if (Math.random() < 0.1) {
-							const dir = Math.floor(Math.random() * 4) as Core.Direction;
-							actor.movement.nextDir = dir;
+						let nextDir = Core.Direction.NONE;
+						if (Core.ACTOR_CONFIG[actor.role].type === Core.ActorType.GHOST) {
+							nextDir = this.computeGhostCPUMovement(actor.role);
+						}
+						else {
+							nextDir = this.computeHumanCPUMovement(actor.role);
+						}
+						if (nextDir !== Core.Direction.NONE) {
+							actor.movement.nextDir = nextDir;
 						}
 						actor.movement = Core.calcNextMovement(actor.movement, Core.calcSpeed(actor.role, actor.status, isStunned[actor.role]) * (deltaTime / 1000));
 						actor.lastUpdateTime = now;
-						// アイテムを拾ったらすぐ使う
 						if (actor.inventory !== null) {
-							this.executeUseItem(actor.role);
+							// アイテム使用はランダム
+							if (Math.random() < 0.05) {
+								this.executeUseItem(actor.role);
+							}
 						}
 					}
 				}
@@ -296,6 +379,9 @@ export class GameRoom {
 
 							if (pickedUp) {
 								this.gameState.items.splice(i, 1);
+								if (Core.ACTOR_CONFIG[actor.role].type === Core.ActorType.GHOST) {
+									this.suspicionHeatMap[actor.movement.gridY][actor.movement.gridX] = 1;
+								}
 							}
 						}
 					}
@@ -515,6 +601,96 @@ export class GameRoom {
 			}
 		}
 		return bestPos;
+	}
+
+	private computeHumanCPUMovement(role: Core.ActorRole): Core.Direction {
+		// 周囲のヒートマップを見て，最も値が高い方向に移動する
+		const { gridX, gridY } = this.gameState.actors[role].movement;
+	 	let bestHeat = -1;
+		let bestDir: Core.Direction = Core.Direction.NONE;
+		for (const [dir, { dx, dy }] of Object.entries(Core.DIRECTION_CONFIG)) {
+			const nextX = gridX + dx;
+			const nextY = gridY + dy;
+			if (nextX < 0 || nextX >= Core.MAP_WIDTH || nextY < 0 || nextY >= Core.MAP_HEIGHT || Core.MAP[nextY][nextX] !== 0) {
+				continue;
+			}
+			if (this.suspicionHeatMap[nextY][nextX] > bestHeat) {
+				bestHeat = this.suspicionHeatMap[nextY][nextX];
+				bestDir = parseInt(dir) as Core.Direction;
+			}
+			else if (this.suspicionHeatMap[nextY][nextX] === bestHeat && Math.random() < 0.5) {
+				bestDir = parseInt(dir) as Core.Direction;
+			}
+		}
+		return bestDir;
+	}
+
+	private computeGhostCPUMovement(role: Core.ActorRole): Core.Direction {
+		// なるべく人間から遠ざかる方向に移動する
+		// BFS で人間からの距離を計算
+		const distanceMap: number[][] = [];
+		for (let y = 0; y < Core.MAP_HEIGHT; y++) {
+			distanceMap[y] = [];
+			for (let x = 0; x < Core.MAP_WIDTH; x++) {
+				distanceMap[y][x] = Infinity;
+			}
+		}
+		const queue: { gridX: number; gridY: number, distance: number }[] = [];
+		for (const role of Core.HUMAN_ROLES) {
+			const actor = this.gameState.actors[role];
+			if (actor.status === Core.ActorStatus.INACTIVE) {
+				continue;
+			}
+			queue.push({ gridX: actor.movement.gridX, gridY: actor.movement.gridY, distance: 0 });
+			distanceMap[actor.movement.gridY][actor.movement.gridX] = 0;
+		}
+		while (queue.length > 0) {
+			const { gridX, gridY, distance } = queue.shift()!;
+			for (const { dx, dy } of Object.values(Core.DIRECTION_CONFIG)) {
+				const nextX = gridX + dx;
+				const nextY = gridY + dy;
+				if (nextX < 0 || nextX >= Core.MAP_WIDTH || nextY < 0 || nextY >= Core.MAP_HEIGHT || Core.MAP[nextY][nextX] !== 0) {
+					continue;
+				}
+				if (distance + 1 < distanceMap[nextY][nextX]) {
+					distanceMap[nextY][nextX] = distance + 1;
+					queue.push({ gridX: nextX, gridY: nextY, distance: distance + 1 });
+				}
+			}
+		}
+
+		const { gridX, gridY } = this.gameState.actors[role].movement;
+		const currentDistance = distanceMap[gridY][gridX];
+		if (currentDistance >= 12) {
+			// 人間から十分遠い場合はランダムウォーク
+			const currentDir = this.gameState.actors[role].movement.currentDir;
+			const currentDirOpposite = currentDir === Core.Direction.NONE ? Core.Direction.NONE : Core.DIRECTION_CONFIG[currentDir].opposite;
+			while (true) {
+				const dir = Math.floor(Math.random() * 5) as Core.Direction;
+				if (dir === currentDirOpposite || dir === Core.Direction.NONE) {
+					continue; // 逆方向には行かない
+				}
+				return dir;
+			}
+		}
+
+		let bestDistance = -1;
+		let bestDir: Core.Direction = Core.Direction.NONE;
+		for (const [dir, { dx, dy }] of Object.entries(Core.DIRECTION_CONFIG)) {
+			const nextX = gridX + dx;
+			const nextY = gridY + dy;
+			if (nextX < 0 || nextX >= Core.MAP_WIDTH || nextY < 0 || nextY >= Core.MAP_HEIGHT || Core.MAP[nextY][nextX] !== 0) {
+				continue;
+			}
+			if (distanceMap[nextY][nextX] > bestDistance) {
+				bestDistance = distanceMap[nextY][nextX];
+				bestDir = parseInt(dir) as Core.Direction;
+			}
+			else if (distanceMap[nextY][nextX] === bestDistance && Math.random() < 0.5) {
+				bestDir = parseInt(dir) as Core.Direction;
+			}
+		}
+		return bestDir;
 	}
 
 	private broadcastGameSnapshot(gameSnapshot: Core.GameSnapshot) {

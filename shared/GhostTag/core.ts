@@ -220,10 +220,8 @@ export const GHOST_SPEED = 4.5
 export const HUMAN_BOOST_SPEED = 9
 export const GHOST_BOOST_SPEED = 7.5
 
-// export const COUNTDOWN_TIME = 5000; // ms
-// export const GAME_DURATION = 120000; // ms
-export const COUNTDOWN_TIME = 2000; // ms
-export const GAME_DURATION = 3000; // テスト用
+export const COUNTDOWN_TIME = 5000; // ms
+export const GAME_DURATION = 120000; // ms
 
 export const RESPAWN_DURATION = 2500; // ms
 
