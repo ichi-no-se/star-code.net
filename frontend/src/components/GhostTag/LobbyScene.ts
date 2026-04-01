@@ -27,12 +27,12 @@ export default class LobbyScene extends Phaser.Scene {
             this.registry.set('socket', socket);
             this.socket = socket;
         }
-        this.add.text(WIDTH / 2, 80, 'Lobby', { fontFamily: FONT_FAMILY_EN, fontSize: '96px', color: '#fff' }).setOrigin(0.5, 0.5);
+        this.add.text(WIDTH / 2, 80, 'Lobby', { fontFamily: FONT_FAMILY_EN, fontSize: '96px', color: '#eee' }).setOrigin(0.5, 0.5);
 
         ROOM_CONFIG.forEach(({ id, name }, index) => {
             const y = 220 + index * 120;
 
-            const textObject = this.add.text(WIDTH / 2, y, `${name} (00 Players)`, { fontFamily: FONT_FAMILY_EN, fontSize: '36px', color: '#fff' }).setOrigin(0.5, 0.5).setDepth(1);
+            const textObject = this.add.text(WIDTH / 2, y, `${name} (00 Players)`, { fontFamily: FONT_FAMILY_EN, fontSize: '36px', color: '#eee' }).setOrigin(0.5, 0.5).setDepth(1);
 
             const graphics = this.add.graphics();
 
@@ -45,7 +45,7 @@ export default class LobbyScene extends Phaser.Scene {
                 graphics.strokeRect(WIDTH / 2 - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight);
                 graphics.fillRect(WIDTH / 2 - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight);
             };
-            drawButton(0xffffff, 0.5, 4);
+            drawButton(0xeeeeee, 0.5, 4);
 
             const hitArea = new Phaser.Geom.Rectangle(
                 (textObject.width / 2) - (buttonWidth / 2),
@@ -58,13 +58,12 @@ export default class LobbyScene extends Phaser.Scene {
                 textObject.input.cursor = 'pointer';
             }
             textObject.on('pointerover', () => {
-                this.sound.play('select');
-                drawButton(0x00ffff, 0.7, 6);
+                drawButton(0x00eeef, 0.7, 6);
                 textObject.setColor('#0ff');
             });
             textObject.on('pointerout', () => {
-                drawButton(0xffffff, 0.5, 4);
-                textObject.setColor('#fff');
+                drawButton(0xeeeeee, 0.5, 4);
+                textObject.setColor('#eee');
             });
             textObject.on('pointerdown', () => {
                 this.sound.play('select');
@@ -83,7 +82,7 @@ export default class LobbyScene extends Phaser.Scene {
         const backText = this.add.text(WIDTH / 2, buttonY, 'タイトルに戻る', {
             fontFamily: FONT_FAMILY_JA,
             fontSize: '24px',
-            color: '#fff'
+            color: '#eee'
         }).setOrigin(0.5, 0.5).setDepth(1);
 
         const buttonBackground = this.add.graphics();
@@ -94,7 +93,7 @@ export default class LobbyScene extends Phaser.Scene {
             buttonBackground.strokeRect(WIDTH / 2 - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight);
             buttonBackground.fillRect(WIDTH / 2 - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight);
         };
-        drawButton(0xffffff, 0.5, 4);
+        drawButton(0xeeeeee, 0.5, 4);
 
         const hitArea = new Phaser.Geom.Rectangle(
             (backText.width / 2) - (buttonWidth / 2),
@@ -110,14 +109,13 @@ export default class LobbyScene extends Phaser.Scene {
         }
 
         backText.on('pointerover', () => {
-            this.sound.play('select');
-            drawButton(0x00ffff, 0.7, 6);
-            backText.setColor('#0ff');
+            drawButton(0x00eeef, 0.7, 6);
+            backText.setColor('#0ee');
         });
 
         backText.on('pointerout', () => {
-            drawButton(0xffffff, 0.5, 4);
-            backText.setColor('#fff');
+            drawButton(0xeeeeee, 0.5, 4);
+            backText.setColor('#eee');
         });
 
         backText.on('pointerdown', () => {

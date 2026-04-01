@@ -69,7 +69,7 @@ export default class TitleScene extends Phaser.Scene {
 		];
 
 		menuItems.forEach(({ text, scene, y, buttonWidth, buttonHeight, fontSize }) => {
-			const textObject = this.add.text(WIDTH / 2, y, text, { fontFamily: FONT_FAMILY_JA, fontSize: fontSize, color: '#fff' }).setOrigin(0.5, 0.5).setDepth(1); // 手前に置く
+			const textObject = this.add.text(WIDTH / 2, y, text, { fontFamily: FONT_FAMILY_JA, fontSize: fontSize, color: '#eee' }).setOrigin(0.5, 0.5).setDepth(1); // 手前に置く
 			const buttonBackground = this.add.graphics();
 			const drawButton = (color: number, alpha: number, lineWeight: number) => {
 				buttonBackground.clear();
@@ -78,7 +78,7 @@ export default class TitleScene extends Phaser.Scene {
 				buttonBackground.strokeRect(WIDTH / 2 - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight);
 				buttonBackground.fillRect(WIDTH / 2 - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight);
 			};
-			drawButton(0xffffff, 0.5, 4);
+			drawButton(0xeeeeee, 0.5, 4);
 
 			const hitArea = new Phaser.Geom.Rectangle(
 				(textObject.width / 2) - (buttonWidth / 2),
@@ -91,13 +91,12 @@ export default class TitleScene extends Phaser.Scene {
 				textObject.input.cursor = 'pointer';
 			}
 			textObject.on('pointerover', () => {
-				this.sound.play('select');
-				drawButton(0x00ffff, 0.7, 6);
-				textObject.setColor('#0ff');
+				drawButton(0x00eeef, 0.7, 6);
+				textObject.setColor('#0ee');
 			});
 			textObject.on('pointerout', () => {
-				drawButton(0xffffff, 0.5, 4);
-				textObject.setColor('#fff');
+				drawButton(0xeeeeee, 0.5, 4);
+				textObject.setColor('#eee');
 			});
 			textObject.on('pointerdown', () => {
 				this.sound.play('select');

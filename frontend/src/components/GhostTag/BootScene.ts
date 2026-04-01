@@ -27,6 +27,8 @@ export default class BootScene extends Phaser.Scene {
 		this.load.spritesheet('ghost_item_pick_up_effect', '/ghost-tag/effects/ghost_item_pick_up_effect.png', { frameWidth: 160, frameHeight: 160 });
 		this.load.spritesheet('human_item_pick_up_effect', '/ghost-tag/effects/human_item_pick_up_effect.png', { frameWidth: 80, frameHeight: 80 });
 
+		this.load.spritesheet('inventory', '/ghost-tag/ui/inventory.png', { frameWidth: 40, frameHeight: 40 });
+
 		this.load.image('score_100', '/ghost-tag/effects/score_100.png');
 		this.load.image('score_150', '/ghost-tag/effects/score_150.png');
 		this.load.image('score_200', '/ghost-tag/effects/score_200.png');

@@ -220,9 +220,10 @@ export const GHOST_SPEED = 4.5
 export const HUMAN_BOOST_SPEED = 9
 export const GHOST_BOOST_SPEED = 7.5
 
-export const COUNTDOWN_TIME = 5000; // ms
+// export const COUNTDOWN_TIME = 5000; // ms
 // export const GAME_DURATION = 120000; // ms
-export const GAME_DURATION = 30000; // テスト用
+export const COUNTDOWN_TIME = 2000; // ms
+export const GAME_DURATION = 3000; // テスト用
 
 export const RESPAWN_DURATION = 2500; // ms
 
@@ -259,14 +260,17 @@ interface ActorConfig {
 	type: ActorType;
 	spriteName: string;
 	initialPos: { gridX: number, gridY: number };
+	iconOriginPos: { x: number, y: number };
+	iconDirection: ActiveDirection;
+	inventoryIconOriginPos: { x: number, y: number };
 	buttonOriginPos: { x: number, y: number };
 }
 
 export const ACTOR_CONFIG: ActorConfig[] = [
-	{ role: ActorRole.HUMAN_1, name: "Human 1", speed: HUMAN_SPEED, boostSpeed: HUMAN_BOOST_SPEED, boostDuration: HUMAN_BOOST_DURATION, stunAttackingDuration: HUMAN_STUN_ATTACKING_DURATION, type: ActorType.HUMAN, spriteName: 'human_1', initialPos: { gridX: 1, gridY: 1 }, buttonOriginPos: { x: 90, y: 780 } },
-	{ role: ActorRole.HUMAN_2, name: "Human 2", speed: HUMAN_SPEED, boostSpeed: HUMAN_BOOST_SPEED, boostDuration: HUMAN_BOOST_DURATION, stunAttackingDuration: HUMAN_STUN_ATTACKING_DURATION, type: ActorType.HUMAN, spriteName: 'human_2', initialPos: { gridX: 40, gridY: 16 }, buttonOriginPos: { x: 90, y: 900 } },
-	{ role: ActorRole.GHOST_1, name: "Ghost 1", speed: GHOST_SPEED, boostSpeed: GHOST_BOOST_SPEED, boostDuration: GHOST_BOOST_DURATION, stunAttackingDuration: GHOST_STUN_ATTACKING_DURATION, type: ActorType.GHOST, spriteName: 'ghost_1', initialPos: { gridX: 40, gridY: 1 }, buttonOriginPos: { x: 1190, y: 780 } },
-	{ role: ActorRole.GHOST_2, name: "Ghost 2", speed: GHOST_SPEED, boostSpeed: GHOST_BOOST_SPEED, boostDuration: GHOST_BOOST_DURATION, stunAttackingDuration: GHOST_STUN_ATTACKING_DURATION, type: ActorType.GHOST, spriteName: 'ghost_2', initialPos: { gridX: 1, gridY: 16 }, buttonOriginPos: { x: 1190, y: 900 } }
+	{ role: ActorRole.HUMAN_1, name: "Human 1", speed: HUMAN_SPEED, boostSpeed: HUMAN_BOOST_SPEED, boostDuration: HUMAN_BOOST_DURATION, stunAttackingDuration: HUMAN_STUN_ATTACKING_DURATION, type: ActorType.HUMAN, spriteName: 'human_1', initialPos: { gridX: 1, gridY: 1 }, iconOriginPos: { x: 30, y: 780 }, iconDirection: Direction.RIGHT, inventoryIconOriginPos: { x: 160, y: 780 }, buttonOriginPos: { x: 310, y: 780 } },
+	{ role: ActorRole.HUMAN_2, name: "Human 2", speed: HUMAN_SPEED, boostSpeed: HUMAN_BOOST_SPEED, boostDuration: HUMAN_BOOST_DURATION, stunAttackingDuration: HUMAN_STUN_ATTACKING_DURATION, type: ActorType.HUMAN, spriteName: 'human_2', initialPos: { gridX: 40, gridY: 16 }, iconOriginPos: {x: 30,y: 930},iconDirection: Direction.RIGHT, inventoryIconOriginPos: { x: 160, y: 930 }, buttonOriginPos: { x: 310, y: 930 } },
+	{ role: ActorRole.GHOST_1, name: "Ghost 1", speed: GHOST_SPEED, boostSpeed: GHOST_BOOST_SPEED, boostDuration: GHOST_BOOST_DURATION, stunAttackingDuration: GHOST_STUN_ATTACKING_DURATION, type: ActorType.GHOST, spriteName: 'ghost_1', initialPos: { gridX: 40, gridY: 1 }, iconOriginPos: { x: 1770, y: 780 }, iconDirection: Direction.LEFT, inventoryIconOriginPos: { x: 1640, y: 780 }, buttonOriginPos: { x: 1350, y: 780 } },
+	{ role: ActorRole.GHOST_2, name: "Ghost 2", speed: GHOST_SPEED, boostSpeed: GHOST_BOOST_SPEED, boostDuration: GHOST_BOOST_DURATION, stunAttackingDuration: GHOST_STUN_ATTACKING_DURATION, type: ActorType.GHOST, spriteName: 'ghost_2', initialPos: { gridX: 1, gridY: 16 }, iconOriginPos: { x: 1770, y: 930 }, iconDirection: Direction.LEFT, inventoryIconOriginPos: { x: 1640, y: 930 }, buttonOriginPos: { x: 1350, y: 930 } }
 ];
 
 export const HUMAN_ROLES = ACTOR_CONFIG.filter(c => c.type === ActorType.HUMAN).map(c => c.role);

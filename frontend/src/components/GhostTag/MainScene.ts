@@ -11,12 +11,20 @@ enum RenderDepth {
     EFFECT = 25,
     MARKER = 30,
     UI = 50,
+    UI_INVENTORY_ITEM = 55,
+    UI_INVENTORY_FRAME = 60
 }
 
 export default class MainScene extends Phaser.Scene {
     private static readonly EMIT_INTERVAL = 1000 / 20; // 20 FPS
     private static readonly FRAME_OFFSET_BOOST = 8;
     private static readonly FRAME_OFFSET_STUNNED = 16;
+
+    private static readonly MAIN_BUTTON_WIDTH = 260;
+    private static readonly MAIN_BUTTON_HEIGHT = 60;
+    private static readonly CHANGE_TO_CPU_BUTTON_WIDTH = 260;
+    private static readonly CHANGE_TO_CPU_BUTTON_HEIGHT = 40;
+    private static readonly BUTTON_LINE_THICKNESS = 2;
 
     private socket!: Socket | null;
 
@@ -30,6 +38,9 @@ export default class MainScene extends Phaser.Scene {
     private keyEsc?: Phaser.Input.Keyboard.Key;
     private roomId!: string;
 
+    private inventoryFrames!: Phaser.GameObjects.Sprite[];
+    private inventoryItemSprites!: Phaser.GameObjects.Sprite[];
+    private roomStateText!: Phaser.GameObjects.Text;
     private timerText!: Phaser.GameObjects.Text;
     private itemSpritesMap!: Map<string, Phaser.GameObjects.Sprite>;
     private actorSprites!: (Phaser.GameObjects.Sprite | null)[];
@@ -38,9 +49,16 @@ export default class MainScene extends Phaser.Scene {
     private visualActorStates!: (Core.VisualActorState | null)[]; // 描画用の位置
     private predictedActorMovements!: (Core.MovementState | null)[]; // 手元での予測位置
     private lastPredictedActorMovementsUpdateTime!: number; // 予測位置を最後に更新した時間
-    private actorJoinButtons!: Phaser.GameObjects.Text[];
-    private actorChangeToCPUButtons!: Phaser.GameObjects.Text[];
-    private actorItemStateTexts!: Phaser.GameObjects.Text[]; // アイテム所持状態表示用テキスト
+
+    private actorMainButtonGraphicsList!: Phaser.GameObjects.Graphics[];
+    private actorMainButtonTexts!: Phaser.GameObjects.Text[];
+    private actorMainButtonZones!: Phaser.GameObjects.Zone[];
+    private actorChangeToCPUGraphicsList!: Phaser.GameObjects.Graphics[];
+    private actorChangeToCPUTexts!: Phaser.GameObjects.Text[];
+    private actorChangeToCPUZones!: Phaser.GameObjects.Zone[];
+
+    private humanScoreText!: Phaser.GameObjects.Text;
+    private ghostScoreText!: Phaser.GameObjects.Text;
 
     private localMovement!: Core.MovementState | null; // 操作キャラの手元での位置
 
@@ -121,24 +139,76 @@ export default class MainScene extends Phaser.Scene {
                 }
             });
         });
-        // 仮の UI 後でちゃんとしたのに差し替える
-        this.timerText = this.add.text(Core.WIDTH / 2, 780, 'Loading...', { fontSize: '40px', color: '#fff', fontFamily: Core.FONT_FAMILY_EN }).setOrigin(0.5, 0).setDepth(RenderDepth.UI);
-        const protoButtonStyle = { fontSize: '20px', color: '#0f0', fontFamily: Core.FONT_FAMILY_EN };
-        this.actorJoinButtons = [];
-        this.actorChangeToCPUButtons = [];
-        this.actorItemStateTexts = [];
-        for (const { role, name, buttonOriginPos } of Object.values(Core.ACTOR_CONFIG)) {
-            const joinButton = this.add.text(buttonOriginPos.x, buttonOriginPos.y, `Join as ${name}`, protoButtonStyle)
-                .setInteractive({ useHandCursor: true })
-                .on('pointerdown', () => { this.joinGamePlayerRequest(role); }).setDepth(RenderDepth.UI);
-            this.actorJoinButtons[role] = joinButton;
-            const changeToCPUButton = this.add.text(buttonOriginPos.x, buttonOriginPos.y + 30, `Change ${name} to CPU`, protoButtonStyle)
-                .setInteractive({ useHandCursor: true })
-                .on('pointerdown', () => { this.changeToCPURequest(role); }).setDepth(RenderDepth.UI);
-            this.actorChangeToCPUButtons[role] = changeToCPUButton;
-            const itemStateText = this.add.text(buttonOriginPos.x, buttonOriginPos.y + 60, 'Item: None, StatusTimer: 0', { fontSize: '18px', color: '#ff0', fontFamily: Core.FONT_FAMILY_EN }).setDepth(RenderDepth.UI);
-            this.actorItemStateTexts[role] = itemStateText;
+
+        // UI アイコン
+        for (const { spriteName, iconOriginPos, iconDirection } of Core.ACTOR_CONFIG) {
+            const frameOffset = Core.DIRECTION_CONFIG[iconDirection].frameOffset;
+            const icon = this.add.sprite(iconOriginPos.x, iconOriginPos.y, spriteName).setOrigin(0, 0).setScale(3).setDepth(RenderDepth.UI);
+            const animKey = `icon-walk-${spriteName}`;
+            this.anims.create({
+                key: animKey,
+                frames: this.anims.generateFrameNumbers(spriteName, { start: frameOffset, end: frameOffset + 1 }),
+                frameRate: 1,
+                repeat: -1
+            });
+            icon.play(animKey);
         }
+
+        this.inventoryFrames = [];
+        this.inventoryItemSprites = [];
+        for (const { role, inventoryIconOriginPos } of Core.ACTOR_CONFIG) {
+            this.inventoryFrames[role] = this.add.sprite(inventoryIconOriginPos.x, inventoryIconOriginPos.y, 'inventory').setOrigin(0, 0).setScale(3).setDepth(RenderDepth.UI_INVENTORY_FRAME).setFrame(0);
+            const center = this.inventoryFrames[role].getCenter();
+            this.inventoryItemSprites[role] = this.add.sprite(center.x, center.y, Core.ITEM_CONFIG[Core.ItemType.SPEED_UP].spriteName).setOrigin(0.5, 0.5).setScale(2).setDepth(RenderDepth.UI_INVENTORY_ITEM).setFrame(0).setVisible(false);
+        }
+
+        // ボタン
+        this.actorMainButtonGraphicsList = [];
+        this.actorMainButtonTexts = [];
+        this.actorMainButtonZones = [];
+
+        this.actorChangeToCPUGraphicsList = [];
+        this.actorChangeToCPUTexts = [];
+        this.actorChangeToCPUZones = [];
+
+        for (const { role, buttonOriginPos } of Core.ACTOR_CONFIG) {
+            const graphics = this.add.graphics().setDepth(RenderDepth.UI);
+            graphics.lineStyle(MainScene.BUTTON_LINE_THICKNESS, 0xeeeeee);
+            graphics.strokeRect(buttonOriginPos.x, buttonOriginPos.y, MainScene.MAIN_BUTTON_WIDTH, MainScene.MAIN_BUTTON_HEIGHT);
+            this.actorMainButtonGraphicsList[role] = graphics;
+
+            const text = this.add.text(buttonOriginPos.x + MainScene.MAIN_BUTTON_WIDTH / 2, buttonOriginPos.y + MainScene.MAIN_BUTTON_HEIGHT / 2, 'JOIN', { fontSize: '24px', color: '#eee', fontFamily: Core.FONT_FAMILY_EN }).setOrigin(0.5, 0.5).setDepth(RenderDepth.UI);
+            this.actorMainButtonTexts[role] = text;
+
+            const zone = this.add.zone(buttonOriginPos.x, buttonOriginPos.y, MainScene.MAIN_BUTTON_WIDTH, MainScene.MAIN_BUTTON_HEIGHT).setOrigin(0, 0).setDepth(RenderDepth.UI).setInteractive({ useHandCursor: true });
+            this.actorMainButtonZones[role] = zone;
+
+            const changeToCPUOriginX = buttonOriginPos.x;
+            const changeToCPUOriginY = buttonOriginPos.y + MainScene.MAIN_BUTTON_HEIGHT + 10;
+            const changeToCPUGraphics = this.add.graphics().setDepth(RenderDepth.UI);
+            changeToCPUGraphics.lineStyle(MainScene.BUTTON_LINE_THICKNESS, 0xeeeeee);
+            changeToCPUGraphics.strokeRect(changeToCPUOriginX, changeToCPUOriginY, MainScene.CHANGE_TO_CPU_BUTTON_WIDTH, MainScene.CHANGE_TO_CPU_BUTTON_HEIGHT);
+            this.actorChangeToCPUGraphicsList[role] = changeToCPUGraphics;
+
+            const changeToCPUText = this.add.text(changeToCPUOriginX + MainScene.CHANGE_TO_CPU_BUTTON_WIDTH / 2, changeToCPUOriginY + MainScene.CHANGE_TO_CPU_BUTTON_HEIGHT / 2, 'SET CPU', { fontSize: '18px', color: '#eee', fontFamily: Core.FONT_FAMILY_EN }).setOrigin(0.5, 0.5).setDepth(RenderDepth.UI);
+            this.actorChangeToCPUTexts[role] = changeToCPUText;
+
+            const changeToCPUZone = this.add.zone(changeToCPUOriginX, changeToCPUOriginY, MainScene.CHANGE_TO_CPU_BUTTON_WIDTH, MainScene.CHANGE_TO_CPU_BUTTON_HEIGHT).setOrigin(0, 0).setDepth(RenderDepth.UI).setInteractive({ useHandCursor: true });
+            this.actorChangeToCPUZones[role] = changeToCPUZone;
+        }
+
+        // 得点表示
+        this.add.text(Core.WIDTH / 2 - 200, 960, 'HUMAN TEAM', { fontSize: '32px', color: '#fee', fontFamily: Core.FONT_FAMILY_EN }).setOrigin(0.5, 0.5).setDepth(RenderDepth.UI);
+        this.humanScoreText = this.add.text(Core.WIDTH / 2 - 200, 1020, '00000', { fontSize: '64px', color: '#fcc', fontFamily: Core.FONT_FAMILY_EN }).setOrigin(0.5, 0.5).setDepth(RenderDepth.UI);
+
+        this.add.text(Core.WIDTH / 2 + 200, 960, 'GHOST TEAM', { fontSize: '32px', color: '#eef', fontFamily: Core.FONT_FAMILY_EN }).setOrigin(0.5, 0.5).setDepth(RenderDepth.UI);
+        this.ghostScoreText = this.add.text(Core.WIDTH / 2 + 200, 1020, '00000', { fontSize: '64px', color: '#ccf', fontFamily: Core.FONT_FAMILY_EN }).setOrigin(0.5, 0.5).setDepth(RenderDepth.UI);
+
+        // 仮の UI 後でちゃんとしたのに差し替える
+
+        this.roomStateText = this.add.text(Core.WIDTH / 2, 740, 'Loading...', { fontSize: '32px', color: '#ccc', fontFamily: Core.FONT_FAMILY_EN }).setOrigin(0.5, 0).setDepth(RenderDepth.UI);
+        this.add.text(Core.WIDTH / 2 - 50, 890, 'TIME:', { fontSize: '48px', color: '#eee', fontFamily: Core.FONT_FAMILY_EN }).setOrigin(1, 1).setDepth(RenderDepth.UI);
+        this.timerText = this.add.text(Core.WIDTH / 2 - 50, 890, '000', { fontSize: '80px', color: '#eee', fontFamily: Core.FONT_FAMILY_EN }).setOrigin(0, 1).setDepth(RenderDepth.UI);
 
         // キャラクターアニメーション作成
         for (const { spriteName } of Object.values(Core.ACTOR_CONFIG)) {
@@ -243,9 +313,13 @@ export default class MainScene extends Phaser.Scene {
         const hasNewSnapshot = this.receivedGameSnapshots.length > 0;
         let newRole: Core.ActorRole | null = null;
         let latestRoomTimer: number | null = null;
+        let latestHumanScore: number = 0;
+        let latestGhostScore: number = 0;
         const events: Core.GameEvent[] = [];
         for (const { snapshot, time: snapshotTime } of this.receivedGameSnapshots) {
             this.lastPredictedActorMovementsUpdateTime = snapshotTime;
+            latestHumanScore = 0;
+            latestGhostScore = 0;
             for (const { role } of Object.values(Core.ACTOR_CONFIG)) {
                 const receivedActorState = snapshot.actors[role]; // 受信した状態
                 if (receivedActorState.status === Core.ActorStatus.INACTIVE) {
@@ -259,16 +333,22 @@ export default class MainScene extends Phaser.Scene {
                 }
                 this.currentActorControllers[role] = snapshot.actors[role].controller;
                 // もし誰かがスタンアイテムを使用したならば，効果音を鳴らす
-                if(this.currentActorStatuses[role] !== Core.ActorStatus.STUN_ATTACKING && snapshot.actors[role].status === Core.ActorStatus.STUN_ATTACKING) {
+                if (this.currentActorStatuses[role] !== Core.ActorStatus.STUN_ATTACKING && snapshot.actors[role].status === Core.ActorStatus.STUN_ATTACKING) {
                     this.sound.play('stun');
                 }
                 // もし自分が加速アイテムを使用したならば，効果音を鳴らす
-                if(this.currentActorStatuses[role] !== Core.ActorStatus.SPEED_UP && snapshot.actors[role].status === Core.ActorStatus.SPEED_UP && role === newRole) {
+                if (this.currentActorStatuses[role] !== Core.ActorStatus.SPEED_UP && snapshot.actors[role].status === Core.ActorStatus.SPEED_UP && role === newRole) {
                     this.sound.play('boost');
                 }
                 this.currentActorStatuses[role] = snapshot.actors[role].status;
                 this.currentActorInventories[role] = snapshot.actors[role].inventory;
                 this.currentActorStatusTimers[role] = snapshot.actors[role].statusTimer;
+                if (Core.ACTOR_CONFIG[role].type === Core.ActorType.HUMAN) {
+                    latestHumanScore += snapshot.actors[role].score;
+                }
+                else if (Core.ACTOR_CONFIG[role].type === Core.ActorType.GHOST) {
+                    latestGhostScore += snapshot.actors[role].score;
+                }
             }
             latestRoomTimer = snapshot.roomTimer;
             // ゲーム中からは遷移させない（イベントとしてリザルトに飛ぶので）
@@ -496,18 +576,31 @@ export default class MainScene extends Phaser.Scene {
             // タイマーの更新
             if (latestRoomTimer !== null) {
                 const seconds = Math.ceil(latestRoomTimer / 1000);
+                const secondsText = seconds.toString().padStart(3, '0');
+
                 switch (this.currentRoomPhase) {
                     case Core.RoomPhase.WAITING:
-                        this.timerText.setText(`Waiting...`);
+                        this.roomStateText.setText('Waiting for players...');
+                        this.timerText.setText(secondsText);
                         break;
                     case Core.RoomPhase.STARTING:
-                        this.timerText.setText(`Starting... ${seconds}`);
+                        this.roomStateText.setText('Starting...');
+                        this.roomStateText.setColor('#ee5');
+                        this.timerText.setText(secondsText);
+                        this.timerText.setColor('#ee5');
                         break;
                     case Core.RoomPhase.PLAYING:
-                        this.timerText.setText(`Time: ${seconds}`);
+                        this.roomStateText.setText('');
+                        this.timerText.setText(secondsText);
+                        const timerColor = seconds <= 10 ? '#f55' :seconds <= 30 ? '#ee5' : '#eee';
+                        this.timerText.setColor(timerColor);
                         break;
                 }
             }
+
+            // スコアの更新
+            this.humanScoreText.setText(latestHumanScore.toString().padStart(5, '0'));
+            this.ghostScoreText.setText(latestGhostScore.toString().padStart(5, '0'));
         }
         // スタン状態の判定
         let isGhostStunned = false;
@@ -662,61 +755,163 @@ export default class MainScene extends Phaser.Scene {
             this.visionMask.clear();
         }
 
-        for (const { role, name, spriteName } of Object.values(Core.ACTOR_CONFIG)) {
+        for (const { role, spriteName } of Object.values(Core.ACTOR_CONFIG)) {
             const visualState = this.visualActorStates[role];
             const sprite = this.actorSprites[role];
-            const joinButton = this.actorJoinButtons[role];
-            const cpuButton = this.actorChangeToCPUButtons[role];
-            const itemStateText = this.actorItemStateTexts[role];
             const status = this.currentActorStatuses[role];
             if (sprite === null) continue;
 
-            let itemStateTextContent = 'Item: ';
             const inventory = this.currentActorInventories[role];
             if (inventory) {
                 const config = Core.ITEM_CONFIG[inventory];
-                const itemName = config.spriteName;
-                itemStateTextContent += itemName;
+                this.inventoryItemSprites[role].setTexture(config.spriteName).setVisible(true);
+                if (this.currentActorStatusTimers[role] > 0) {
+                    let frameOffset;
+                    let itemDuration;
+                    if (config.type === Core.ItemType.SPEED_UP) {
+                        // speed up
+                        frameOffset = 1;
+                        if (Core.ACTOR_CONFIG[role].type === Core.ActorType.HUMAN) {
+                            itemDuration = Core.HUMAN_BOOST_DURATION;
+                        }
+                        else {
+                            itemDuration = Core.GHOST_BOOST_DURATION;
+                        }
+                    }
+                    else {
+                        // stun
+                        frameOffset = 5;
+                        if (Core.ACTOR_CONFIG[role].type === Core.ActorType.HUMAN) {
+                            itemDuration = Core.HUMAN_STUN_ATTACKING_DURATION;
+                        }
+                        else {
+                            itemDuration = Core.GHOST_STUN_ATTACKING_DURATION;
+                        }
+                    }
+                    const elapsed = itemDuration - this.currentActorStatusTimers[role];
+                    const frame = frameOffset + Math.floor(elapsed / itemDuration * 4);
+                    this.inventoryFrames[role].setFrame(frame);
+                }
+                else {
+                    this.inventoryFrames[role].setFrame(0);
+                }
             }
             else {
-                itemStateTextContent += 'None';
+                this.inventoryItemSprites[role].setVisible(false);
+                this.inventoryFrames[role].setFrame(0);
             }
-            itemStateTextContent += `, StatusTimer: ${Math.ceil(this.currentActorStatusTimers[role] / 1000)}`;
-            itemStateText.setText(itemStateTextContent);
+
+            const mainButtonGraphics = this.actorMainButtonGraphicsList[role];
+            const mainButtonText = this.actorMainButtonTexts[role];
+            const mainButtonZone = this.actorMainButtonZones[role];
+
+            let mainButtonColor = 0xeeeeee;
+            let mainButtonLabel = 'JOIN';
+
             switch (this.currentActorControllers[role]) {
                 case Core.ControllerType.NONE:
-                    joinButton.setText(`Join as ${name}`);
-                    joinButton.off('pointerdown');
-                    joinButton.on('pointerdown', () => { this.joinGamePlayerRequest(role); });
-                    cpuButton.setText(`Change ${name} to CPU`);
-                    cpuButton.off('pointerdown');
-                    cpuButton.on('pointerdown', () => { this.changeToCPURequest(role); });
+                    mainButtonColor = 0xeeeeee;
+                    mainButtonLabel = 'JOIN';
                     break;
                 case Core.ControllerType.PLAYER:
                     if (this.currentRole === role) {
-                        joinButton.setText(`Leave ${name}`);
-                        joinButton.off('pointerdown');
-                        joinButton.on('pointerdown', () => { this.leaveGamePlayerRequest(); });
-                        cpuButton.setText(`Change ${name} to CPU`);
-                        cpuButton.off('pointerdown');
-                        cpuButton.on('pointerdown', () => { this.changeToCPURequest(role); });
+                        mainButtonColor = 0x00eeee;
+                        mainButtonLabel = 'LEAVE';
                     }
                     else {
-                        joinButton.setText(`Taken: ${name}`);
-                        joinButton.off('pointerdown');
+                        mainButtonColor = 0x555555;
+                        mainButtonLabel = 'TAKEN';
                         // 他のプレイヤーが操作中の役はCPU に変更できない
-                        cpuButton.setText(`Taken: ${name}`);
-                        cpuButton.off('pointerdown');
                     }
                     break;
                 case Core.ControllerType.CPU:
-                    joinButton.setText(`Join as ${name}`); // 仮の表示
-                    joinButton.off('pointerdown');
-                    joinButton.on('pointerdown', () => { this.joinGamePlayerRequest(role); });
-                    cpuButton.setText(`CPU: ${name}`); // 仮の表示
-                    cpuButton.off('pointerdown');
+                    mainButtonColor = 0xeeeeee;
+                    mainButtonLabel = 'JOIN';
                     break;
             }
+
+            const isMainButtonHovered = mainButtonZone.input && mainButtonZone.input.enabled && mainButtonZone.getBounds().contains(this.input.x, this.input.y);
+            if (isMainButtonHovered && mainButtonLabel !== 'TAKEN') {
+                mainButtonColor = 0xeeee00;
+            }
+            mainButtonGraphics.clear();
+            mainButtonGraphics.lineStyle(MainScene.BUTTON_LINE_THICKNESS, mainButtonColor);
+            mainButtonGraphics.strokeRect(mainButtonZone.x, mainButtonZone.y, MainScene.MAIN_BUTTON_WIDTH, MainScene.MAIN_BUTTON_HEIGHT);
+            mainButtonText.setText(mainButtonLabel).setColor(Phaser.Display.Color.IntegerToColor(mainButtonColor).rgba);
+
+            switch (mainButtonLabel) {
+                case 'JOIN':
+                    mainButtonZone.off('pointerdown');
+                    mainButtonZone.on('pointerdown', () => {
+                        this.sound.play('select');
+                        this.joinGamePlayerRequest(role);
+                    });
+                    mainButtonZone.setInteractive({ useHandCursor: true });
+                    break;
+                case 'LEAVE':
+                    mainButtonZone.off('pointerdown');
+                    mainButtonZone.on('pointerdown', () => {
+                        this.sound.play('select');
+                        this.leaveGamePlayerRequest();
+                    });
+                    mainButtonZone.setInteractive({ useHandCursor: true });
+                    break;
+                case 'TAKEN':
+                    mainButtonZone.off('pointerdown');
+                    mainButtonZone.setInteractive(false);
+                    break;
+            }
+
+            const changeToCPUGraphics = this.actorChangeToCPUGraphicsList[role];
+            const changeToCPUText = this.actorChangeToCPUTexts[role];
+            const changeToCPUZone = this.actorChangeToCPUZones[role];
+            let changeToCPUColor = 0xeeeeee;
+            let changeToCPULabel = changeToCPUText.text;
+
+            switch (this.currentActorControllers[role]) {
+                case Core.ControllerType.NONE:
+                    changeToCPUColor = 0xeeeeee;
+                    changeToCPULabel = 'SET CPU';
+                    break;
+                case Core.ControllerType.PLAYER:
+                    if (this.currentRole === role) {
+                        changeToCPUColor = 0xeeeeee;
+                        changeToCPULabel = 'SET CPU';
+                    }
+                    else {
+                        changeToCPUColor = 0x555555;
+                        changeToCPULabel = '';
+                    }
+                    break;
+                case Core.ControllerType.CPU:
+                    changeToCPUColor = 0x555555;
+                    changeToCPULabel = 'CPU ACTIVE';
+                    break;
+            }
+            const isCPUButtonHovered = changeToCPUZone.input && changeToCPUZone.input.enabled && changeToCPUZone.getBounds().contains(this.input.x, this.input.y);
+            if (isCPUButtonHovered && changeToCPULabel === 'SET CPU') {
+                changeToCPUColor = 0xeeee00;
+            }
+            changeToCPUGraphics.clear();
+            changeToCPUGraphics.lineStyle(MainScene.BUTTON_LINE_THICKNESS, changeToCPUColor);
+            changeToCPUGraphics.strokeRect(changeToCPUZone.x, changeToCPUZone.y, MainScene.CHANGE_TO_CPU_BUTTON_WIDTH, MainScene.CHANGE_TO_CPU_BUTTON_HEIGHT);
+            changeToCPUText.setText(changeToCPULabel).setColor(Phaser.Display.Color.IntegerToColor(changeToCPUColor).rgba);
+
+            switch (changeToCPULabel) {
+                case 'SET CPU':
+                    changeToCPUZone.off('pointerdown');
+                    changeToCPUZone.on('pointerdown', () => {
+                        this.sound.play('select');
+                        this.changeToCPURequest(role);
+                    });
+                    changeToCPUZone.setInteractive({ useHandCursor: true });
+                    break;
+                default:
+                    changeToCPUZone.off('pointerdown');
+                    changeToCPUZone.setInteractive(false);
+                    break;
+            }
+
             if (visualState === null) {
                 sprite.setVisible(false);
             }

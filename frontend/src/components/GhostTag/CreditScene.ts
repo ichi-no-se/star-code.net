@@ -8,7 +8,7 @@ export default class CreditScene extends Phaser.Scene {
 
 	create() {
 		this.cameras.main.fadeIn(100, 0, 0, 0);
-		this.add.text(WIDTH / 2, 80, 'クレジット', { fontFamily: FONT_FAMILY_JA, fontSize: '96px', color: '#fff' }).setOrigin(0.5, 0.5);
+		this.add.text(WIDTH / 2, 80, 'クレジット', { fontFamily: FONT_FAMILY_JA, fontSize: '96px', color: '#eee' }).setOrigin(0.5, 0.5);
 
 		const credits = [
 			"【制作】",
@@ -38,7 +38,7 @@ export default class CreditScene extends Phaser.Scene {
 			if(line === "Press Start 2P") {
 				fontFamily = FONT_FAMILY_EN;
 			}
-			this.add.text(WIDTH / 2, y, line, { fontFamily: fontFamily, fontSize: fontSize, color: '#fff' }).setOrigin(0.5, 0.5);
+			this.add.text(WIDTH / 2, y, line, { fontFamily: fontFamily, fontSize: fontSize, color: '#eee' }).setOrigin(0.5, 0.5);
 		});
 
 		const buttonWidth = 600;
@@ -48,7 +48,7 @@ export default class CreditScene extends Phaser.Scene {
 		const backText = this.add.text(WIDTH / 2, buttonY, 'タイトルに戻る', {
 			fontFamily: FONT_FAMILY_JA,
 			fontSize: '64px',
-			color: '#fff'
+			color: '#eee'
 		}).setOrigin(0.5, 0.5).setDepth(1);
 
 		const buttonBackground = this.add.graphics();
@@ -59,7 +59,7 @@ export default class CreditScene extends Phaser.Scene {
 			buttonBackground.strokeRect(WIDTH / 2 - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight);
 			buttonBackground.fillRect(WIDTH / 2 - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight);
 		};
-		drawButton(0xffffff, 0.5, 4);
+		drawButton(0xeeeeee, 0.5, 4);
 
 		const hitArea = new Phaser.Geom.Rectangle(
 			(backText.width / 2) - (buttonWidth / 2),
@@ -75,14 +75,13 @@ export default class CreditScene extends Phaser.Scene {
 		}
 
 		backText.on('pointerover', () => {
-			this.sound.play('select');
-			drawButton(0x00ffff, 0.7, 6);
-			backText.setColor('#0ff');
+			drawButton(0x00eeee, 0.7, 6);
+			backText.setColor('#0ee');
 		});
 
 		backText.on('pointerout', () => {
-			drawButton(0xffffff, 0.5, 4);
-			backText.setColor('#fff');
+			drawButton(0xeeeeee, 0.5, 4);
+			backText.setColor('#eee');
 		});
 
 		backText.on('pointerdown', () => {
