@@ -235,7 +235,7 @@ export const SCORE_SPEED_UP_NORMAL = 150;
 export const SCORE_SPEED_UP_SPECIAL = 300;
 
 // 捕まえた時の得点
-export const SCORE_TAG = 700;
+export const SCORE_TAG = 500;
 
 export type ItemScore = typeof SCORE_ITEM_NORMAL | typeof SCORE_ITEM_SPECIAL | typeof SCORE_SPEED_UP_NORMAL | typeof SCORE_SPEED_UP_SPECIAL;
 
