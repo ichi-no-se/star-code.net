@@ -21,7 +21,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@styles/*": ["./styles/*"]
+      "@styles/*": ["./styles/*"],
+      "@shared/*": ["../shared/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "next-sitemap.config.js"],

@@ -6,6 +6,7 @@ import { chatHandler } from './handlers/chat';
 import { reversiHandler } from './handlers/reversi';
 import { onlineGamePrototype0Handler } from './handlers/online-game-prototype-0';
 import { onlineGamePrototype1Handler } from './handlers/online-game-prototype-1';
+import { ghostTagHandler } from './handlers/ghost-tag';
 
 dotenv.config();
 
@@ -29,6 +30,9 @@ onlineGamePrototype0Handler(onlineGamePrototype0Namespace);
 
 const onlineGamePrototype1Namespace = io.of('/online-game-prototype-1');
 onlineGamePrototype1Handler(onlineGamePrototype1Namespace);
+
+const ghostTagNamespace = io.of('/ghost-tag');
+ghostTagHandler(ghostTagNamespace);
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
