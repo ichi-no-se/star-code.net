@@ -4,6 +4,7 @@ date: "2025-07-06"
 order: 14
 ---
 ## はじめに
+
 Word2Vec を知っていますか？（[Wikipedia](https://ja.wikipedia.org/wiki/Word2vec)）
 
 単語をベクトル空間内に埋め込む手法で，意味の近い単語が近いベクトルに配置されます．
@@ -13,7 +14,9 @@ Word2Vec を知っていますか？（[Wikipedia](https://ja.wikipedia.org/wiki
 [こちら](/projects/word2vec-guess)から遊べます．
 
 ## やったこと
+
 ### 語彙
+
 まずは，語彙リストが必要です．
 日本語の基礎語彙を集めたい，というところで，[現代日本語書き言葉均衡コーパス](https://clrd.ninjal.ac.jp/bccwj/index.html)というデータセットがひとつありますが，営利目的ではなくとも 20 万円がかかってしまいます．
 
@@ -51,6 +54,7 @@ Word2Vec を知っていますか？（[Wikipedia](https://ja.wikipedia.org/wiki
 最初に並んでいる36 個の単語は，それなりに類似度が高い単語が選ばれるように設計しています．
 
 ## 終わりに
+
 Word2Vec を利用した，単語当てゲームを作ってみました．
 [こちら](/projects/word2vec-guess)から遊べます．
 

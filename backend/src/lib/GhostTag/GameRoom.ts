@@ -48,9 +48,9 @@ export class GameRoom {
 			};
 		}
 		this.suspicionHeatMap = [];
-		for(let y = 0; y < Core.MAP_HEIGHT; y++) {
+		for (let y = 0; y < Core.MAP_HEIGHT; y++) {
 			this.suspicionHeatMap[y] = [];
-			for(let x = 0; x < Core.MAP_WIDTH; x++) {
+			for (let x = 0; x < Core.MAP_WIDTH; x++) {
 				this.suspicionHeatMap[y][x] = 0;
 			}
 		}
@@ -232,7 +232,9 @@ export class GameRoom {
 				}
 				if (isGhostStunned) {
 					for (const role of Core.GHOST_ROLES) {
-						this.suspicionHeatMap[this.gameState.actors[role].movement.gridY][this.gameState.actors[role].movement.gridX] = 1;
+						if (this.gameState.actors[role].status !== Core.ActorStatus.RESPAWN && this.gameState.actors[role].status !== Core.ActorStatus.INACTIVE) {
+							this.suspicionHeatMap[this.gameState.actors[role].movement.gridY][this.gameState.actors[role].movement.gridX] = 1;
+						}
 					}
 				}
 				if (!isHumanStunned) {
@@ -276,7 +278,7 @@ export class GameRoom {
 						}
 						let count = 1;
 						let heat = this.suspicionHeatMap[y][x];
-						for (const { dx,dy} of Object.values(Core.DIRECTION_CONFIG)) {
+						for (const { dx, dy } of Object.values(Core.DIRECTION_CONFIG)) {
 							const nextX = x + dx;
 							const nextY = y + dy;
 							if (nextX >= 0 && nextX < Core.MAP_WIDTH && nextY >= 0 && nextY < Core.MAP_HEIGHT && Core.MAP[nextY][nextX] === 0) {
@@ -575,7 +577,7 @@ export class GameRoom {
 		// ゴーストのスポーン位置は人間からなるべく遠い位置にする
 		let bestPos = Core.randomMapPosition();
 		let maxMinDistToHuman = -1;
-		for (let attempt = 0; attempt < 5; attempt++) {
+		for (let attempt = 0; attempt < 8; attempt++) {
 			let intersectionWithExistingItem = false;
 			let pos: { gridX: number; gridY: number };
 			do {
@@ -606,7 +608,7 @@ export class GameRoom {
 	private computeHumanCPUMovement(role: Core.ActorRole): Core.Direction {
 		// 周囲のヒートマップを見て，最も値が高い方向に移動する
 		const { gridX, gridY } = this.gameState.actors[role].movement;
-	 	let bestHeat = -1;
+		let bestHeat = -1;
 		let bestDir: Core.Direction = Core.Direction.NONE;
 		for (const [dir, { dx, dy }] of Object.entries(Core.DIRECTION_CONFIG)) {
 			const nextX = gridX + dx;
@@ -658,11 +660,72 @@ export class GameRoom {
 				}
 			}
 		}
-
 		const { gridX, gridY } = this.gameState.actors[role].movement;
 		const currentDistance = distanceMap[gridY][gridX];
+		if (currentDistance >= 18) {
+			// 人間から十分遠い場合はアイテムを取りに行く
+			const distanceMapToItem: number[][] = [];
+			for (let y = 0; y < Core.MAP_HEIGHT; y++) {
+				distanceMapToItem[y] = [];
+				for (let x = 0; x < Core.MAP_WIDTH; x++) {
+					distanceMapToItem[y][x] = Infinity;
+				}
+			}
+			const queue: { gridX: number; gridY: number, distance: number }[] = [];
+			for (const item of this.gameState.items) {
+				const category = Core.ITEM_CONFIG[item.type].category;
+				if (category === Core.ItemCategory.SCORE || category === Core.ItemCategory.SCORE_SPECIAL) {
+					queue.push({ gridX: item.gridX, gridY: item.gridY, distance: 0 });
+					distanceMapToItem[item.gridY][item.gridX] = 0;
+				}
+			}
+			while (queue.length > 0) {
+				const { gridX, gridY, distance } = queue.shift()!;
+				for (const { dx, dy } of Object.values(Core.DIRECTION_CONFIG)) {
+					const nextX = gridX + dx;
+					const nextY = gridY + dy;
+					if (nextX < 0 || nextX >= Core.MAP_WIDTH || nextY < 0 || nextY >= Core.MAP_HEIGHT || Core.MAP[nextY][nextX] !== 0) {
+						continue;
+					}
+					if (distance + 1 < distanceMapToItem[nextY][nextX]) {
+						distanceMapToItem[nextY][nextX] = distance + 1;
+						queue.push({ gridX: nextX, gridY: nextY, distance: distance + 1 });
+					}
+				}
+			}
+			let bestDistance = Infinity;
+			let bestDirCandidate: Core.Direction[] = [];
+			for (const [dir, { dx, dy }] of Object.entries(Core.DIRECTION_CONFIG)) {
+				const nextX = gridX + dx;
+				const nextY = gridY + dy;
+				if (nextX < 0 || nextX >= Core.MAP_WIDTH || nextY < 0 || nextY >= Core.MAP_HEIGHT || Core.MAP[nextY][nextX] !== 0) {
+					continue;
+				}
+				if (distanceMapToItem[nextY][nextX] < bestDistance) {
+					bestDistance = distanceMapToItem[nextY][nextX];
+					bestDirCandidate = [parseInt(dir) as Core.Direction];
+				}
+				else if (distanceMapToItem[nextY][nextX] === bestDistance) {
+					bestDirCandidate.push(parseInt(dir) as Core.Direction);
+				}
+			}
+			let bestDir: Core.Direction = Core.Direction.NONE;
+			if (bestDirCandidate.length > 0) {
+				// 逆方向を除外
+				const currentDir = this.gameState.actors[role].movement.currentDir;
+				const currentDirOpposite = currentDir === Core.Direction.NONE ? Core.Direction.NONE : Core.DIRECTION_CONFIG[currentDir].opposite;
+				const filteredCandidates = bestDirCandidate.filter(dir => dir !== currentDirOpposite && dir !== Core.Direction.NONE);
+				if (filteredCandidates.length > 0) {
+					bestDir = filteredCandidates[Math.floor(Math.random() * filteredCandidates.length)];
+				}
+				else {
+					bestDir = bestDirCandidate[Math.floor(Math.random() * bestDirCandidate.length)];
+				}
+			}
+			return bestDir;
+		}
 		if (currentDistance >= 12) {
-			// 人間から十分遠い場合はランダムウォーク
+			// 人間から少し遠い場合はランダムウォーク
 			const currentDir = this.gameState.actors[role].movement.currentDir;
 			const currentDirOpposite = currentDir === Core.Direction.NONE ? Core.Direction.NONE : Core.DIRECTION_CONFIG[currentDir].opposite;
 			while (true) {
@@ -673,24 +736,38 @@ export class GameRoom {
 				return dir;
 			}
 		}
-
-		let bestDistance = -1;
-		let bestDir: Core.Direction = Core.Direction.NONE;
-		for (const [dir, { dx, dy }] of Object.entries(Core.DIRECTION_CONFIG)) {
-			const nextX = gridX + dx;
-			const nextY = gridY + dy;
-			if (nextX < 0 || nextX >= Core.MAP_WIDTH || nextY < 0 || nextY >= Core.MAP_HEIGHT || Core.MAP[nextY][nextX] !== 0) {
-				continue;
+		else {
+			let bestDistance = -1;
+			let bestDirCandidate: Core.Direction[] = [];
+			for (const [dir, { dx, dy }] of Object.entries(Core.DIRECTION_CONFIG)) {
+				const nextX = gridX + dx;
+				const nextY = gridY + dy;
+				if (nextX < 0 || nextX >= Core.MAP_WIDTH || nextY < 0 || nextY >= Core.MAP_HEIGHT || Core.MAP[nextY][nextX] !== 0) {
+					continue;
+				}
+				if (distanceMap[nextY][nextX] > bestDistance) {
+					bestDistance = distanceMap[nextY][nextX];
+					bestDirCandidate = [parseInt(dir) as Core.Direction];
+				}
+				else if (distanceMap[nextY][nextX] === bestDistance) {
+					bestDirCandidate.push(parseInt(dir) as Core.Direction);
+				}
 			}
-			if (distanceMap[nextY][nextX] > bestDistance) {
-				bestDistance = distanceMap[nextY][nextX];
-				bestDir = parseInt(dir) as Core.Direction;
+			let bestDir: Core.Direction = Core.Direction.NONE;
+			if (bestDirCandidate.length > 0) {
+				// 逆方向を除外
+				const currentDir = this.gameState.actors[role].movement.currentDir;
+				const currentDirOpposite = currentDir === Core.Direction.NONE ? Core.Direction.NONE : Core.DIRECTION_CONFIG[currentDir].opposite;
+				const filteredCandidates = bestDirCandidate.filter(dir => dir !== currentDirOpposite && dir !== Core.Direction.NONE);
+				if (filteredCandidates.length > 0) {
+					bestDir = filteredCandidates[Math.floor(Math.random() * filteredCandidates.length)];
+				}
+				else {
+					bestDir = bestDirCandidate[Math.floor(Math.random() * bestDirCandidate.length)];
+				}
 			}
-			else if (distanceMap[nextY][nextX] === bestDistance && Math.random() < 0.5) {
-				bestDir = parseInt(dir) as Core.Direction;
-			}
+			return bestDir;
 		}
-		return bestDir;
 	}
 
 	private broadcastGameSnapshot(gameSnapshot: Core.GameSnapshot) {
