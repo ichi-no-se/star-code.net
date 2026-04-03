@@ -599,8 +599,13 @@ export default class MainScene extends Phaser.Scene {
             }
 
             // スコアの更新
-            this.humanScoreText.setText(latestHumanScore.toString().padStart(5, '0'));
-            this.ghostScoreText.setText(latestGhostScore.toString().padStart(5, '0'));
+            // 0 への更新は受け付けない（0 になるのはゲーム終了時のみで，ゲーム終了画面に遷移するため）
+            if (latestHumanScore !== 0) {
+                this.humanScoreText.setText(latestHumanScore.toString().padStart(5, '0'));
+            }
+            if (latestGhostScore !== 0) {
+                this.ghostScoreText.setText(latestGhostScore.toString().padStart(5, '0'));
+            }
         }
         // スタン状態の判定
         let isGhostStunned = false;
