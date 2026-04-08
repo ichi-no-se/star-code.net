@@ -7,7 +7,9 @@ export default function QRCanvas() {
             <h1 className="title">QR Canvas</h1>
             <h2 className="introduction">
                 QRコード®のロバスト性の実験．<br />
-                （QRコード®は<Link href="https://www.denso-wave.com">株式会社デンソーウェーブ</Link>の登録商標です）
+                <div style={{ fontSize: '0.6em', color: 'gray' }}>
+                    QRコード®は<Link href="https://www.denso-wave.com">株式会社デンソーウェーブ</Link>の登録商標です
+                </div>
             </h2>
         </>
     )
