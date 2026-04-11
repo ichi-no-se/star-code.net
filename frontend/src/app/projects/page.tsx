@@ -9,9 +9,9 @@ export default function ProjectsPage() {
 					<div>
 						<h2 className="post-title">QR Canvas</h2>
 						<p className="post-date">2026-04-11</p>
-						<p className="post-description">QRコード®のロバスト性の実験</p>
+						<p className="post-description">QRコードを書き換えた時にどんな影響があるか実験</p>
 						<p style={{ fontSize: '0.6em', color: 'gray' }}>
-							QRコード®は株式会社デンソーウェーブの登録商標です
+							QRコードは株式会社デンソーウェーブの登録商標です
 						</p>
 					</div>
 				</Link>
