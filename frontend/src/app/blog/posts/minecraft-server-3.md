@@ -5,6 +5,7 @@ order: 7
 ---
 
 ## はじめに
+
 Minecraft サーバーを[建てました](/blog/minecraft-server)．
 [PaperMC](https://papermc.io/) を用いて，プラグインを導入できる運用にしています．
 
@@ -39,9 +40,11 @@ IDE として，JetBrains 社の [IntelliJ IDEA](https://www.jetbrains.com/ja-jp
 [実装](https://github.com/ichi-no-se/no-chat-and-command/blob/main/src/main/java/net/starcode/noChatAndCommand/NoChatAndCommand.java)を見てもらう方が早いですが，`AsyncChatEvent` でチャットのイベントを，`PlayerCommandPreprocessEvent` でコマンドのイベントを取得しています．
 
 ## おわりに
+
 実際にこのプラグインを導入した Minecraft のサーバーを動かしています．
 詳しくは[こちら](/blog/minecraft-server)．
 
 その他関連記事は以下．
+
 - [Minecraft サーバーの建て方](/blog/minecraft-server-2)
 - [Minecraft サーバーを 72 時間でリセット](/blog/minecraft-server-4)
