@@ -258,7 +258,7 @@ export default function ShinyPokemon() {
 						</p>
 					</div>
 				</div>
-				<div className="-panel">
+				<div className="main-panel">
 					<label className="title-label">
 						結果
 					</label>
