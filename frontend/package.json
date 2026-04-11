@@ -11,6 +11,7 @@
     "wasm": "cd ./circle-splatting-wasm && ./build.sh ../src/lib"
   },
   "dependencies": {
+    "@zxing/library": "^0.21.3",
     "autoprefixer": "^10.4.21",
     "gray-matter": "^4.0.3",
     "next": "^15.5.7",
