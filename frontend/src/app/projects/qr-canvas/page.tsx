@@ -4,6 +4,7 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import '@styles/qr-canvas.css';
 import { encodeToBooleanMatrix } from '@/lib/QRUtils';
 import Decoder from '@zxing/library/esm/core/qrcode/decoder/Decoder';
+import { ChecksumException, FormatException } from '@zxing/library';
 
 const QRView = ({ matrix, onCellClick }: { matrix: boolean[][]; onCellClick: (x: number, y: number) => void }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -79,7 +80,15 @@ export default function QRCanvas() {
             setDecodedText(text);
             setIsError(false);
         } catch (error) {
-            setDecodedText(String(error));
+            if (error instanceof ChecksumException) {
+                setDecodedText("Checksum Exception");
+            }
+            else if (error instanceof FormatException) {
+                setDecodedText("Format Exception");
+            }
+            else {
+                setDecodedText("Unknown Error");
+            }
             setDecodedHex("");
             setIsError(true);
         }
