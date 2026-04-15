@@ -69,6 +69,5 @@ fastText の学習済みモデル（Japanese，bin）を加工して使用．
 出典：Grave, E., Bojanowski, P., Gupta, P., Joulin, A., & Mikolov, T. (2018). Learning Word Vectors for 157 Languages. *Proceedings of the International Conference on Language Resources and Evaluation (LREC 2018)*.
 ライセンス：[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)
 
-
 その他のコンテンツ（コード，記事，画像など）のライセンスについては現在検討中です．
 決まり次第，このセクションを更新します．

@@ -30,7 +30,7 @@ export default function KanjiGuess({ vocabURL, vectorURL }: KanjiGuessProps) {
 	const [guessCount, setGuessCount] = useState(0);
 
 	const CANDIDATE_KANJI_COUNT = 36;
-	const PRE_CANDIDATE_KANJI_COUNT = 100;
+	const PRE_CANDIDATE_KANJI_COUNT = 50;
 
 
 	const startNewRound = useCallback(() => {
