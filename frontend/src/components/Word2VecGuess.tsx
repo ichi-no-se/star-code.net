@@ -102,7 +102,6 @@ export default function Word2VecGuess({ wordListURL, wordVecURL }: Word2VecGuess
 			return cosineSimilarity(answerVec, vec);
 		});
 		const rank = similarityScores.map((score, index) => ({ score, index })).sort((a, b) => b.score - a.score).map(item => item.index);
-		console.log(rank);
 		const rankMap = new Array(CANDIDATE_WORDS_COUNT).fill(0);
 		for (let i = 0; i < rank.length; i++) {
 			rankMap[rank[i]] = i + 1;
