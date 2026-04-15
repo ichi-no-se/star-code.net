@@ -51,7 +51,7 @@ export class FastTextKanji {
         }
     }
 
-    getkanjiVec(n: number): Float32Array | null {
+    getKanjiVec(n: number): Float32Array | null {
         if (n < 0 || n >= this.numWords || this.dim === null) {
             return null;
         }
@@ -63,7 +63,7 @@ export class FastTextKanji {
         if (index === -1) {
             return null;
         }
-        return this.getkanjiVec(index);
+        return this.getKanjiVec(index);
     }
 
     calcSimilarity(normalizedVecA: Float32Array, normalizedVecB: Float32Array): number {
@@ -95,5 +95,35 @@ export class FastTextKanji {
 
     isKanjiInVocab(c: string): boolean {
         return this.vocab.indexOf(c) !== -1;
+    }
+
+    getKanji(index: number): string | null {
+        if (index < 0 || index >= this.numWords) {
+            return null;
+        }
+        return this.vocab[index];
+    }
+
+    getNumWords(): number {
+        return this.numWords;
+    }
+
+    calcSimilarKanjis(vec: Float32Array, topN: number): { kanji: string; similarity: number }[] | null {
+        if (this.dim === null) {
+            throw new Error("Model not loaded");
+        }
+        const similarities: { kanji: string; similarity: number }[] = [];
+        const normalizedVec = this.normalizeVec(vec);
+        if (!normalizedVec) {
+            return null;
+        }
+        for (let i = 0; i < this.numWords; i++) {
+            const kanjiVec = this.getKanjiVec(i);
+            if (!kanjiVec) continue;
+            const similarity = this.calcSimilarity(normalizedVec, kanjiVec);
+            similarities.push({ kanji: this.vocab[i], similarity });
+        }
+        similarities.sort((a, b) => b.similarity - a.similarity);
+        return similarities.slice(0, topN);
     }
 }
