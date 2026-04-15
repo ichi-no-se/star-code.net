@@ -5,7 +5,6 @@
 }
 
 body {
-	/* フォントをシステム標準のサンセリフ（ゴシック体）にする */
 	font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 	line-height: 1.5;
 	background-color: #f3f4f6;
@@ -42,6 +41,35 @@ button {
 	padding: 0;
 	margin: 0;
 	text-align: inherit;
+}
+
+.fullscreen-body {
+	height: 100vh;
+	width: 100vw;
+	overflow: hidden;
+	margin: 0;
+}
+
+.fullscreen-main {
+	height: 100%;
+	width: 100%;
+}
+
+.standard-body {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.standard-main {
+	flex: 1;
+}
+
+.fullscreen-body,
+.standard-body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	color: #333;
+	background: linear-gradient(to right, #eff6ff, #faf5ff);
 }
 
 .home-container {
