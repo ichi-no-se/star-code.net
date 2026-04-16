@@ -10,6 +10,15 @@ import { ghostTagHandler } from './handlers/ghost-tag';
 
 dotenv.config();
 
+if (process.env.NODE_ENV === 'production') {
+	const noop = () => {};
+	console.log = noop;
+	console.info = noop;
+	console.debug = noop;
+	console.warn = noop;
+	// エラーログは残す
+}
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
