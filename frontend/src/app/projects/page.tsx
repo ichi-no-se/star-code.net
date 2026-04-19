@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/kanji-similarity" className="post-box">
+					<div>
+						<h2 className="post-title">漢字電卓</h2>
+						<p className="post-date">2026-04-19</p>
+						<p className="post-description">漢字の式から類似漢字を計算</p>
+					</div>
+				</Link>
 				<Link href="/projects/kanji-guess" className="post-box">
 					<div>
 						<h2 className="post-title">fastText 類似度漢字当てゲーム</h2>

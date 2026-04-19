@@ -1,12 +1,17 @@
+export interface SimilarityResult {
+    kanji: string; similarity: number
+}
 
 export class FastTextKanji {
     private vocab: string;
+    private vocabMap: Map<string, number>;
     private vectors: Float32Array; // Flattened array of shape [numWords * dim]
     private numWords: number;
     private dim: number | null;
 
     constructor() {
         this.vocab = "";
+        this.vocabMap = new Map();
         this.vectors = new Float32Array();
         this.numWords = 0;
         this.dim = null;
@@ -19,7 +24,10 @@ export class FastTextKanji {
         }
         const vocabText = await vocabResponse.text();
         this.vocab = vocabText.trim();
-
+        this.vocabMap.clear();
+        for (let i = 0; i < this.vocab.length; i++) {
+            this.vocabMap.set(this.vocab[i], i);
+        }
         const vectorResponse = await fetch(vectorURL);
         if (!vectorResponse.ok) {
             throw new Error("Failed to load vectors");
@@ -59,8 +67,8 @@ export class FastTextKanji {
     }
 
     getKanjiVecByChar(c: string): Float32Array | null {
-        const index = this.vocab.indexOf(c);
-        if (index === -1) {
+        const index = this.vocabMap.get(c);
+        if (index === undefined) {
             return null;
         }
         return this.getKanjiVec(index);
@@ -94,7 +102,7 @@ export class FastTextKanji {
     }
 
     isKanjiInVocab(c: string): boolean {
-        return this.vocab.indexOf(c) !== -1;
+        return this.vocabMap.has(c);
     }
 
     getKanji(index: number): string | null {
@@ -108,11 +116,11 @@ export class FastTextKanji {
         return this.numWords;
     }
 
-    calcSimilarKanjis(vec: Float32Array, topN: number): { kanji: string; similarity: number }[] | null {
+    calcSimilarKanjis(vec: Float32Array, topN: number): SimilarityResult[] | null {
         if (this.dim === null) {
             throw new Error("Model not loaded");
         }
-        const similarities: { kanji: string; similarity: number }[] = [];
+        const similarities: SimilarityResult[] = [];
         const normalizedVec = this.normalizeVec(vec);
         if (!normalizedVec) {
             return null;
