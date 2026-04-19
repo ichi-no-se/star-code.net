@@ -5,11 +5,11 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
-				<Link href="/projects/kanji-similarity" className="post-box">
+				<Link href="/projects/kanji-calculator" className="post-box">
 					<div>
-						<h2 className="post-title">漢字電卓</h2>
+						<h2 className="post-title">漢数電卓</h2>
 						<p className="post-date">2026-04-19</p>
-						<p className="post-description">漢字の式から類似漢字を計算</p>
+						<p className="post-description">例：<code>仏-(英+独)/2.0</code></p>
 					</div>
 				</Link>
 				<Link href="/projects/kanji-guess" className="post-box">
