@@ -242,4 +242,7 @@ header nav ul {
 		gap: 0.5rem;
 	}
 
+	.introduction {
+		font-size: 1.2rem;
+	}
 }
