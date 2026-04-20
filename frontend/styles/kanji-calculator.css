@@ -111,7 +111,6 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	background: #fff;
 	border: 1px solid #eee;
 	border-radius: 0.5rem;
 	padding: 1rem;
@@ -125,7 +124,7 @@
 
 .result-similarity {
 	font-size: 1.0rem;
-	color: #888;
+	color: #333;
 	margin-top: 0.2rem;
 }
 

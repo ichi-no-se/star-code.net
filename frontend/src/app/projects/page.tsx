@@ -8,8 +8,8 @@ export default function ProjectsPage() {
 				<Link href="/projects/kanji-calculator" className="post-box">
 					<div>
 						<h2 className="post-title">漢数電卓</h2>
-						<p className="post-date">2026-04-19</p>
-						<p className="post-description">例：<code>仏-(英+独)/2.0</code></p>
+						<p className="post-date">2026-04-20</p>
+						<p className="post-description"><code>仏-(英+独)/2=？</code></p>
 					</div>
 				</Link>
 				<Link href="/projects/kanji-guess" className="post-box">

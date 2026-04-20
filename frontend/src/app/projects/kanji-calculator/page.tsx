@@ -447,7 +447,7 @@ export default function KanjiCalculatorPage() {
 				)}
 				<div className="result-container">
 					{results.map((result, index) => (
-						<div key={index} className="result-item">
+						<div key={index} className="result-item" style={{ backgroundColor: `rgba(50, 200, 80, ${Math.max(0, Math.min(1, result.similarity))})` }}>
 							<span className="result-kanji">{result.kanji}</span>
 							<span className="result-similarity">{result.similarity.toFixed(4)}</span>
 						</div>
