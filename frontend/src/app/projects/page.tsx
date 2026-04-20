@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/kanji-calculator" className="post-box">
+					<div>
+						<h2 className="post-title">漢数電卓</h2>
+						<p className="post-date">2026-04-20</p>
+						<p className="post-description"><code>仏-(英+独)/2=？</code></p>
+					</div>
+				</Link>
 				<Link href="/projects/kanji-guess" className="post-box">
 					<div>
 						<h2 className="post-title">fastText 類似度漢字当てゲーム</h2>

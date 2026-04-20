@@ -15,14 +15,14 @@ export default function KanjiGuessPage() {
 				<br />
 				開発記事は<Link href="/blog/kanji-guess">こちら</Link>から．
 			</div>
-			<KanjiGuess vocabURL="/kanji-vec/kanji_education_vocab.txt" vectorURL="/kanji-vec/kanji_education_vecs.bin" />
+			<KanjiGuess vocabURL="/kanji-vec/kanji_edu_u3_vocab.txt" vectorURL="/kanji-vec/kanji_edu_u3_vecs.bin" />
 			<div className="license">
 				このアプリでは，以下のデータセット・リソースを使用しています．
 				<li>
 					<strong>語彙リスト</strong>
 					<br />
-					教育漢字を使用しています．
-					<Link href="https://qiita.com/YSRKEN/items/ee9589dd59015ca2f15f">教育漢字、常用漢字、JIS第n水準漢字の一覧を取得するプログラムを考えよう - Qiita</Link>上のリストを使用しています（閲覧日：2026 年 4 月 15 日）．
+					小学校 3 年生までで習う漢字を使用しています．
+					<Link href="https://qiita.com/YSRKEN/items/ee9589dd59015ca2f15f">教育漢字、常用漢字、JIS第n水準漢字の一覧を取得するプログラムを考えよう - Qiita</Link>上のリストを使用しています（閲覧日：2026 年 4 月 18 日）．
 				</li>
 				<li>
 					<strong>単語ベクトル</strong>

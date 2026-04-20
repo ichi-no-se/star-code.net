@@ -10,6 +10,7 @@ order: 0
 - mixi2: [一之瀬このみ](https://mixi.social/@1_no_se)
 - pixiv: [一之瀬このみ](https://www.pixiv.net/users/73996425)
 - AtCoder: [1_no_se](https://atcoder.jp/users/1_no_se)
+- Email: 1ichi1nose あっと gmail ドット com（適切に置換してください）
 
 好きなものを好きと言える人が好きです．
 
