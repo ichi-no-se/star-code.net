@@ -35,8 +35,6 @@ button,
 textarea,
 select,
 button {
-	-webkit-appearance: none;
-	appearance: none;
 	background-color: transparent;
 	color: inherit;
 	font-family: inherit;
