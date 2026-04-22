@@ -33,11 +33,11 @@ const toFullWidth = (str: string) => {
 type RouteResult =
     | { type: "IDLE" }
     | { type: "NO_ROUTE" }
-    | { type: "SUCCESS", result: number[] };
+    | { type: "SUCCESS", result: number[], cost: number };
 
 
 
-const filterStations = (text: string, stationMap: Map<number, Station>, maxResults: number = 20) => {
+const filterStations = (text: string, stationMap: Map<number, Station>) => {
     if (text.length >= 2 && text[text.length - 1] === "駅") {
         text = text.slice(0, -1);
     }
@@ -61,7 +61,7 @@ const filterStations = (text: string, stationMap: Map<number, Station>, maxResul
         }
     }
     resultWithPriority.sort((a, b) => a.priority - b.priority);
-    return resultWithPriority.slice(0, maxResults).map(({ station_cd, station }) => ({ station_cd, station }));
+    return resultWithPriority.map(({ station_cd, station }) => ({ station_cd, station }));
 };
 
 export default function TransferGuidePage() {
@@ -120,21 +120,18 @@ export default function TransferGuidePage() {
         if (selectedDepartureCd === null || selectedArrivalCd === null) {
             return { type: "IDLE" };
         }
-        const departureStation = stationMap.get(selectedDepartureCd)!;
-        const arrivalStation = stationMap.get(selectedArrivalCd)!;
-
-        const SIZE = stationMap.size;
-        const deque = new Array<number>(SIZE);
+        const SIZE = stationMap.size; // 十分大きい値であればよい，こんなに大きくなくとも余裕ですが念の為
+        const deque = new Array<{ cd: number, from: number }>(SIZE);
         let head = 0;
         let tail = 0;
         const visited = new Map<number, { from: number }>();
 
-        const pushFront = (val: number) => {
+        const pushFront = (cd: number, from: number) => {
             head = (head - 1 + SIZE) % SIZE;
-            deque[head] = val;
+            deque[head] = { cd, from };
         }
-        const pushBack = (val: number) => {
-            deque[tail] = val;
+        const pushBack = (cd: number, from: number) => {
+            deque[tail] = { cd, from };
             tail = (tail + 1) % SIZE;
         }
         const popFront = () => {
@@ -145,25 +142,27 @@ export default function TransferGuidePage() {
         const isEmpty = () => head === tail;
 
         // 逆から 0-1 BFS
-        visited.set(selectedArrivalCd, { from: -1 });
-        pushFront(selectedArrivalCd);
+        pushFront(selectedArrivalCd, -1);
 
         while (!isEmpty()) {
-            const currentCd = popFront();
-            const currentStation = stationMap.get(currentCd)!;
-            if (currentCd === selectedDepartureCd) {
+            const { cd, from } = popFront();
+
+            if (visited.has(cd)) {
+                continue;
+            }
+            visited.set(cd, { from });
+            if (cd === selectedDepartureCd) {
                 break;
             }
-            for (const cd of groupMap.get(currentStation.g_cd)!) {
-                if (!visited.has(cd)) {
-                    visited.set(cd, { from: currentCd });
-                    pushFront(cd);
+            const currentStation = stationMap.get(cd)!;
+            for (const nextCd of groupMap.get(currentStation.g_cd)!) {
+                if (!visited.has(nextCd)) {
+                    pushFront(nextCd, cd);
                 }
             }
-            for (const cd of currentStation.edges) {
-                if (!visited.has(cd)) {
-                    visited.set(cd, { from: currentCd });
-                    pushBack(cd);
+            for (const nextCd of currentStation.edges) {
+                if (!visited.has(nextCd)) {
+                    pushBack(nextCd, cd);
                 }
             }
         }
@@ -173,17 +172,28 @@ export default function TransferGuidePage() {
         const path = [];
         let currentCd = selectedDepartureCd;
         while (currentCd !== -1) {
+            if (path.length >= 2 && stationMap.get(path[path.length - 2])!.g_cd === stationMap.get(currentCd)!.g_cd) {
+                path.pop(); // 2 つ前と同じグループなら、途中の駅は通過するだけなので経路から外す
+            }
             path.push(currentCd);
             currentCd = visited.get(currentCd)!.from;
         }
-        return { type: "SUCCESS", result: path };
-    }, [selectedArrivalCd, selectedDepartureCd]);
+        let cost = 0;
+        for (let i = 1; i < path.length; i++) {
+            const prevStation = stationMap.get(path[i - 1])!;
+            const currentStation = stationMap.get(path[i])!;
+            if (prevStation.g_cd !== currentStation.g_cd) {
+                cost++;
+            }
+        }
+        return { type: "SUCCESS", result: path, cost };
+    }, [selectedArrivalCd, selectedDepartureCd, groupMap, stationMap]);
 
     return (
         <>
-            <h1 className="title">乗換案内（最短経由駅数）</h1>
+            <h1 className="title">乗換案内（最少通過区間）</h1>
             <div className="introduction">
-                乗換案内です．最短経由駅数でルートを検索します．<br />
+                乗換案内です．最少通過区間でルートを検索します．<br />
                 新幹線には対応していません．<br />
                 開発記事は<Link href="/blog/transfer-guide">こちら</Link>から．<br />
                 駅データは 2026 年 4 月 9 日時点のものを使用しています．
@@ -192,111 +202,108 @@ export default function TransferGuidePage() {
                 <div className="input-container">
                     <div className="station-selector">
                         <span className="label">出発駅</span>
-                        <input
-                            type="text"
-                            className="station-input"
-                            placeholder="出発駅を入力"
-                            value={departureStationText}
-                            onChange={
-                                (e) => {
-                                    setDepartureStationText(e.target.value)
-                                    setSelectedDepartureCd(null);
+                        <div className="field-group">
+                            <input
+                                type="text"
+                                className="station-input"
+                                placeholder="出発駅を入力"
+                                value={departureStationText}
+                                onChange={
+                                    (e) => {
+                                        setDepartureStationText(e.target.value)
+                                        setSelectedDepartureCd(null);
+                                    }
                                 }
-                            }
-                        />
-                        {
-                            candidateDepartureStations.length > 0 && (
-                                <div className="candidate-list">
-                                    {candidateDepartureStations.map(({ station_cd, station }) => (
-                                        <label key={station_cd} className="candidate-item">
-                                            <input
-                                                type="radio"
-                                                name="departure-candidate"
-                                                value={station_cd}
-                                                checked={selectedDepartureCd === station_cd}
-                                                onChange={() => setSelectedDepartureCd(station_cd)}
-                                            />
-                                            {station.name}（{lineMap.get(station.line_cd)}）
-                                        </label>
-                                    ))}
-                                </div>
-                            )
-                        }
+                            />
+                            <select
+                                className="station-dropdown"
+                                value={selectedDepartureCd ?? ""}
+                                onChange={(e) => setSelectedDepartureCd(parseInt(e.target.value))}
+                                disabled={candidateDepartureStations.length === 0}
+                            >
+                                <option value="" disabled>出発駅を選択してください</option>
+                                {candidateDepartureStations.map(({ station_cd, station }) => (
+                                    <option key={station_cd} value={station_cd}>
+                                        {station.name} ({lineMap.get(station.line_cd)})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                     <div className="station-selector">
                         <span className="label">到着駅</span>
-                        <input
-                            type="text"
-                            className="station-input"
-                            placeholder="到着駅を入力"
-                            value={arrivalStationText}
-                            onChange={
-                                (e) => {
-                                    setArrivalStationText(e.target.value)
-                                    setSelectedArrivalCd(null);
+                        <div className="field-group">
+                            <input
+                                type="text"
+                                className="station-input"
+                                placeholder="到着駅を入力"
+                                value={arrivalStationText}
+                                onChange={
+                                    (e) => {
+                                        setArrivalStationText(e.target.value)
+                                        setSelectedArrivalCd(null);
+                                    }
                                 }
-                            }
-                        />
-                    </div>
-                    {
-                        candidateArrivalStations.length > 0 && (
-                            <div className="candidate-list">
+                            />
+                            <select className="station-dropdown"
+                                value={selectedArrivalCd ?? ""}
+                                onChange={(e) => setSelectedArrivalCd(parseInt(e.target.value))}
+                                disabled={candidateArrivalStations.length === 0}
+                            >
+                                <option value="" disabled>到着駅を選択してください</option>
                                 {candidateArrivalStations.map(({ station_cd, station }) => (
-                                    <label key={station_cd} className="candidate-item">
-                                        <input
-                                            type="radio"
-                                            name="arrival-candidate"
-                                            value={station_cd}
-                                            checked={selectedArrivalCd === station_cd}
-                                            onChange={() => setSelectedArrivalCd(station_cd)}
-                                        />
-                                        {station.name}（{lineMap.get(station.line_cd)}）
-                                    </label>
+                                    <option key={station_cd} value={station_cd}>
+                                        {station.name} ({lineMap.get(station.line_cd)})
+                                    </option>
                                 ))}
-                            </div>
-                        )
-                    }
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 {loading && <div className="loading">データを読み込んでいます...</div>}
                 <div className="output-container">
                     {route.type === "IDLE" && <div className="idle-message">駅を選択してください</div>}
                     {route.type === "NO_ROUTE" && <div className="error-message">経路が見つかりません</div>}
                     {route.type === "SUCCESS" && (
-                        <div className="route-result">
-                            {route.result.map((station_cd, index) => {
-                                const station = stationMap.get(station_cd)!;
-                                const line_cd = station.line_cd;
-                                const lineName = lineMap.get(line_cd)!;
-                                if (index === 0) {
-                                    return (
-                                        <div key={station_cd} className="route-station">
-                                            <span className="station-name">{station.name}</span>
-                                            <span className="line-name">（{lineName}）</span>
-                                        </div>
-                                    )
-                                }
-                                const prevStation = stationMap.get(route.result[index - 1])!;
-                                const prevLineCd = prevStation.line_cd;
-                                if (prevLineCd !== line_cd) {
-                                    return (
-                                        <Fragment key={station_cd}>
-                                            <div className="transfer">｜乗換</div>
-                                            <div className="route-station">
+                        <>
+                            <div className="route-cost">通過区間：{route.cost} 区間</div>
+                            <div className="route-result">
+                                {route.result.map((station_cd, index) => {
+                                    const station = stationMap.get(station_cd)!;
+                                    const line_cd = station.line_cd;
+                                    const lineName = lineMap.get(line_cd)!;
+                                    if (index === 0) {
+                                        return (
+                                            <div key={station_cd} className="route-station">
                                                 <span className="station-name">{station.name}</span>
-                                                <span className="line-name">（{lineName}）</span>
+                                                <span className="line-name">{lineName}</span>
                                             </div>
-                                        </Fragment>
-                                    )
-                                }
-                                else {
-                                    return (
-                                        <div key={station_cd} className="route-station">
-                                            <span className="station-name">{station.name}</span>
-                                        </div>
-                                    )
-                                }
-                            })}
-                        </div>
+                                        )
+                                    }
+                                    const g_cd = station.g_cd;
+                                    const prevStation = stationMap.get(route.result[index - 1])!;
+                                    const prevg_cd = prevStation.g_cd;
+                                    if (prevg_cd === g_cd) {
+                                        return (
+                                            <Fragment key={station_cd}>
+                                                <div className="transfer">乗換</div>
+                                                <div className="route-station">
+                                                    <span className="station-name">{station.name}</span>
+                                                    <span className="line-name">{lineName}</span>
+                                                </div>
+                                            </Fragment>
+                                        )
+                                    }
+                                    else {
+                                        return (
+                                            <div key={station_cd} className="route-station">
+                                                <span className="station-name">{station.name}</span>
+                                            </div>
+                                        )
+                                    }
+                                })}
+                            </div>
+                        </>
                     )}
                 </div>
             </div>

@@ -7,9 +7,9 @@ export default function ProjectsPage() {
 			<ol className="post-list">
 				<Link href="/projects/transfer-guide" className="post-box">
 					<div>
-						<h2 className="post-title">乗換案内（最短経由駅数）</h2>
+						<h2 className="post-title">乗換案内（最少通過区間）</h2>
 						<p className="post-date">2026-04-21</p>
-						<p className="post-description">最短経由駅数でルートを検索します</p>
+						<p className="post-description">最少通過区間のルートを検索します</p>
 					</div>
 				</Link>
 				<Link href="/projects/kanji-calculator" className="post-box">
