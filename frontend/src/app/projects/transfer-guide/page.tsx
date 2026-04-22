@@ -121,17 +121,16 @@ export default function TransferGuidePage() {
             return { type: "IDLE" };
         }
         const SIZE = stationMap.size; // 十分大きい値であればよい，こんなに大きくなくとも余裕ですが念の為
-        const deque = new Array<{ cd: number, from: number }>(SIZE);
+        const deque = new Array<{ cd: number, from: number, changes: number }>(SIZE);
         let head = 0;
         let tail = 0;
-        const visited = new Map<number, { from: number }>();
 
-        const pushFront = (cd: number, from: number) => {
+        const pushFront = (cd: number, from: number, changes: number) => {
             head = (head - 1 + SIZE) % SIZE;
-            deque[head] = { cd, from };
+            deque[head] = { cd, from, changes };
         }
-        const pushBack = (cd: number, from: number) => {
-            deque[tail] = { cd, from };
+        const pushBack = (cd: number, from: number, changes: number) => {
+            deque[tail] = { cd, from, changes };
             tail = (tail + 1) % SIZE;
         }
         const popFront = () => {
@@ -142,41 +141,47 @@ export default function TransferGuidePage() {
         const isEmpty = () => head === tail;
 
         // 逆から 0-1 BFS
-        pushFront(selectedArrivalCd, -1);
+        pushFront(selectedArrivalCd, -1, 0);
+
+
+        const visitedMap = new Map<number, { from: number }>();
+        const changesMap = new Map<number, number>();
 
         while (!isEmpty()) {
-            const { cd, from } = popFront();
+            const { cd, from, changes } = popFront();
 
-            if (visited.has(cd)) {
+            if (visitedMap.has(cd)) {
                 continue;
             }
-            visited.set(cd, { from });
+            if (changesMap.get(cd)! > changes) {
+                continue;
+            }
+            visitedMap.set(cd, { from });
             if (cd === selectedDepartureCd) {
                 break;
             }
             const currentStation = stationMap.get(cd)!;
             for (const nextCd of groupMap.get(currentStation.g_cd)!) {
-                if (!visited.has(nextCd)) {
-                    pushFront(nextCd, cd);
+                if (!visitedMap.has(nextCd) && (!changesMap.has(nextCd) || changesMap.get(nextCd)! > changes + 1)) {
+                    changesMap.set(nextCd, changes + 1);
+                    pushFront(nextCd, cd, changes + 1);
                 }
             }
             for (const nextCd of currentStation.edges) {
-                if (!visited.has(nextCd)) {
-                    pushBack(nextCd, cd);
+                if (!visitedMap.has(nextCd) && (!changesMap.has(nextCd) || changesMap.get(nextCd)! > changes)) {
+                    changesMap.set(nextCd, changes);
+                    pushBack(nextCd, cd, changes);
                 }
             }
         }
-        if (!visited.has(selectedDepartureCd)) {
+        if (!visitedMap.has(selectedDepartureCd)) {
             return { type: "NO_ROUTE" };
         }
         const path = [];
         let currentCd = selectedDepartureCd;
         while (currentCd !== -1) {
-            if (path.length >= 2 && stationMap.get(path[path.length - 2])!.g_cd === stationMap.get(currentCd)!.g_cd) {
-                path.pop(); // 2 つ前と同じグループなら、途中の駅は通過するだけなので経路から外す
-            }
             path.push(currentCd);
-            currentCd = visited.get(currentCd)!.from;
+            currentCd = visitedMap.get(currentCd)!.from;
         }
         let cost = 0;
         for (let i = 1; i < path.length; i++) {
