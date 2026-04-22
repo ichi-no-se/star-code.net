@@ -216,10 +216,12 @@ export default function TransferGuidePage() {
         <>
             <h1 className="title">乗換案内（最少通過区間）</h1>
             <div className="introduction">
-                乗換案内です．最少通過区間でルートを検索します．<br />
-                新幹線には対応していません．<br />
+                乗換案内です．最少通過区間の経路を算出します．<br />
+                利便性，経済性は考慮していません．これらを考慮したい場合は<Link href="https://transit.yahoo.co.jp">こちら</Link>をご利用ください．<br />
+                また，新幹線には対応していません．<br />
                 開発記事は<Link href="/blog/transfer-guide">こちら</Link>から．<br />
-                駅データは 2026 年 4 月 9 日時点のものを使用しています．
+                
+                <small>このアプリでは，<Link href="https://ekidata.jp/">駅データ.jp</Link> のデータ（2026-04-09）を加工して使用しています．</small>
             </div>
             <div className="layout-container">
                 <div className="input-container">
@@ -329,13 +331,6 @@ export default function TransferGuidePage() {
                         </>
                     )}
                 </div>
-            </div>
-            <div className="license">
-                このアプリでは，以下のデータセット・リソースを使用しています．
-                <li>
-                    <strong>駅データ.jp</strong><br />
-                    <Link href="https://ekidata.jp/">駅データ.jp</Link> のデータを加工して使用しています．<br />
-                </li>
             </div>
         </>
     )
