@@ -297,7 +297,7 @@ export default function TransferGuidePage() {
                                     const station = stationMap.get(station_cd)!;
                                     const line_cd = station.line_cd;
                                     const lineName = lineMap.get(line_cd)!;
-                                    const key_name = selectedDepartureCd + "_" + selectedArrivalCd + "_" + station_cd;
+                                    const key_name = `${selectedDepartureCd}_${selectedArrivalCd}_${index}`;
                                     if (index === 0) {
                                         return (
                                             <div key={key_name} className="route-station">
