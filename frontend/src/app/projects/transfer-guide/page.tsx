@@ -297,9 +297,10 @@ export default function TransferGuidePage() {
                                     const station = stationMap.get(station_cd)!;
                                     const line_cd = station.line_cd;
                                     const lineName = lineMap.get(line_cd)!;
+                                    const key_name = selectedDepartureCd + "_" + selectedArrivalCd + "_" + station_cd;
                                     if (index === 0) {
                                         return (
-                                            <div key={station_cd} className="route-station">
+                                            <div key={key_name} className="route-station">
                                                 <span className="station-name">{station.name}</span>
                                                 <span className="line-name">{lineName}</span>
                                             </div>
@@ -307,10 +308,10 @@ export default function TransferGuidePage() {
                                     }
                                     const g_cd = station.g_cd;
                                     const prevStation = stationMap.get(route.result[index - 1])!;
-                                    const prevg_cd = prevStation.g_cd;
-                                    if (prevg_cd === g_cd) {
+                                    const prev_g_cd = prevStation.g_cd;
+                                    if (prev_g_cd === g_cd) {
                                         return (
-                                            <Fragment key={station_cd}>
+                                            <Fragment key={key_name}>
                                                 <div className="transfer">乗換</div>
                                                 <div className="route-station">
                                                     <span className="station-name">{station.name}</span>
@@ -321,7 +322,7 @@ export default function TransferGuidePage() {
                                     }
                                     else {
                                         return (
-                                            <div key={station_cd} className="route-station">
+                                            <div key={key_name} className="route-station">
                                                 <span className="station-name">{station.name}</span>
                                             </div>
                                         )
