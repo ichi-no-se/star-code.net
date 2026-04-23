@@ -73,6 +73,7 @@ export default function TransferGuidePage() {
     const [arrivalStationText, setArrivalStationText] = useState("");
     const [selectedDepartureCd, setSelectedDepartureCd] = useState<number | null>(null);
     const [selectedArrivalCd, setSelectedArrivalCd] = useState<number | null>(null);
+    const [route, setRoute] = useState<RouteResult>({ type: "IDLE" });
 
     useEffect(() => {
         async function loadData() {
@@ -116,9 +117,10 @@ export default function TransferGuidePage() {
         return filterStations(arrivalStationText, stationMap);
     }, [arrivalStationText, stationMap]);
 
-    const route: RouteResult = useMemo(() => {
+    useEffect(() => {
         if (selectedDepartureCd === null || selectedArrivalCd === null) {
-            return { type: "IDLE" };
+            setRoute({ type: "IDLE" });
+            return;
         }
         const SIZE = stationMap.size; // 十分大きい値であればよい，こんなに大きくなくとも余裕ですが念の為
         const deque = new Array<{ cd: number, val: number }>(SIZE);
@@ -165,7 +167,8 @@ export default function TransferGuidePage() {
             }
         }
         if (!distMap.has(selectedArrivalCd)) {
-            return { type: "NO_ROUTE" };
+            setRoute({ type: "NO_ROUTE" });
+            return;
         }
 
         // 乗り換え回数でもう一度 01 BFS（後ろから）
@@ -209,7 +212,7 @@ export default function TransferGuidePage() {
                 cost++;
             }
         }
-        return { type: "SUCCESS", result: path, cost };
+        setRoute({ type: "SUCCESS", result: path, cost });
     }, [selectedArrivalCd, selectedDepartureCd, groupMap, stationMap]);
 
     return (
@@ -220,7 +223,6 @@ export default function TransferGuidePage() {
                 利便性，経済性は考慮していません．これらを考慮したい場合は<Link href="https://transit.yahoo.co.jp">こちら</Link>をご利用ください．<br />
                 また，新幹線には対応していません．<br />
                 開発記事は<Link href="/blog/transfer-guide">こちら</Link>から．<br />
-                
                 <small>このアプリでは，<Link href="https://ekidata.jp/">駅データ.jp</Link> のデータ（2026-04-09）を加工して使用しています．</small>
             </div>
             <div className="layout-container">
@@ -292,12 +294,12 @@ export default function TransferGuidePage() {
                     {route.type === "SUCCESS" && (
                         <>
                             <div className="route-cost">通過区間：{route.cost} 区間</div>
-                            <div className="route-result">
+                            <div className="route-result" key={`${selectedDepartureCd}-${selectedArrivalCd}`}>
                                 {route.result.map((station_cd, index) => {
                                     const station = stationMap.get(station_cd)!;
                                     const line_cd = station.line_cd;
                                     const lineName = lineMap.get(line_cd)!;
-                                    const key_name = `${selectedDepartureCd}_${selectedArrivalCd}_${index}`;
+                                    const key_name = `${selectedDepartureCd}-${selectedArrivalCd}-${index}`;
                                     if (index === 0) {
                                         return (
                                             <div key={key_name} className="route-station">
