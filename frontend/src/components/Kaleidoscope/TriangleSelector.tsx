@@ -1,0 +1,226 @@
+"use client";
+import { useState, useEffect, useMemo, useRef } from "react";
+import "@styles/kaleidoscope.css";
+
+export interface TriangleConfig {
+    cx: number;
+    cy: number;
+    r: number;
+    angle: number;
+}
+
+interface Props {
+    image: HTMLImageElement;
+    onChange: (config: TriangleConfig, isDragging: boolean) => void;
+}
+
+
+export const calcPoints = (config: TriangleConfig) => {
+    const points = [];
+    for (let i = 0; i < 3; i++) {
+        const angle = config.angle + i * Math.PI * 2 / 3;
+        const x = config.cx + config.r * Math.cos(angle);
+        const y = config.cy + config.r * Math.sin(angle);
+        points.push({ x, y });
+    }
+    return points;
+}
+
+export default function TriangleSelector({ image, onChange }: Props) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [config, setConfig] = useState<TriangleConfig>({ cx: 0, cy: 0, r: 0, angle: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragMode, setDragMode] = useState<"translate" | "rotate-scale">("translate");
+    const [draggingPointIndex, setDraggingPointIndex] = useState<0 | 1 | 2>(0);
+    const dragOffset = useRef<{ x: number, y: number }>({ x: 0, y: 0 });
+    const [hoverMode, setHoverMode] = useState<"none" | "translate" | "rotate-scale">("none");
+    const lastNotifyTime = useRef(0);
+    const HIT_RADIUS = Math.max(image.naturalWidth, image.naturalHeight) * 0.015;
+
+    const notifyChange = (config: TriangleConfig, isDragging: boolean) => {
+        const now = Date.now();
+        if(!isDragging || now - lastNotifyTime.current > 50){
+            onChange(config, isDragging);
+            lastNotifyTime.current = now;
+        }
+    };
+
+    useEffect(() => {
+        const initialConfig = {
+            cx: image.naturalWidth / 2,
+            cy: image.naturalHeight / 2,
+            r: Math.min(image.naturalWidth, image.naturalHeight) / 8,
+            angle: 0
+        }
+        setConfig(initialConfig);
+        notifyChange(initialConfig, false);
+    }, [image]);
+
+    const isConfigValid = (config: TriangleConfig, image: HTMLImageElement) => {
+        if (config.r <= 2) return false; // 半径が小さすぎる場合無効
+        const pointsFromConfig = calcPoints(config);
+        for (const point of pointsFromConfig) {
+            if (point.x < 0 || point.x > image.naturalWidth || point.y < 0 || point.y > image.naturalHeight) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    const points = useMemo(() => {
+        return calcPoints(config);
+    }, [config]);
+
+
+    const isInsideTriangle = (x: number, y: number) => {
+        const cross = (p1: { x: number, y: number }, p2: { x: number, y: number }, mx: number, my: number) => {
+            return (p2.x - p1.x) * (my - p1.y) - (p2.y - p1.y) * (mx - p1.x);
+        };
+
+        const d1 = cross(points[0], points[1], x, y);
+        const d2 = cross(points[1], points[2], x, y);
+        const d3 = cross(points[2], points[0], x, y);
+
+        return (d1 >= 0 && d2 >= 0 && d3 >= 0);
+    }
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        startDragging(e.clientX, e.clientY);
+    }
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (e.cancelable) {
+            e.preventDefault();
+        }
+        const touch = e.touches[0];
+        startDragging(touch.clientX, touch.clientY);
+    }
+
+    const startDragging = (clientX: number, clientY: number) => {
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+
+        const scaleX = image.naturalWidth / rect.width;
+        const scaleY = image.naturalHeight / rect.height;
+        const mouseX = (clientX - rect.left) * scaleX;
+        const mouseY = (clientY - rect.top) * scaleY;
+        let shortestDistance = Infinity;
+        let closestPointIndex: 0 | 1 | 2 = 0;
+        for (let i = 0; i < 3; i++) {
+            const dx = points[i].x - mouseX;
+            const dy = points[i].y - mouseY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < shortestDistance) {
+                shortestDistance = distance;
+                closestPointIndex = i as 0 | 1 | 2;
+            }
+        }
+        if (shortestDistance < HIT_RADIUS) {
+            setDragMode("rotate-scale");
+            setDraggingPointIndex(closestPointIndex);
+            setIsDragging(true);
+            dragOffset.current = { x: points[closestPointIndex].x - mouseX, y: points[closestPointIndex].y - mouseY };
+        }
+        else {
+            setDragMode("translate");
+            if (isInsideTriangle(mouseX, mouseY)) {
+                setIsDragging(true);
+                dragOffset.current = { x: config.cx - mouseX, y: config.cy - mouseY };
+            }
+            else {
+                setIsDragging(false);
+            }
+        }
+    }
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        updateDragging(e.clientX, e.clientY);
+    }
+
+    const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (e.cancelable) {
+            e.preventDefault();
+        }
+        const touch = e.touches[0];
+        updateDragging(touch.clientX, touch.clientY);
+    }
+
+    const updateDragging = (clientX: number, clientY: number) => {
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const scaleX = image.naturalWidth / rect.width;
+        const scaleY = image.naturalHeight / rect.height;
+        const mouseX = (clientX - rect.left) * scaleX;
+        const mouseY = (clientY - rect.top) * scaleY;
+        if (!isDragging) {
+            let shortestDistance = Infinity;
+            for (let i = 0; i < 3; i++) {
+                const dx = points[i].x - mouseX;
+                const dy = points[i].y - mouseY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < shortestDistance) {
+                    shortestDistance = distance;
+                }
+            }
+            if (shortestDistance < HIT_RADIUS) {
+                setHoverMode("rotate-scale");
+            }
+            else {
+                if (isInsideTriangle(mouseX, mouseY)) {
+                    setHoverMode("translate");
+                }
+                else {
+                    setHoverMode("none");
+                }
+            }
+            return;
+        }
+        const x = mouseX + dragOffset.current.x;
+        const y = mouseY + dragOffset.current.y;
+
+        if (dragMode === "translate") {
+            const newConfig = { ...config, cx: x, cy: y };
+            if (isConfigValid(newConfig, image)) {
+                setConfig(newConfig);
+                notifyChange(newConfig, true);
+            }
+        }
+        else {
+            const distance = Math.sqrt((x - config.cx) ** 2 + (y - config.cy) ** 2);
+            const deltaAngle = Math.atan2(y - config.cy, x - config.cx) - Math.atan2(points[draggingPointIndex].y - config.cy, points[draggingPointIndex].x - config.cx);
+            const newConfig = { ...config, r: distance, angle: config.angle + deltaAngle };
+            if (isConfigValid(newConfig, image)) {
+                setConfig(newConfig);
+                notifyChange(newConfig,true);
+            }
+        }
+    }
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+        setHoverMode("none");
+        notifyChange(config, false);
+    }
+
+    const handleTouchEnd = () => {
+        setIsDragging(false);
+        setHoverMode("none");
+        notifyChange(config, false);
+    }
+
+    return (
+        <div ref={containerRef} className="shape-container" onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} data-cursor={isDragging ? dragMode : hoverMode}>
+            <img src={image.src} className="image" />
+            <svg className="overlay" viewBox={`0 0 ${image.naturalWidth} ${image.naturalHeight}`}>
+                <g className="selector-group">
+                    <polygon points={points.map(p => `${p.x},${p.y}`).join(" ")} className="shape" />
+                    {
+                        points.map((p, i) => (
+                            <circle key={i} cx={p.x} cy={p.y} r={HIT_RADIUS} className="handle" />
+                        ))
+                    }
+                </g>
+            </svg>
+        </div>
+    )
+}

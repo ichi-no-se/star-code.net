@@ -1,0 +1,92 @@
+.shape-container,
+.render-container {
+    position: relative;
+    line-height: 0;
+    user-select: none;
+    display: inline-block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    touch-action: none;
+}
+
+.image,
+.render-canvas {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.image {
+    pointer-events: none;
+}
+
+.save-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: default;
+    touch-action: auto;
+    pointer-events: auto;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.shape {
+    stroke: white;
+    stroke-width: 2px;
+    fill: rgba(255, 255, 255, 0.2);
+    touch-action: none;
+}
+
+.handle {
+    fill: white;
+    stroke: transparent;
+}
+
+.selector-group {
+    mix-blend-mode: difference;
+}
+
+
+.shape-container[data-cursor="translate"] {
+    cursor: move;
+}
+
+.shape-container[data-cursor="rotate-scale"] {
+    cursor: crosshair;
+}
+
+.shape-container[data-cursor="none"] {
+    cursor: default;
+}
+
+
+.kaleidoscope-settings .setting-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.kaleidoscope-settings label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 6rem;
+    text-align: left;
+}
