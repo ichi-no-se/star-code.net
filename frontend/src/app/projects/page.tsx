@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/kaleidoscope-square" className="post-box">
+					<div>
+						<h2 className="post-title">万華鏡風画像作成（正方形）</h2>
+						<p className="post-date">2026-05-04</p>
+						<p className="post-description">画像から万華鏡風の画像を作成</p>
+					</div>
+				</Link>
 				<Link href="/projects/kaleidoscope" className="post-box">
 					<div>
 						<h2 className="post-title">万華鏡風画像作成（正三角形）</h2>

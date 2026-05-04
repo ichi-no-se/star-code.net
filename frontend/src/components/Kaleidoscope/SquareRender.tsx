@@ -1,23 +1,23 @@
 "use client";
 import { useRef, useEffect, useState, useImperativeHandle, forwardRef, useMemo } from "react";
-import { TriangleConfig, calcPoints } from "./TriangleSelector";
+import { SquareConfig, calcPoints } from "./SquareSelector";
 import "@styles/kaleidoscope.css";
 
 interface Props {
     image: HTMLImageElement;
-    config: TriangleConfig;
+    config: SquareConfig;
     width: number;
     height: number;
     zoom: number;
     isInteracting: boolean;
 }
 
-export interface TriangleRenderRef {
+export interface SquareRenderRef {
     download: () => void;
 }
 
 
-const TriangleRender = forwardRef<TriangleRenderRef, Props>((props, ref) => {
+const SquareRender = forwardRef<SquareRenderRef, Props>((props, ref) => {
     const { image, config, width, height, zoom, isInteracting } = props;
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -66,18 +66,14 @@ const TriangleRender = forwardRef<TriangleRenderRef, Props>((props, ref) => {
         const imageData = ctx.createImageData(width, height);
 
         const points = calcPoints(config);
-        const [p0, p1, p2] = points;
+        const [p0, p1, _, p3] = points;
         const v1 = { x: p1.x - p0.x, y: p1.y - p0.y };
-        const v2 = { x: p2.x - p0.x, y: p2.y - p0.y };
-        const det = v1.x * v2.y - v1.y * v2.x;
-        const inv00 = v2.y / det;
-        const inv01 = -v2.x / det;
+        const v3 = { x: p3.x - p0.x, y: p3.y - p0.y };
+        const det = v1.x * v3.y - v1.y * v3.x;
+        const inv00 = v3.y / det;
+        const inv01 = -v3.x / det;
         const inv10 = -v1.y / det;
         const inv11 = v1.x / det;
-        const L = config.r * Math.sqrt(3);
-        const e01 = { x: (p1.x - p0.x) / L, y: (p1.y - p0.y) / L };
-        const e01_perp = { x: -e01.y, y: e01.x };
-
         const mod = (a: number, b: number) => ((a % b) + b) % b;
 
         const calcSrcPos = (x: number, y: number) => {
@@ -87,47 +83,15 @@ const TriangleRender = forwardRef<TriangleRenderRef, Props>((props, ref) => {
             const u = inv00 * dx + inv01 * dy;
             const v = inv10 * dx + inv11 * dy;
 
-            const iu = Math.floor(u);
-            const iv = Math.floor(v);
-            const fu = u - iu;
-            const fv = v - iv;
+            const u2 = mod(u,2);
+            const v2 = mod(v,2);
 
-            const isUpperRight = fu + fv >= 1;
+            const finalU = u2 <= 1 ? u2 : 2 - u2;
+            const finalV = v2 <= 1 ? v2 : 2 - v2;
 
-            const aroundPoints = isUpperRight ? [
-                { u: iu + 1, v: iv },
-                { u: iu, v: iv + 1 },
-                { u: iu + 1, v: iv + 1 },
-            ] : [
-                { u: iu, v: iv },
-                { u: iu + 1, v: iv },
-                { u: iu, v: iv + 1 },
-            ]
-            const aroundPointsIds = aroundPoints.map(p => mod(p.u - p.v, 3));
+            const srcX = p0.x + finalU * v1.x + finalV * v3.x;
+            const srcY = p0.y + finalU * v1.y + finalV * v3.y;
 
-            const distFromPoint = [];
-
-            for (let i = 0; i < 3; i++) {
-                if (aroundPointsIds[i] === 2) {
-                    continue;
-                }
-                const px = aroundPoints[i].u * v1.x + aroundPoints[i].v * v2.x;
-                const py = aroundPoints[i].u * v1.y + aroundPoints[i].v * v2.y;
-                const dPx = dx - px;
-                const dPy = dy - py;
-                const dist = Math.sqrt(dPx * dPx + dPy * dPy);
-                distFromPoint[aroundPointsIds[i]] = dist;
-            }
-
-            let cosTheta = (L * L + distFromPoint[0] * distFromPoint[0] - distFromPoint[1] * distFromPoint[1]) / (2 * L * distFromPoint[0]);
-            if (Number.isNaN(cosTheta)) {
-                cosTheta = 0;
-            }
-            cosTheta = Math.max(-1, Math.min(1, cosTheta));
-            const sinTheta = Math.sqrt(1 - cosTheta * cosTheta); // 0 <= theta <= pi / 3
-
-            let srcX = p0.x + distFromPoint[0] * (cosTheta * e01.x + sinTheta * e01_perp.x)
-            let srcY = p0.y + distFromPoint[0] * (cosTheta * e01.y + sinTheta * e01_perp.y);
             return { x: srcX, y: srcY };
         }
 
@@ -211,4 +175,4 @@ const TriangleRender = forwardRef<TriangleRenderRef, Props>((props, ref) => {
 }
 );
 
-export default TriangleRender;
+export default SquareRender;
