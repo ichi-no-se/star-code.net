@@ -59,12 +59,18 @@
 	width: 12em;
 	border: 1px solid #ccc;
 	border-radius: 0.5rem;
+	padding: 0.2rem;
+}
+
+.exclude-current-checkbox {
+	margin-right: 0.3rem;
 }
 
 .number-input-area {
 	width: 3em;
 	border: 1px solid #ccc;
 	border-radius: 0.5rem;
+	padding: 0.2rem;
 }
 
 .input-label {

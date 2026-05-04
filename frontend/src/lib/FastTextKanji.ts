@@ -116,7 +116,7 @@ export class FastTextKanji {
         return this.numWords;
     }
 
-    calcSimilarKanjis(vec: Float32Array, topN: number): SimilarityResult[] | null {
+    calcSimilarKanjis(vec: Float32Array, topN: number, exclude?: String[]): SimilarityResult[] | null {
         if (this.dim === null) {
             throw new Error("Model not loaded");
         }
@@ -126,6 +126,9 @@ export class FastTextKanji {
             return null;
         }
         for (let i = 0; i < this.numWords; i++) {
+            if (exclude && exclude.includes(this.vocab[i])) {
+                continue;
+            }
             const kanjiVec = this.getKanjiVec(i);
             if (!kanjiVec) continue;
             const similarity = this.calcSimilarity(normalizedVec, kanjiVec);

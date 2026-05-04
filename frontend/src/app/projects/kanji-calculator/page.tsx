@@ -351,6 +351,7 @@ export default function KanjiCalculatorPage() {
 	const [scalarResult, setScalarResult] = useState<number | null>(null);
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 	const [error, setError] = useState<CalcError>(null);
+	const [excludeCurrent, setExcludeCurrent] = useState<boolean>(false);
 
 
 	useEffect(() => {
@@ -385,9 +386,17 @@ export default function KanjiCalculatorPage() {
 		}
 		// value.type === "VECTOR"
 		setScalarResult(null);
-		const results = modelRef.current.calcSimilarKanjis(value.value, numberOfResults) || [];
+		const excludeList = [];
+		if (excludeCurrent) {
+			for(const char of formulaText) {
+				if (modelRef.current.isKanjiInVocab(char)) {
+					excludeList.push(char);
+				}
+			}
+		}
+		const results = modelRef.current.calcSimilarKanjis(value.value, numberOfResults, excludeList) || [];
 		setResults(results);
-	}, [formulaText, numberOfResults, isLoaded]);
+	}, [formulaText, numberOfResults, isLoaded, excludeCurrent]);
 
 	const getErrorMessage = (error: CalcError): string => {
 		if (!error) return "";
@@ -432,6 +441,10 @@ export default function KanjiCalculatorPage() {
 					<label>
 						<span className="input-label">表示件数：</span>
 						<input type="number" min={1} max={1000} id="number-input" value={numberOfResults} onChange={(e) => setNumberOfResults(parseInt(e.target.value))} className="number-input-area" />
+					</label>
+					<label>
+						<input type="checkbox" id="exclude-current" className="exclude-current-checkbox" checked={excludeCurrent} onChange={(e) => setExcludeCurrent(e.target.checked)} />
+						<span className="input-label">式に含まれる漢字を除外</span>
 					</label>
 				</div>
 				{error && error.type !== "EMPTY" && (
