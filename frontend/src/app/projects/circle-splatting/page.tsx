@@ -77,7 +77,7 @@ export default function CircleSplatting() {
     };
 
     return (
-        <main>
+        <>
             <h1 className="title">図形による画像近似</h1>
             <h2 className="introduction">
                 たくさんの色付き図形を配置して，元の画像を再構築します．<br />
@@ -141,6 +141,6 @@ export default function CircleSplatting() {
                     <p>出力画像</p>
                 </div>
             </div>
-        </main>
+        </>
     )
 }

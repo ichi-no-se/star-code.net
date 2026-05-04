@@ -40,7 +40,8 @@ export default function CanvasOutput({ image }: Props) {
                 <img
                     src={imageUrl}
                     className="image-canvas"
-                    style={{ maxWidth: "100%", height: "auto" }} alt={""} />
+                    alt="Output"
+                />
             )}
         </>
     )
