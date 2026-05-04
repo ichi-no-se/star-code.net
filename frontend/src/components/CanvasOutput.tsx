@@ -40,6 +40,7 @@ export default function CanvasOutput({ image }: Props) {
                 <img
                     src={imageUrl}
                     className="image-canvas"
+                    alt="Output"
                 />
             )}
         </>

@@ -157,7 +157,7 @@ export default function KaleidoscopePage() {
                         onChange={(e) => {
                             const val = e.target.value.replace(/[^0-9.-]/g, "");
                             setAngleText(val);
-                            let valFloat = parseFloat(e.target.value);
+                            const valFloat = parseFloat(e.target.value);
                             if (!isNaN(valFloat)) {
                                 const rad = degToRad(valFloat);
                                 if (selectorRef.current) {
@@ -169,7 +169,7 @@ export default function KaleidoscopePage() {
                             }
                         }}
                         onBlur={(e) => {
-                            let valFloat = parseFloat(e.target.value);
+                            const valFloat = parseFloat(e.target.value);
                             if (isNaN(valFloat)) {
                                 const deg = radToDeg(triangleConfig.angle);
                                 setAngleText(deg.toFixed(0));
