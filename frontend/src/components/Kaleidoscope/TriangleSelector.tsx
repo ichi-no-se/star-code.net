@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle } from "react";
 import "@styles/kaleidoscope.css";
 
 export interface TriangleConfig {
@@ -11,9 +11,9 @@ export interface TriangleConfig {
 
 interface Props {
     image: HTMLImageElement;
+    config: TriangleConfig;
     onChange: (config: TriangleConfig, isDragging: boolean) => void;
 }
-
 
 export const calcPoints = (config: TriangleConfig) => {
     const points = [];
@@ -26,9 +26,12 @@ export const calcPoints = (config: TriangleConfig) => {
     return points;
 }
 
-export default function TriangleSelector({ image, onChange }: Props) {
+export interface TriangleSelectorRef {
+    validateConfig: (config: TriangleConfig) => boolean;
+}
+
+const TriangleSelector = forwardRef<TriangleSelectorRef, Props>(({ image, config, onChange }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [config, setConfig] = useState<TriangleConfig>({ cx: 0, cy: 0, r: 0, angle: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragMode, setDragMode] = useState<"translate" | "rotate-scale">("translate");
     const [draggingPointIndex, setDraggingPointIndex] = useState<0 | 1 | 2>(0);
@@ -39,7 +42,7 @@ export default function TriangleSelector({ image, onChange }: Props) {
 
     const notifyChange = (config: TriangleConfig, isDragging: boolean) => {
         const now = Date.now();
-        if(!isDragging || now - lastNotifyTime.current > 50){
+        if (!isDragging || now - lastNotifyTime.current > 50) {
             onChange(config, isDragging);
             lastNotifyTime.current = now;
         }
@@ -52,7 +55,6 @@ export default function TriangleSelector({ image, onChange }: Props) {
             r: Math.min(image.naturalWidth, image.naturalHeight) / 8,
             angle: 0
         }
-        setConfig(initialConfig);
         notifyChange(initialConfig, false);
     }, [image]);
 
@@ -66,6 +68,12 @@ export default function TriangleSelector({ image, onChange }: Props) {
         }
         return true;
     }
+
+    useImperativeHandle(ref, () => ({
+        validateConfig: (config: TriangleConfig) => {
+            return isConfigValid(config, image);
+        }
+    }));
 
     const points = useMemo(() => {
         return calcPoints(config);
@@ -181,7 +189,6 @@ export default function TriangleSelector({ image, onChange }: Props) {
         if (dragMode === "translate") {
             const newConfig = { ...config, cx: x, cy: y };
             if (isConfigValid(newConfig, image)) {
-                setConfig(newConfig);
                 notifyChange(newConfig, true);
             }
         }
@@ -190,8 +197,7 @@ export default function TriangleSelector({ image, onChange }: Props) {
             const deltaAngle = Math.atan2(y - config.cy, x - config.cx) - Math.atan2(points[draggingPointIndex].y - config.cy, points[draggingPointIndex].x - config.cx);
             const newConfig = { ...config, r: distance, angle: config.angle + deltaAngle };
             if (isConfigValid(newConfig, image)) {
-                setConfig(newConfig);
-                notifyChange(newConfig,true);
+                notifyChange(newConfig, true);
             }
         }
     }
@@ -224,3 +230,6 @@ export default function TriangleSelector({ image, onChange }: Props) {
         </div>
     )
 }
+);
+
+export default TriangleSelector;

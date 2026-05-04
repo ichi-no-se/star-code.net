@@ -1,21 +1,23 @@
 "use client";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import ImageUploader from "@/components/ImageUploader";
-import SquareSelector, { SquareConfig } from "@/components/Kaleidoscope/SquareSelector";
+import SquareSelector, { SquareSelectorRef, SquareConfig } from "@/components/Kaleidoscope/SquareSelector";
 import SquareRender, { SquareRenderRef } from "@/components/Kaleidoscope/SquareRender";
 import "@styles/image-processor.css";
 import "@styles/image-tools.css";
 
 export default function KaleidoscopeSquarePage() {
     const [inputImage, setInputImage] = useState<HTMLImageElement | null>(null);
-    const [squareConfig, setSquareConfig] = useState<SquareConfig | null>(null);
+    const [squareConfig, setSquareConfig] = useState<SquareConfig>({ cx: 0, cy: 0, r: 0, angle: 0 });
     const [outputWidth, setOutputWidth] = useState(400);
     const [outputWidthText, setOutputWidthText] = useState("400");
     const [outputHeight, setOutputHeight] = useState(400);
     const [outputHeightText, setOutputHeightText] = useState("400");
     const [zoom, setZoom] = useState(1);
     const [zoomText, setZoomText] = useState("1");
+    const [angleText, setAngleText] = useState("0");
     const [isInteracting, setIsInteracting] = useState(false);
+    const selectorRef = useRef<SquareSelectorRef>(null);
     const renderRef = useRef<SquareRenderRef>(null);
     const handleDownload = () => {
         if (renderRef.current) {
@@ -27,6 +29,27 @@ export default function KaleidoscopeSquarePage() {
             setSquareConfig(config);
             setIsInteracting(isDragging);
         }, []);
+    const degToRad = (deg: number) => {
+        deg %= 360;
+        if (deg < 0) {
+            deg += 360;
+        }
+        return (deg * Math.PI) / 180;
+    }
+    const radToDeg = (rad: number) => {
+        rad %= 2 * Math.PI;
+        if (rad < 0) {
+            rad += 2 * Math.PI;
+        }
+        return (rad * 180) / Math.PI;
+    };
+    useEffect(() => {
+        if (selectorRef.current) {
+            const angle = squareConfig.angle;
+            const deg = radToDeg(angle);
+            setAngleText(deg.toFixed(0));
+        }
+    }, [squareConfig]);
     return (
         <>
             <h1 className="title">万華鏡風画像作成（正方形）</h1>
@@ -127,6 +150,51 @@ export default function KaleidoscopeSquarePage() {
                         step="0.1"
                     />
                 </div>
+                <div className="setting-group">
+                    <label>回転（度）</label><input
+                        type="number"
+                        value={angleText}
+                        onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9.-]/g, "");
+                            setAngleText(val);
+                            let valFloat = parseFloat(e.target.value);
+                            if (!isNaN(valFloat)) {
+                                const rad = degToRad(valFloat);
+                                if (selectorRef.current) {
+                                    const newConfig = { ...squareConfig, angle: rad };
+                                    if (selectorRef.current.validateConfig(newConfig)) {
+                                        setSquareConfig(newConfig);
+                                    }
+                                }
+                            }
+                        }}
+                        onBlur={(e) => {
+                            let valFloat = parseFloat(e.target.value);
+                            if (isNaN(valFloat)) {
+                                const deg = radToDeg(squareConfig.angle);
+                                setAngleText(deg.toFixed(0));
+                                return;
+                            }
+                            else {
+                                const rad = degToRad(valFloat);
+                                if (selectorRef.current) {
+                                    const newConfig = { ...squareConfig, angle: rad };
+                                    if (selectorRef.current.validateConfig(newConfig)) {
+                                        setSquareConfig(newConfig);
+                                        setAngleText(valFloat.toFixed(0));
+                                    }
+                                    else {
+                                        const deg = radToDeg(squareConfig.angle);
+                                        setAngleText(deg.toFixed(0));
+                                    }
+                                }
+                            }
+                        }}
+                        min="-360"
+                        max="360"
+                        step="1"
+                    />
+                </div>
             </div>
             <div className="canvas-container">
                 <div className="canvas-button-wrapper">
@@ -138,17 +206,17 @@ export default function KaleidoscopeSquarePage() {
                     </div>
                     <div className="canvas-wrapper">
                         {inputImage && (
-                            <SquareSelector image={inputImage} onChange={handleSelectorChange} />
+                            <SquareSelector image={inputImage} config={squareConfig} onChange={handleSelectorChange} ref={selectorRef} />
                         )}
                     </div>
                     <p>入力画像</p>
                 </div>
                 <div className="canvas-button-wrapper">
-                    <button className="download-button" onClick={handleDownload} disabled={!squareConfig}>
+                    <button className="download-button" onClick={handleDownload} disabled={!inputImage}>
                         ダウンロード
                     </button>
                     <div className="canvas-wrapper">
-                        {inputImage && squareConfig && (
+                        {inputImage && (
                             <SquareRender image={inputImage} config={squareConfig} width={outputWidth} height={outputHeight} zoom={zoom} isInteracting={isInteracting} ref={renderRef} />
                         )}
                     </div>

@@ -1,21 +1,23 @@
 "use client";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import ImageUploader from "@/components/ImageUploader";
-import TriangleSelector, { TriangleConfig } from "@/components/Kaleidoscope/TriangleSelector";
+import TriangleSelector, { TriangleSelectorRef, TriangleConfig } from "@/components/Kaleidoscope/TriangleSelector";
 import TriangleRender, { TriangleRenderRef } from "@/components/Kaleidoscope/TriangleRender";
 import "@styles/image-processor.css";
 import "@styles/image-tools.css";
 
 export default function KaleidoscopePage() {
     const [inputImage, setInputImage] = useState<HTMLImageElement | null>(null);
-    const [triangleConfig, setTriangleConfig] = useState<TriangleConfig | null>(null);
+    const [triangleConfig, setTriangleConfig] = useState<TriangleConfig>({ cx: 0, cy: 0, r: 0, angle: 0 });
     const [outputWidth, setOutputWidth] = useState(400);
     const [outputWidthText, setOutputWidthText] = useState("400");
     const [outputHeight, setOutputHeight] = useState(400);
     const [outputHeightText, setOutputHeightText] = useState("400");
     const [zoom, setZoom] = useState(1);
     const [zoomText, setZoomText] = useState("1");
+    const [angleText, setAngleText] = useState("0");
     const [isInteracting, setIsInteracting] = useState(false);
+    const selectorRef = useRef<TriangleSelectorRef>(null);
     const renderRef = useRef<TriangleRenderRef>(null);
     const handleDownload = () => {
         if (renderRef.current) {
@@ -27,6 +29,27 @@ export default function KaleidoscopePage() {
             setTriangleConfig(config);
             setIsInteracting(isDragging);
         }, []);
+    const degToRad = (deg: number) => {
+        deg %= 360;
+        if (deg < 0) {
+            deg += 360;
+        }
+        return (deg * Math.PI) / 180;
+    }
+    const radToDeg = (rad: number) => {
+        rad %= 2 * Math.PI;
+        if (rad < 0) {
+            rad += 2 * Math.PI;
+        }
+        return (rad * 180) / Math.PI;
+    };
+    useEffect(() => {
+        if (selectorRef.current) {
+            const angle = triangleConfig.angle;
+            const deg = radToDeg(angle);
+            setAngleText(deg.toFixed(0));
+        }
+    }, [triangleConfig])
     return (
         <>
             <h1 className="title">万華鏡風画像作成（正三角形）</h1>
@@ -127,6 +150,51 @@ export default function KaleidoscopePage() {
                         step="0.1"
                     />
                 </div>
+                <div className="setting-group">
+                    <label>回転（度）</label><input
+                        type="number"
+                        value={angleText}
+                        onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9.-]/g, "");
+                            setAngleText(val);
+                            let valFloat = parseFloat(e.target.value);
+                            if (!isNaN(valFloat)) {
+                                const rad = degToRad(valFloat);
+                                if (selectorRef.current) {
+                                    const newConfig = { ...triangleConfig, angle: rad };
+                                    if (selectorRef.current.validateConfig(newConfig)) {
+                                        setTriangleConfig(newConfig);
+                                    }
+                                }
+                            }
+                        }}
+                        onBlur={(e) => {
+                            let valFloat = parseFloat(e.target.value);
+                            if (isNaN(valFloat)) {
+                                const deg = radToDeg(triangleConfig.angle);
+                                setAngleText(deg.toFixed(0));
+                                return;
+                            }
+                            else {
+                                const rad = degToRad(valFloat);
+                                if (selectorRef.current) {
+                                    const newConfig = { ...triangleConfig, angle: rad };
+                                    if (selectorRef.current.validateConfig(newConfig)) {
+                                        setTriangleConfig(newConfig);
+                                        setAngleText(valFloat.toFixed(0));
+                                    }
+                                    else {
+                                        const deg = radToDeg(triangleConfig.angle);
+                                        setAngleText(deg.toFixed(0));
+                                    }
+                                }
+                            }
+                        }}
+                        min="-360"
+                        max="360"
+                        step="1"
+                    />
+                </div>
             </div>
             <div className="canvas-container">
                 <div className="canvas-button-wrapper">
@@ -138,17 +206,17 @@ export default function KaleidoscopePage() {
                     </div>
                     <div className="canvas-wrapper">
                         {inputImage && (
-                            <TriangleSelector image={inputImage} onChange={handleSelectorChange} />
+                            <TriangleSelector image={inputImage} config={triangleConfig} onChange={handleSelectorChange} ref={selectorRef} />
                         )}
                     </div>
                     <p>入力画像</p>
                 </div>
                 <div className="canvas-button-wrapper">
-                    <button className="download-button" onClick={handleDownload} disabled={!triangleConfig}>
+                    <button className="download-button" onClick={handleDownload} disabled={!inputImage}>
                         ダウンロード
                     </button>
                     <div className="canvas-wrapper">
-                        {inputImage && triangleConfig && (
+                        {inputImage && (
                             <TriangleRender image={inputImage} config={triangleConfig} width={outputWidth} height={outputHeight} zoom={zoom} isInteracting={isInteracting} ref={renderRef} />
                         )}
                     </div>
