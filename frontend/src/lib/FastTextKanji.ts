@@ -116,7 +116,7 @@ export class FastTextKanji {
         return this.numWords;
     }
 
-    calcSimilarKanjis(vec: Float32Array, topN: number, exclude?: String[]): SimilarityResult[] | null {
+    calcSimilarKanjis(vec: Float32Array, topN: number, exclude?: string[]): SimilarityResult[] | null {
         if (this.dim === null) {
             throw new Error("Model not loaded");
         }
