@@ -19,6 +19,7 @@ export default function KaleidoscopeSquarePage() {
     const [isInteracting, setIsInteracting] = useState(false);
     const selectorRef = useRef<SquareSelectorRef>(null);
     const renderRef = useRef<SquareRenderRef>(null);
+    const ZOOM_MIN = 1e-4;
     const handleDownload = () => {
         if (renderRef.current) {
             renderRef.current.download();
@@ -132,8 +133,8 @@ export default function KaleidoscopeSquarePage() {
                             setZoomText(val);
                             let valFloat = parseFloat(e.target.value);
                             if (!isNaN(valFloat) && valFloat > 0) {
-                                if (valFloat < 0.1) {
-                                    valFloat = 0.1;
+                                if (valFloat < ZOOM_MIN) {
+                                    valFloat = ZOOM_MIN;
                                 }
                                 setZoom(valFloat);
                             }
@@ -142,6 +143,9 @@ export default function KaleidoscopeSquarePage() {
                             let valFloat = parseFloat(e.target.value);
                             if (isNaN(valFloat) || valFloat <= 0) {
                                 valFloat = 1;
+                            }
+                            if (valFloat < ZOOM_MIN) {
+                                valFloat = ZOOM_MIN;
                             }
                             setZoom(valFloat);
                             setZoomText(valFloat.toString());
