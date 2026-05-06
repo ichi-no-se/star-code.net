@@ -187,13 +187,6 @@ export default function KanjiGuess2Page() {
 					</button>
 				</div>
 				<div className="game-section">
-					{
-						(gameState === "gave_up" || gameState === "result") && (
-							<div className={"answer-info " + (gameState === "gave_up" ? "gave-up" : "result")}>
-								{(gameState === "gave_up" ? "ギブアップ　" : "") + `正解：${answerKanji}`}
-							</div>
-						)
-					}
 					<div className="similarity-ranking">
 						<div className="ranking-table-header">
 							<span className="label-kanji">漢字</span>
@@ -219,6 +212,13 @@ export default function KanjiGuess2Page() {
 						}
 					</div>
 				</div>
+				{
+					(gameState === "gave_up" || gameState === "result") && (
+						<div className={"answer-info " + (gameState === "gave_up" ? "gave-up" : "result")}>
+							{(gameState === "gave_up" ? "ギブアップ　" : "") + `正解：${answerKanji}`}
+						</div>
+					)
+				}
 				<div className="guess-info">
 					{`推測回数: ${guessCount + (gameState === "result" ? 1 : 0)} 回`}
 				</div>
@@ -253,6 +253,13 @@ export default function KanjiGuess2Page() {
 				<div className="feedback-message">
 					{FEEDBACK_MESSAGES[feedbackMessage]}
 				</div>
+				{
+					(gameState === "gave_up" || gameState === "result") && (
+						<button className="start-button" onClick={startNewRound}>
+							新しいゲームを開始
+						</button>
+					)
+				}
 			</div>
 			<div className="license">
 				このアプリでは，以下のデータセット・リソースを使用しています．
