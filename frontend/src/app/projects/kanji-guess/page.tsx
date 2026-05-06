@@ -21,7 +21,7 @@ export default function KanjiGuessPage() {
 				<li>
 					<strong>語彙リスト</strong>
 					<br />
-					小学校 3 年生までで習う漢字を使用しています．
+					小学校 3 年生以下で習う漢字を使用しています．
 					<Link href="https://qiita.com/YSRKEN/items/ee9589dd59015ca2f15f">教育漢字、常用漢字、JIS第n水準漢字の一覧を取得するプログラムを考えよう - Qiita</Link>上のリストを使用しています（閲覧日：2026 年 4 月 18 日）．
 				</li>
 				<li>

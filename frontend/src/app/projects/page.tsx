@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/kanji-guess-2" className="post-box">
+					<div>
+						<h2 className="post-title">fastText 類似度漢字当てゲーム 2</h2>
+						<p className="post-date">2026-05-07</p>
+						<p className="post-description">徐々に公開される類似度から漢字を当てるゲーム</p>
+					</div>
+				</Link>
 				<Link href="/projects/kaleidoscope-square" className="post-box">
 					<div>
 						<h2 className="post-title">万華鏡風画像作成（正方形）</h2>
