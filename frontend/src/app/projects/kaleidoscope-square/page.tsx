@@ -19,6 +19,7 @@ export default function KaleidoscopeSquarePage() {
     const [isInteracting, setIsInteracting] = useState(false);
     const selectorRef = useRef<SquareSelectorRef>(null);
     const renderRef = useRef<SquareRenderRef>(null);
+    const ZOOM_MIN = 1e-4;
     const handleDownload = () => {
         if (renderRef.current) {
             renderRef.current.download();
@@ -55,6 +56,7 @@ export default function KaleidoscopeSquarePage() {
             <h1 className="title">万華鏡風画像作成（正方形）</h1>
             <h2 className="introduction">
                 画像から万華鏡風の画像を作成します．<br />
+                正方形はドラッグで移動，変形が可能です．<br />
                 <small>
                     端末のブラウザ上で計算を行います．サーバーに画像が送信されることはありません．<br />
                     作成した画像はご自由にお使いください．クレジット表記等は不要です．
@@ -132,8 +134,8 @@ export default function KaleidoscopeSquarePage() {
                             setZoomText(val);
                             let valFloat = parseFloat(e.target.value);
                             if (!isNaN(valFloat) && valFloat > 0) {
-                                if (valFloat < 0.1) {
-                                    valFloat = 0.1;
+                                if (valFloat < ZOOM_MIN) {
+                                    valFloat = ZOOM_MIN;
                                 }
                                 setZoom(valFloat);
                             }
@@ -142,6 +144,9 @@ export default function KaleidoscopeSquarePage() {
                             let valFloat = parseFloat(e.target.value);
                             if (isNaN(valFloat) || valFloat <= 0) {
                                 valFloat = 1;
+                            }
+                            if (valFloat < ZOOM_MIN) {
+                                valFloat = ZOOM_MIN;
                             }
                             setZoom(valFloat);
                             setZoomText(valFloat.toString());
