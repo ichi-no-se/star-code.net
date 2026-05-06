@@ -67,10 +67,8 @@ export default function KanjiGuess2Page() {
 	}, [answerRange]);
 
 	useEffect(() => {
-		if (gameState === "playing" || gameState === "result") {
-			scrollEndRef.current?.scrollIntoView({ behavior: "smooth" });
-		}
-	}, [guessCount, gameState]);
+		scrollEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+	}, [guessCount]);
 
 	useEffect(() => {
 		const init = async () => {
@@ -119,7 +117,7 @@ export default function KanjiGuess2Page() {
 			return;
 		}
 
-		for(const c of similarityResults.slice(0, guessCount + 1)) {
+		for (const c of similarityResults.slice(0, guessCount + 1)) {
 			if (c.kanji === kanji) {
 				setFeedbackMessage("appear_in_ranking");
 				return;
@@ -224,8 +222,7 @@ export default function KanjiGuess2Page() {
 				<div className="guess-info">
 					{`推測回数: ${guessCount + (gameState === "result" ? 1 : 0)} 回`}
 				</div>
-				<div ref={scrollEndRef} style={{ height: "1px" }} />
-				<div className="input-section">
+				<div className="input-section" ref={scrollEndRef}>
 					<input
 						type="text"
 						placeholder="入力"
