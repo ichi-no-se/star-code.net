@@ -222,7 +222,7 @@ export default function KanjiGuess2Page() {
 				<div className="guess-info">
 					{`推測回数: ${guessCount + (gameState === "result" ? 1 : 0)} 回`}
 				</div>
-				<div className="input-section" ref={scrollEndRef}>
+				<div className="input-section">
 					<input
 						type="text"
 						placeholder="入力"
@@ -250,7 +250,7 @@ export default function KanjiGuess2Page() {
 						ギブアップ
 					</button>
 				</div>
-				<div className="feedback-message">
+				<div className="feedback-message" ref={scrollEndRef}>
 					{FEEDBACK_MESSAGES[feedbackMessage]}
 				</div>
 				{
