@@ -31,9 +31,7 @@
 - フロントエンド：Next.js
 - バックエンド：Node.js
 
-## ライセンス
-
-このリポジトリに含まれるコンテンツのうち，以下のコンテンツについてはライセンスを明示しています．
+## 使用データ
 
 ### Word2Vec 類似度単語当てゲーム
 
@@ -60,13 +58,13 @@
 #### 漢字リスト
 
 - **教育漢字**
-[https://qiita.com/YSRKEN/items/ee9589dd59015ca2f15f](教育漢字、常用漢字、JIS第n水準漢字の一覧を取得するプログラムを考えよう - Qiita) 上のリストを加工して使用しています（閲覧日：2026 年 4 月 15 日）．
+[教育漢字、常用漢字、JIS第n水準漢字の一覧を取得するプログラムを考えよう - Qiita](https://qiita.com/YSRKEN/items/ee9589dd59015ca2f15f) 上のリストを加工して使用しています（閲覧日：2026 年 4 月 15 日）．
 
 - **ＪＩＳ第１水準漢字**
-[https://qiita.com/YSRKEN/items/ee9589dd59015ca2f15f](教育漢字、常用漢字、JIS第n水準漢字の一覧を取得するプログラムを考えよう - Qiita) 上のリストを加工して使用しています（閲覧日：2026 年 4 月 15 日）．
+[教育漢字、常用漢字、JIS第n水準漢字の一覧を取得するプログラムを考えよう - Qiita](https://qiita.com/YSRKEN/items/ee9589dd59015ca2f15f) 上のリストを加工して使用しています（閲覧日：2026 年 4 月 15 日）．
 
 - **小学校 3 年生以下で習う漢字**
-[https://qiita.com/YSRKEN/items/ee9589dd59015ca2f15f](教育漢字、常用漢字、JIS第n水準漢字の一覧を取得するプログラムを考えよう - Qiita) 上のリストを加工して使用しています（閲覧日：2026 年 4 月 18 日）．
+[教育漢字、常用漢字、JIS第n水準漢字の一覧を取得するプログラムを考えよう - Qiita](https://qiita.com/YSRKEN/items/ee9589dd59015ca2f15f) 上のリストを加工して使用しています（閲覧日：2026 年 4 月 18 日）．
 
 #### 単語ベクトル
 
@@ -75,5 +73,19 @@ fastText の学習済みモデル（Japanese，bin）を加工して使用．
 出典：Grave, E., Bojanowski, P., Gupta, P., Joulin, A., & Mikolov, T. (2018). Learning Word Vectors for 157 Languages. *Proceedings of the International Conference on Language Resources and Evaluation (LREC 2018)*.
 ライセンス：[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)
 
-その他のコンテンツ（コード，記事，画像など）のライセンスについては現在検討中です．
+
+### 乗換案内（最少通過区間）
+
+[駅データ.jp](https://ekidata.jp/) のデータ（2026-04-09）を加工して使用．
+
+### 鉄道路線クイズ
+
+[国土交通省国土数値情報ダウンロードサイト](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-v2_3.html)（令和 2 年）のデータを加工して使用．
+
+ライセンス：[公共データ利用規約（第1.0版）](https://www.digital.go.jp/resources/open_data/public_data_license_v1.0)
+
+
+## ライセンス
+
+上に示していないコンテンツ（コード，記事，画像など）についてのライセンスについては現在検討中です．
 決まり次第，このセクションを更新します．
