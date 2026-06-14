@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import GeoCanvas, { GeoData } from "@/components/GeoCanvas";
 import "@styles/rail-silhouette.css";
 
@@ -24,16 +24,23 @@ const TYPE_LABELS: Record<number, string> = {
 	5: "第三セクター"
 }
 
-interface LineNode {
+interface LineInfo {
 	globalIndex: number;
+	classCd: number;
+	typeCd: number;
+	companyName: string;
 	lineName: string;
 	geometry: GeoData;
 }
 
 export default function RailSilhouettePage() {
-	const [geoJsonData, setGeoJsonData] = useState<{ features: GeoFeature[] } | null>(null);
-	const [currentGeoFeature, setCurrentGeoFeature] = useState<GeoFeature | null>(null);
+	const [currentLineInfo, setCurrentLineInfo] = useState<LineInfo | null>(null);
+	const [lineInfoList, setLineInfoList] = useState<LineInfo[]>([]);
+	const [flags, setFlags] = useState<boolean[]>([]);
 	const [error, setError] = useState<string | null>(null);
+	const [expandedTypes, setExpandedType] = useState<boolean[]>([]);
+	const [expandedCompanies, setExpandedCompanies] = useState<boolean[][]>([]);
+	const [showAnswer, setShowAnswer] = useState<boolean>(false);
 
 	useEffect(() => {
 		fetch("/rail-silhouette/rail_lines.geojson")
@@ -44,7 +51,30 @@ export default function RailSilhouettePage() {
 				return response.json();
 			})
 			.then(data => {
-				setGeoJsonData(data);
+				const infoList: LineInfo[] = data.features.map((feature: GeoFeature, index: number) => ({
+					globalIndex: index,
+					classCd: feature.properties.class_cd,
+					typeCd: feature.properties.type_cd,
+					companyName: feature.properties.company,
+					lineName: feature.properties.line,
+					geometry: feature.geometry,
+				}));
+				const companyMap = new Map<number, Set<string>>();
+				infoList.forEach(line => {
+					if (!companyMap.has(line.typeCd)) {
+						companyMap.set(line.typeCd, new Set<string>());
+					}
+					companyMap.get(line.typeCd)!.add(line.companyName);
+				});
+				const sortedCompanyCounts = Array.from(companyMap.entries()).sort((a, b) => a[0] - b[0]).map(([_, companies]) => companies.size);
+				const initialTypes = new Array(sortedCompanyCounts.length).fill(false);
+				const initialCompanies = sortedCompanyCounts.map(count => new Array(count).fill(false));
+
+				setExpandedType(initialTypes);
+				setExpandedCompanies(initialCompanies);
+				setLineInfoList(infoList);
+				setFlags(new Array(infoList.length).fill(true));
+
 			})
 			.catch(error => {
 				console.error("Error fetching GeoJSON data:", error);
@@ -53,31 +83,165 @@ export default function RailSilhouettePage() {
 	}, []);
 
 	const handleChoice = () => {
-		if (!geoJsonData || geoJsonData.features.length === 0) return;
-		const randomIndex = Math.floor(Math.random() * geoJsonData.features.length);
-		setCurrentGeoFeature(geoJsonData.features[randomIndex]);
+		if (!lineInfoList || lineInfoList.length === 0) return;
+		const activeLines = lineInfoList.filter(line => flags[line.globalIndex]);
+		if (activeLines.length === 0) {
+			return;
+		}
+		const randomLine = activeLines[Math.floor(Math.random() * activeLines.length)];
+		setCurrentLineInfo(randomLine);
+		setShowAnswer(false);
 	}
 
+	const toggleType = (typeIndex: number) => {
+		const newExpandedTypes = [...expandedTypes];
+		newExpandedTypes[typeIndex] = !newExpandedTypes[typeIndex];
+		setExpandedType(newExpandedTypes);
+	}
+
+	const toggleCompany = (typeIndex: number, companyIndex: number) => {
+		const newExpandedCompanies = [...expandedCompanies];
+		newExpandedCompanies[typeIndex][companyIndex] = !newExpandedCompanies[typeIndex][companyIndex];
+		setExpandedCompanies(newExpandedCompanies);
+	}
+
+	const toggleFlag = (globalIndex: number) => {
+		const newFlags = [...flags];
+		newFlags[globalIndex] = !newFlags[globalIndex];
+		setFlags(newFlags);
+	}
+
+	const groupedTree = useMemo(() => {
+		const treeMap = new Map<number, Map<string, LineInfo[]>>();
+		lineInfoList.forEach(line => {
+			if (!treeMap.has(line.typeCd)) {
+				treeMap.set(line.typeCd, new Map<string, LineInfo[]>());
+			}
+			const typeMap = treeMap.get(line.typeCd)!;
+			if (!typeMap.has(line.companyName)) {
+				typeMap.set(line.companyName, []);
+			}
+			typeMap.get(line.companyName)!.push(line);
+		});
+		return Array.from(treeMap.entries()).map(([typeCd, typeMap]) => {
+			const sortedCompanies = Array.from(typeMap.entries()).map(([companyName, lines]) => {
+				const sortedLines = [...lines].sort((a, b) => a.lineName.localeCompare(b.lineName, "ja"));
+				return {
+					companyName,
+					lines: sortedLines,
+				};
+			}).sort((a, b) => a.companyName.localeCompare(b.companyName, "ja"));
+			return {
+				typeCd,
+				typeLabel: TYPE_LABELS[typeCd] || `不明な種別 (${typeCd})`,
+				companies: sortedCompanies,
+			}
+		}).sort((a, b) => a.typeCd - b.typeCd);
+	}, [lineInfoList]);
+	console.log(groupedTree);
 	return (
 		<>
 			<h1 className="title">鉄道路線クイズ</h1>
 			<h2 className="introduction">
 				鉄道路線の形から，どこの路線か当てるクイズ
 			</h2>
-			{!geoJsonData && !error && <p>データを読み込み中...</p>}
+			{!lineInfoList && !error && <p>データを読み込み中...</p>}
 			{error && <p className="error">エラー: {error}</p>}
-			{geoJsonData && (
-				<div className="content">
-					<button className="choice-button" onClick={handleChoice}>路線を選ぶ</button>
-					{currentGeoFeature && (
-						<div className="canvas-container">
-							<GeoCanvas canvasWidth={400} canvasHeight={400} geoData={currentGeoFeature.geometry} />
-							<p className="line-info">{currentGeoFeature.properties.company} {currentGeoFeature.properties.line}</p>
-						</div>
-					)}
+			{lineInfoList && (
+				<div className="game-container">
+					<div className="tree-container">
+						{groupedTree.map((typeGroup, typeIndex) => {
+							const allTypeIndices = typeGroup.companies.flatMap(company => company.lines.map(line => line.globalIndex));
+							const checkedCount = allTypeIndices.filter(index => flags[index]).length;
+							const isAllChecked = checkedCount === allTypeIndices.length;
+							const isIndeterminate = checkedCount > 0 && checkedCount < allTypeIndices.length;
+							return (
+								<div key={typeIndex} className="type-continer">
+									<div className="type-label">
+										<span className="arrow" onClick={() => toggleType(typeIndex)}>{expandedTypes[typeIndex] ? '▼' : '▶︎'}</span>
+										<input type="checkbox"
+											checked={isAllChecked}
+											ref={e => {
+												if (e) {
+													e.indeterminate = isIndeterminate;
+												}
+											}}
+											onChange={(e) => {
+												const isChecked = e.target.checked;
+												const newFlags = [...flags];
+												allTypeIndices.forEach(index => {
+													newFlags[index] = isChecked;
+												});
+												setFlags(newFlags);
+											}}
+										/>
+										<span onClick={() => toggleType(typeIndex)}>{typeGroup.typeLabel}</span>
+									</div>
+									{expandedTypes[typeIndex] && (
+										<div className="company-list-container">
+											{typeGroup.companies.map((companyGroup, companyIndex) => {
+												const checkedCount = companyGroup.lines.filter(line => flags[line.globalIndex]).length;
+												const isAllChecked = checkedCount === companyGroup.lines.length;
+												const isIndeterminate = checkedCount > 0 && checkedCount < companyGroup.lines.length;
+												return (
+													<div key={`${typeIndex}-${companyIndex}`} className="company-container">
+														<div className="company-label">
+															<span className="arrow" onClick={() => toggleCompany(typeIndex, companyIndex)}>{expandedCompanies[typeIndex][companyIndex] ? '▼' : '▶︎'}</span>
+															<input type="checkbox"
+																checked={isAllChecked}
+																ref={input => {
+																	if (input) {
+																		input.indeterminate = isIndeterminate;
+																	}
+																}}
+																onChange={(e) => {
+																	const newFlags = [...flags];
+																	const isChecked = e.target.checked;
+																	companyGroup.lines.forEach(line => {
+																		newFlags[line.globalIndex] = isChecked;
+																	});
+																	setFlags(newFlags);
+																}}
+															/>
+															<span onClick={() => toggleCompany(typeIndex, companyIndex)}>{companyGroup.companyName}</span>
+														</div>
+														{expandedCompanies[typeIndex][companyIndex] && (
+															<div className="line-list-container">
+																{companyGroup.lines.map(line => (
+																	<label key={line.globalIndex} className="line-item">
+																		<input
+																			type="checkbox"
+																			checked={flags[line.globalIndex]}
+																			onChange={() => toggleFlag(line.globalIndex)}
+																		/>
+																		<span>{line.lineName}</span>
+																	</label>
+																))}
+															</div>
+														)}
+													</div>
+												);
+											})}
+										</div>
+									)}
+								</div>
+							);
+						})}
+					</div>
+					<div className="map-container">
+						<button className="choice-button" onClick={handleChoice}>路線を選ぶ</button>
+						{currentLineInfo && (
+							<div className="canvas-container">
+								<GeoCanvas canvasWidth={600} canvasHeight={600} geoData={currentLineInfo.geometry} />
+								{showAnswer ? <p className="line-info">{currentLineInfo.companyName} {currentLineInfo.lineName}</p> : <button className="show-answer-button" onClick={() => setShowAnswer(true)}>答えを見る</button>}
+							</div>
+						)}
+					</div>
 				</div>
 			)}
-			<p>本 Web アプリでは，<Link href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-v2_3.html">国土交通省国土数値情報ダウンロードサイト</Link>（令和 2 年）のデータを加工して使用しています．</p>
+			<div className="license">
+				本 Web アプリでは，<Link href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-v2_3.html">国土交通省国土数値情報ダウンロードサイト</Link>（令和 2 年）のデータを加工して使用しています．
+			</div>
 		</>
 	)
 }
