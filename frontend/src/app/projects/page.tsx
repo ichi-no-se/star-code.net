@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/rail-silhouette" className="post-box">
+					<div>
+						<h2 className="post-title">鉄道路線クイズ</h2>
+						<p className="post-date">2026-06-19</p>
+						<p className="post-description">鉄道路線の形からどこの路線か当てるクイズ</p>
+					</div>
+				</Link>
 				<Link href="/projects/kanji-guess-2" className="post-box">
 					<div>
 						<h2 className="post-title">fastText 類似度漢字当てゲーム 2</h2>

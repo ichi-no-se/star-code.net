@@ -1,0 +1,7 @@
+.geo-canvas {
+	max-width: 100%;
+	height: auto !important;
+	border: 1px solid #eee;
+	border-radius: 8px;
+	background-color: #fff;
+}
