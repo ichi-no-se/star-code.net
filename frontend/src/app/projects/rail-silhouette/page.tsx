@@ -65,7 +65,7 @@ export default function RailSilhouettePage() {
 					}
 					companyMap.get(line.typeCd)!.add(line.companyName);
 				});
-				const sortedCompanyCounts = Array.from(companyMap.entries()).sort((a, b) => a[0] - b[0]).map(([_, companies]) => companies.size);
+				const sortedCompanyCounts = Array.from(companyMap.entries()).sort((a, b) => a[0] - b[0]).map(([, companies]) => companies.size);
 				const initialTypes = new Array(sortedCompanyCounts.length).fill(false);
 				const initialCompanies = sortedCompanyCounts.map(count => new Array(count).fill(false));
 
