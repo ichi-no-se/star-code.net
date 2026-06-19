@@ -8,7 +8,7 @@ export default function ProjectsPage() {
 				<Link href="/projects/rail-silhouette" className="post-box">
 					<div>
 						<h2 className="post-title">鉄道路線クイズ</h2>
-						<p className="post-date">2026-06-14</p>
+						<p className="post-date">2026-06-19</p>
 						<p className="post-description">鉄道路線の形からどこの路線か当てるクイズ</p>
 					</div>
 				</Link>

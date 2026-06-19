@@ -26,7 +26,6 @@ const TYPE_LABELS: Record<number, string> = {
 
 interface LineInfo {
 	globalIndex: number;
-	classCd: number;
 	typeCd: number;
 	companyName: string;
 	lineName: string;
@@ -41,6 +40,7 @@ export default function RailSilhouettePage() {
 	const [expandedTypes, setExpandedType] = useState<boolean[]>([]);
 	const [expandedCompanies, setExpandedCompanies] = useState<boolean[][]>([]);
 	const [showAnswer, setShowAnswer] = useState<boolean>(false);
+	const [copied, setCopied] = useState<boolean>(false);
 
 	useEffect(() => {
 		fetch("/rail-silhouette/rail_lines.geojson")
@@ -53,7 +53,6 @@ export default function RailSilhouettePage() {
 			.then(data => {
 				const infoList: LineInfo[] = data.features.map((feature: GeoFeature, index: number) => ({
 					globalIndex: index,
-					classCd: feature.properties.class_cd,
 					typeCd: feature.properties.type_cd,
 					companyName: feature.properties.company,
 					lineName: feature.properties.line,
@@ -111,6 +110,52 @@ export default function RailSilhouettePage() {
 		setFlags(newFlags);
 	}
 
+	const exportCode = useMemo(() => {
+		if (flags.length === 0) return "";
+		let result = "";
+		for (let i = 0; i < flags.length; i += 5) {
+			let binStr = "";
+			for (let j = 0; j < 5; j++) {
+				if (i + j < flags.length) {
+					binStr += flags[i + j] ? "1" : "0";
+				} else {
+					binStr += "0";
+				}
+			}
+			const num = parseInt(binStr, 2);
+			result += num.toString(32).toUpperCase();
+		}
+		return result;
+	}, [flags]);
+
+	const copyToClipboard = () => {
+		if (!exportCode) return;
+		navigator.clipboard.writeText(exportCode).then(() => {
+			setCopied(true);
+			setTimeout(() => setCopied(false), 2000);
+		}).catch(err => {
+			console.error("Failed to copy to clipboard: ", err);
+		});
+	}
+
+	const handleImport = (inputStr: string) => {
+		const cleanStr = inputStr.trim().toUpperCase();
+		const newFlags = new Array(flags.length).fill(false);
+		let flagIndex = 0;
+		for (let i = 0; i < cleanStr.length; i++) {
+			const num = parseInt(cleanStr[i], 32);
+			if (isNaN(num)) continue
+			const binStr = num.toString(2).padStart(5, '0');
+			for (let j = 0; j < 5; j++) {
+				if (flagIndex < newFlags.length) {
+					newFlags[flagIndex] = binStr[j] === '1';
+					flagIndex++;
+				}
+			}
+		}
+		setFlags(newFlags);
+	}
+
 	const groupedTree = useMemo(() => {
 		const treeMap = new Map<number, Map<string, LineInfo[]>>();
 		lineInfoList.forEach(line => {
@@ -143,20 +188,33 @@ export default function RailSilhouettePage() {
 		<>
 			<h1 className="title">鉄道路線クイズ</h1>
 			<h2 className="introduction">
-				鉄道路線の形から，どこの路線か当てるクイズ
+				鉄道路線の形から，どこの路線か当てるクイズです．
+				<br />
+				開発記事・プリセットは<Link href="/blog/rail-silhouette/">こちら</Link>から．
 			</h2>
 			{!lineInfoList && !error && <p>データを読み込み中...</p>}
 			{error && <p className="error">エラー: {error}</p>}
 			{lineInfoList && (
 				<div className="game-container">
 					<div className="tree-container">
+						<div className="export-import-container">
+							<div className="export-container">
+								<span className="export-label">現在の設定コード：</span>
+								<input type="text" value={exportCode} readOnly className="export-input" />
+								<button onClick={copyToClipboard} className="copy-button">{copied ? "コピーしました" : "コピー"}</button>
+							</div>
+							<div className="import-container">
+								<span className="import-label">設定コードを入力して復元：</span>
+								<input type="text" className="import-input" onChange={(e) => handleImport(e.target.value)} placeholder="設定コードを入力" />
+							</div>
+						</div>
 						{groupedTree.map((typeGroup, typeIndex) => {
 							const allTypeIndices = typeGroup.companies.flatMap(company => company.lines.map(line => line.globalIndex));
 							const checkedCount = allTypeIndices.filter(index => flags[index]).length;
 							const isAllChecked = checkedCount === allTypeIndices.length;
 							const isIndeterminate = checkedCount > 0 && checkedCount < allTypeIndices.length;
 							return (
-								<div key={typeIndex} className="type-continer">
+								<div key={typeIndex} className="type-container">
 									<div className="type-label">
 										<span className="arrow" onClick={() => toggleType(typeIndex)}>{expandedTypes[typeIndex] ? '▼' : '▶︎'}</span>
 										<input type="checkbox"
@@ -229,11 +287,11 @@ export default function RailSilhouettePage() {
 						})}
 					</div>
 					<div className="map-container">
-						<button className="choice-button" onClick={handleChoice}>路線を選ぶ</button>
+						<button className="choice-button" onClick={handleChoice} disabled={!flags.some(f => f)}>出題</button>
 						{currentLineInfo && (
 							<div className="canvas-container">
-								<GeoCanvas canvasWidth={600} canvasHeight={600} geoData={currentLineInfo.geometry} />
 								{showAnswer ? <p className="line-info">{currentLineInfo.companyName} {currentLineInfo.lineName}</p> : <button className="show-answer-button" onClick={() => setShowAnswer(true)}>答えを見る</button>}
+								<GeoCanvas canvasWidth={600} canvasHeight={600} geoData={currentLineInfo.geometry} />
 							</div>
 						)}
 					</div>
