@@ -80,7 +80,7 @@ fastText の学習済みモデル（Japanese，bin）を加工して使用．
 
 ### 鉄道路線クイズ
 
-[国土交通省国土数値情報ダウンロードサイト](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-v2_3.html)（令和 2 年）のデータを加工して使用．
+[国土交通省国土数値情報ダウンロードサイト](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-v2_3.html)（令和 4 年）のデータを加工して使用．
 
 ライセンス：[公共データ利用規約（第1.0版）](https://www.digital.go.jp/resources/open_data/public_data_license_v1.0)
 
