@@ -298,7 +298,7 @@ export default function RailSilhouettePage() {
 				</div>
 			)}
 			<div className="license">
-				本 Web アプリでは，<Link href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-v2_3.html">国土交通省国土数値情報ダウンロードサイト</Link>（令和 2 年）のデータを加工して使用しています．
+				本 Web アプリでは，<Link href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-v2_3.html">国土交通省国土数値情報ダウンロードサイト</Link>（令和 4 年）のデータを加工して使用しています．
 			</div>
 		</>
 	)
