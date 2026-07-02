@@ -290,7 +290,9 @@ export default function RailSilhouettePage() {
 						<button className="choice-button" onClick={handleChoice} disabled={!flags.some(f => f)}>出題</button>
 						{currentLineInfo && (
 							<div className="canvas-container">
-								{showAnswer ? <p className="line-info">{currentLineInfo.companyName} {currentLineInfo.lineName}</p> : <button className="show-answer-button" onClick={() => setShowAnswer(true)}>答えを見る</button>}
+								<div className="answer-zone">
+									{showAnswer ? <p className="line-info">{currentLineInfo.companyName} {currentLineInfo.lineName}</p> : <button className="show-answer-button" onClick={() => setShowAnswer(true)}>答えを見る</button>}
+								</div>
 								<GeoCanvas canvasWidth={600} canvasHeight={600} geoData={currentLineInfo.geometry} />
 							</div>
 						)}
