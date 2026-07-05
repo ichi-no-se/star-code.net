@@ -84,6 +84,11 @@ fastText の学習済みモデル（Japanese，bin）を加工して使用．
 
 ライセンス：[公共データ利用規約（第1.0版）](https://www.digital.go.jp/resources/open_data/public_data_license_v1.0)
 
+### 手書き都道府県
+
+[国土交通省国土数値情報ダウンロードサイト](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2026.html)（令和 8 年）のデータを加工して使用．
+
+ライセンス：[CC BY 4.0](https://creativecommons.org/licenses/by/4.0)
 
 ## ライセンス
 
