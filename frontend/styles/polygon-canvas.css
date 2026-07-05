@@ -1,0 +1,12 @@
+.polygon-canvas-container,.polygon-viewer-container,.polygons-viewer-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.polygon-canvas.polygon-viewer,.polygons-viewer {
+	image-rendering: pixelated;
+	border: 1px solid #ccc;
+}
+

@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/prefecture-outline" className="post-box">
+					<div>
+						<h2 className="post-title">手書き都道府県</h2>
+						<p className="post-date">2026-07-05</p>
+						<p className="post-description">どれだけ都道府県に似せて書けるかな</p>
+					</div>
+				</Link>
 				<Link href="/projects/rail-silhouette" className="post-box">
 					<div>
 						<h2 className="post-title">鉄道路線クイズ</h2>

@@ -45,7 +45,7 @@ export default function DigitClassification() {
         const clearCanvas = () => {
             ctx.fillStyle = "black";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
+        };
 
         clearCanvas();
 
@@ -68,14 +68,14 @@ export default function DigitClassification() {
             const pos = getPos(e);
             ctx.beginPath();
             ctx.moveTo(pos.x, pos.y);
-        }
+        };
         const draw = (e: MouseEvent | TouchEvent) => {
             e.preventDefault();
             if (!isDrawing.current) return;
             const pos = getPos(e);
             ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
-        }
+        };
         const endDrawing = () => {
             isDrawing.current = false;
             ctx.closePath();
@@ -85,15 +85,16 @@ export default function DigitClassification() {
                 return;
             }
             predictDigit(input).then(setProbabilities).catch(console.error);
-        }
+        };
+        const touchOptions: AddEventListenerOptions = { passive: false };
 
         canvas.addEventListener("mousedown", startDrawing);
         canvas.addEventListener("mousemove", draw);
         canvas.addEventListener("mouseup", endDrawing);
         canvas.addEventListener("mouseleave", endDrawing);
 
-        canvas.addEventListener("touchstart", startDrawing, { passive: false });
-        canvas.addEventListener("touchmove", draw, { passive: false });
+        canvas.addEventListener("touchstart", startDrawing, touchOptions);
+        canvas.addEventListener("touchmove", draw, touchOptions);
         canvas.addEventListener("touchend", endDrawing);
         canvas.addEventListener("touchcancel", endDrawing);
         return () => {
@@ -102,11 +103,11 @@ export default function DigitClassification() {
             canvas.removeEventListener("mouseup", endDrawing);
             canvas.removeEventListener("mouseleave", endDrawing);
 
-            canvas.removeEventListener("touchstart", startDrawing);
-            canvas.removeEventListener("touchmove", draw);
+            canvas.removeEventListener("touchstart", startDrawing, touchOptions);
+            canvas.removeEventListener("touchmove", draw, touchOptions);
             canvas.removeEventListener("touchend", endDrawing);
             canvas.removeEventListener("touchcancel", endDrawing);
-        }
+        };
     }, []
     );
 

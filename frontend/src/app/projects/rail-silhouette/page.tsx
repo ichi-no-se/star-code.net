@@ -190,6 +190,8 @@ export default function RailSilhouettePage() {
 			<h2 className="introduction">
 				鉄道路線の形から，どこの路線か当てるクイズです．
 				<br />
+				北が上になるように表示されます．
+				<br />
 				開発記事・プリセットは<Link href="/blog/rail-silhouette/">こちら</Link>から．
 			</h2>
 			{!lineInfoList && !error && <p>データを読み込み中...</p>}
@@ -290,7 +292,9 @@ export default function RailSilhouettePage() {
 						<button className="choice-button" onClick={handleChoice} disabled={!flags.some(f => f)}>出題</button>
 						{currentLineInfo && (
 							<div className="canvas-container">
-								{showAnswer ? <p className="line-info">{currentLineInfo.companyName} {currentLineInfo.lineName}</p> : <button className="show-answer-button" onClick={() => setShowAnswer(true)}>答えを見る</button>}
+								<div className="answer-zone">
+									{showAnswer ? <p className="line-info">{currentLineInfo.companyName} {currentLineInfo.lineName}</p> : <button className="show-answer-button" onClick={() => setShowAnswer(true)}>答えを見る</button>}
+								</div>
 								<GeoCanvas canvasWidth={600} canvasHeight={600} geoData={currentLineInfo.geometry} />
 							</div>
 						)}

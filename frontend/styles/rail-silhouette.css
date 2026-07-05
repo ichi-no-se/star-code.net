@@ -202,6 +202,15 @@
     margin-bottom: 0.5rem;
 }
 
+.answer-zone {
+    width: 100%;
+    min-height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
 .canvas-container {
     flex: 1;
     display: flex;
