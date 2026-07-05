@@ -45,7 +45,7 @@ export default function DigitClassification() {
         const clearCanvas = () => {
             ctx.fillStyle = "black";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
+        };
 
         clearCanvas();
 
@@ -68,14 +68,14 @@ export default function DigitClassification() {
             const pos = getPos(e);
             ctx.beginPath();
             ctx.moveTo(pos.x, pos.y);
-        }
+        };
         const draw = (e: MouseEvent | TouchEvent) => {
             e.preventDefault();
             if (!isDrawing.current) return;
             const pos = getPos(e);
             ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
-        }
+        };
         const endDrawing = () => {
             isDrawing.current = false;
             ctx.closePath();
@@ -85,7 +85,7 @@ export default function DigitClassification() {
                 return;
             }
             predictDigit(input).then(setProbabilities).catch(console.error);
-        }
+        };
 
         canvas.addEventListener("mousedown", startDrawing);
         canvas.addEventListener("mousemove", draw);
@@ -106,7 +106,7 @@ export default function DigitClassification() {
             canvas.removeEventListener("touchmove", draw);
             canvas.removeEventListener("touchend", endDrawing);
             canvas.removeEventListener("touchcancel", endDrawing);
-        }
+        };
     }, []
     );
 
