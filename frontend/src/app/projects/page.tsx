@@ -8,7 +8,7 @@ export default function ProjectsPage() {
 				<Link href="/projects/kanji-puzzle" className="post-box">
 					<div>
 						<h2 className="post-title">和同開珎ソルバー</h2>
-						<p className="post-date">2026-07-10</p>
+						<p className="post-date">2026-07-13</p>
 						<p className="post-description">和同開珎とは：漢字の熟語のパズル</p>
 					</div>
 				</Link>
