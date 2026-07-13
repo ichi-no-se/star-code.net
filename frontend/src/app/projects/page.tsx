@@ -9,7 +9,7 @@ export default function ProjectsPage() {
 					<div>
 						<h2 className="post-title">和同開珎ソルバー</h2>
 						<p className="post-date">2026-07-13</p>
-						<p className="post-description">和同開珎とは：漢字の熟語のパズル</p>
+						<p className="post-description">和同開珎とは：二字熟語のパズル</p>
 					</div>
 				</Link>
 				<Link href="/projects/prefecture-outline" className="post-box">
