@@ -81,57 +81,62 @@ export default function KanjiPuzzlePage() {
 			<h1 className="title">和同開珎ソルバー</h1>
 			<div className="introduction">
 				漢字熟語パズル．<br />
+				矢印の向きをクリックで切り替え可能．<br />
 			</div>
-			<div className="cross-grid">
-				<div />
-				<div className="slot-wrapper vertical">
-					<input type="text" className="slot" value={topSlot.kanji} onChange={(e) => setTopSlot({ ...topSlot, kanji: e.target.value })} />
-					<button className="arrow-button" onClick={() => setTopSlot({ ...topSlot, arrowDirection: topSlot.arrowDirection === "in" ? "out" : "in" })}>
-						{topSlot.arrowDirection === "in" ? "↓" : "↑"}
-					</button>
+			<div className="main-layout">
+				<div className="puzzle-area">
+					<div className="cross-grid">
+						<div />
+						<div className="slot-wrapper vertical">
+							<input type="text" className="slot" value={topSlot.kanji} onChange={(e) => setTopSlot({ ...topSlot, kanji: e.target.value })} />
+							<button className="arrow-button" onClick={() => setTopSlot({ ...topSlot, arrowDirection: topSlot.arrowDirection === "in" ? "out" : "in" })}>
+								{topSlot.arrowDirection === "in" ? "↓" : "↑"}
+							</button>
+						</div>
+						<div />
+						<div className="slot-wrapper horizontal">
+							<input type="text" className="slot" value={leftSlot.kanji} onChange={(e) => setLeftSlot({ ...leftSlot, kanji: e.target.value })} />
+							<button className="arrow-button" onClick={() => setLeftSlot({ ...leftSlot, arrowDirection: leftSlot.arrowDirection === "in" ? "out" : "in" })}>
+								{leftSlot.arrowDirection === "in" ? "→" : "←"}
+							</button>
+						</div>
+						<div className="center-slot">
+							？
+						</div>
+						<div className="slot-wrapper horizontal">
+							<button className="arrow-button" onClick={() => setRightSlot({ ...rightSlot, arrowDirection: rightSlot.arrowDirection === "in" ? "out" : "in" })}>
+								{rightSlot.arrowDirection === "in" ? "←" : "→"}
+							</button>
+							<input type="text" className="slot" value={rightSlot.kanji} onChange={(e) => setRightSlot({ ...rightSlot, kanji: e.target.value })} />
+						</div>
+						<div />
+						<div className="slot-wrapper vertical">
+							<button className="arrow-button" onClick={() => setBottomSlot({ ...bottomSlot, arrowDirection: bottomSlot.arrowDirection === "in" ? "out" : "in" })}>
+								{bottomSlot.arrowDirection === "in" ? "↑" : "↓"}
+							</button>
+							<input type="text" className="slot" value={bottomSlot.kanji} onChange={(e) => setBottomSlot({ ...bottomSlot, kanji: e.target.value })} />
+						</div>
+						<div />
+					</div >
+					<div className="button-wrapper">
+						<button className="search-button" onClick={searchCenterKanjiCandidates}>検索</button>
+					</div>
 				</div>
-				<div />
-				<div className="slot-wrapper horizontal">
-					<input type="text" className="slot" value={leftSlot.kanji} onChange={(e) => setLeftSlot({ ...leftSlot, kanji: e.target.value })} />
-					<button className="arrow-button" onClick={() => setLeftSlot({ ...leftSlot, arrowDirection: leftSlot.arrowDirection === "in" ? "out" : "in" })}>
-						{leftSlot.arrowDirection === "in" ? "→" : "←"}
-					</button>
-				</div>
-				<div className="center-slot">
-					？
-				</div>
-				<div className="slot-wrapper horizontal">
-					<button className="arrow-button" onClick={() => setRightSlot({ ...rightSlot, arrowDirection: rightSlot.arrowDirection === "in" ? "out" : "in" })}>
-						{rightSlot.arrowDirection === "in" ? "←" : "→"}
-					</button>
-					<input type="text" className="slot" value={rightSlot.kanji} onChange={(e) => setRightSlot({ ...rightSlot, kanji: e.target.value })} />
-				</div>
-				<div />
-				<div className="slot-wrapper vertical">
-					<button className="arrow-button" onClick={() => setBottomSlot({ ...bottomSlot, arrowDirection: bottomSlot.arrowDirection === "in" ? "out" : "in" })}>
-						{bottomSlot.arrowDirection === "in" ? "↑" : "↓"}
-					</button>
-					<input type="text" className="slot" value={bottomSlot.kanji} onChange={(e) => setBottomSlot({ ...bottomSlot, kanji: e.target.value })} />
-				</div>
-				<div />
-			</div >
-			<div className="button-wrapper">
-				<button className="search-button" onClick={searchCenterKanjiCandidates}>検索</button>
-			</div>
-			<div className="result-wrapper">
-				<div className="result">
-					{centerKanjiCandidates.length > 0 ? (
-						<>
-							<p className="result-label">候補</p>
-							<ul className="result-list">
-								{centerKanjiCandidates.map((kanji, index) => (
-									<li key={index}>{kanji}</li>
-								))}
-							</ul>
-						</>
-					) : (
-						<p className="no-result">候補なし</p>
-					)}
+				<div className="result-wrapper">
+					<div className="result">
+						{centerKanjiCandidates.length > 0 ? (
+							<>
+								<p className="result-label">候補</p>
+								<ul className="result-list">
+									{centerKanjiCandidates.map((kanji, index) => (
+										<li key={index}>{kanji}</li>
+									))}
+								</ul>
+							</>
+						) : (
+							<p className="no-result">候補なし</p>
+						)}
+					</div>
 				</div>
 			</div>
 			<div className="license">
