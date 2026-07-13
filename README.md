@@ -43,6 +43,8 @@
 [Wiktionary:日本語の基本語彙1000](https://ja.wiktionary.org/wiki/Wiktionary:%E6%97%A5%E6%9C%AC%E8%AA%9E%E3%81%AE%E5%9F%BA%E6%9C%AC%E8%AA%9E%E5%BD%991000) を基にしています（閲覧日：2025年6月29日）．
 ライセンス： [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 
+[`frontend/public/word2vec-guess/word_list.txt`](./frontend/public/word2vec-guess/word_list.txt) は同ライセンスを継承します．
+
 - **ver.2**
 自作の語彙リスト（手動で作成・分類）
 ライセンス：[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
@@ -71,7 +73,10 @@
 fastText の学習済みモデル（Japanese，bin）を加工して使用．
 
 出典：Grave, E., Bojanowski, P., Gupta, P., Joulin, A., & Mikolov, T. (2018). Learning Word Vectors for 157 Languages. *Proceedings of the International Conference on Language Resources and Evaluation (LREC 2018)*.
+
 ライセンス：[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)
+
+元データの規約に基づき，本プロジェクト上で使用，配布される単語リスト（[`frontend/public/kanji-vec/kanji_edu_u3_vecs.bin`](./frontend/public/kanji-vec/kanji_edu_u3_vecs.bin)，[`frontend/public/kanji-vec/kanji_education_vecs.bin`](./frontend/public/kanji-vec/kanji_education_vecs.bin)，[`frontend/public/kanji-vec/kanji_jis1_vecs.bin`](./frontend/public/kanji-vec/kanji_jis1_vecs.bin)）についても，同ライセンス（CC BY-SA 3.0）を継承します．
 
 
 ### 乗換案内（最少通過区間）
@@ -89,6 +94,12 @@ fastText の学習済みモデル（Japanese，bin）を加工して使用．
 [国土交通省国土数値情報ダウンロードサイト](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2026.html)（令和 8 年）のデータを加工して使用．
 
 ライセンス：[CC BY 4.0](https://creativecommons.org/licenses/by/4.0)
+
+### 漢字熟語リスト
+
+本プロジェクトでは，[Electronic Dictionary Research and Development Group (EDRDG)](https://www.edrdg.org/edrdg/index.html) の [JMdict プロジェクト](https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project) が提供するデータを元に、[jmdict-simplified](https://github.com/scriptin/jmdict-simplified) によって加工されたデータをさらに加工して使用しています（適用ライセンス：[EDRDG Licence](https://www.edrdg.org/edrdg/licence.html)）．
+
+元データおよび派生成果物の規約に基づき，本プロジェクト上で使用・配布される熟語リスト（[`frontend/public/kanji-puzzle/kanji_pairs_all.json`](./frontend/public/kanji-puzzle/kanji_pairs_all.json)，[`frontend/public/kanji-puzzle/kanji_pairs_common.json`](./frontend/public/kanji-puzzle/kanji_pairs_common.json)）についても，同ライセンス（[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)）を継承します．
 
 ## ライセンス
 
