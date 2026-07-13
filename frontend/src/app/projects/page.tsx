@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/kanji-puzzle" className="post-box">
+					<div>
+						<h2 className="post-title">和同開珎ソルバー</h2>
+						<p className="post-date">2026-07-10</p>
+						<p className="post-description">和同開珎とは：漢字の熟語のパズル</p>
+					</div>
+				</Link>
 				<Link href="/projects/prefecture-outline" className="post-box">
 					<div>
 						<h2 className="post-title">手書き都道府県</h2>
