@@ -7,6 +7,8 @@ import "@styles/kanji-puzzle-2.css";
 export default function KanjiPuzzle2Page() {
     const [rows, setRows] = useState<number>(3);
     const [cols, setCols] = useState<number>(3);
+    const [rowsInput, setRowsInput] = useState<string>(rows.toString());
+    const [colsInput, setColsInput] = useState<string>(cols.toString());
     const [slots, setSlots] = useState<(string | null)[][]>(Array(rows).fill(null).map(() => Array(cols).fill("")));
     const [commonKanjiPairsData, setCommonKanjiPairsData] = useState<[string, string][]>([]);
     const [allKanjiPairsData, setAllKanjiPairsData] = useState<[string, string][]>([]);
@@ -168,6 +170,30 @@ export default function KanjiPuzzle2Page() {
         setCols(newCols);
     }
 
+    const handleRowsInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsInput(e.target.value);
+        const parsedValue = parseInt(e.target.value);
+        if (!isNaN(parsedValue)) {
+            changeGridSize(parsedValue, cols);
+        }
+    };
+
+    const handleColsInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setColsInput(e.target.value);
+        const parsedValue = parseInt(e.target.value);
+        if (!isNaN(parsedValue)) {
+            changeGridSize(rows, parsedValue);
+        }
+    };
+
+    const handleRowsBlur = () => {
+        setRowsInput(rows.toString());
+    };
+
+    const handleColsBlur = () => {
+        setColsInput(cols.toString());
+    };
+
     return (
         <>
             <h1 className="title">スーパー和同開珎ソルバー</h1>
@@ -180,8 +206,8 @@ export default function KanjiPuzzle2Page() {
                 <div className="input-panel-wrapper">
                     <p className="input-panel-title">入力</p>
                     <div className="grid-size-inputs">
-                        <label>行数: <input type="number" value={rows} onChange={e => changeGridSize(e.target.value ? parseInt(e.target.value) : 1, cols)} /></label>
-                        <label>列数: <input type="number" value={cols} onChange={e => changeGridSize(rows, e.target.value ? parseInt(e.target.value) : 1)} /></label>
+                        <label>行数: <input type="number" value={rowsInput} onChange={handleRowsInputChange} onBlur={handleRowsBlur} /></label>
+                        <label>列数: <input type="number" value={colsInput} onChange={handleColsInputChange} onBlur={handleColsBlur} /></label>
                     </div>
                     <div className="input-grid">
                         {slots.map((row, r) => (
