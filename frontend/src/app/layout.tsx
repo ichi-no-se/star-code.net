@@ -11,7 +11,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 	const isFullScreen = fullScreenPages.includes(pathname);
 
 	const UmamiScript = () => (
-		<Script defer src="https://analytics.star-code.net/script.js" data-website-id="3448b007-5976-4b88-9186-afeb36c14f9a" />
+		<Script defer src="https://analytics.star-code.net/script.js" data-website-id="3448b007-5976-4b88-9186-afeb36c14f9a" data-domains="star-code.net" />
 	);
 
 	if (isFullScreen) {
