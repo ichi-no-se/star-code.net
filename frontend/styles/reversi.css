@@ -330,6 +330,7 @@
 	background-color:#eee;
 	color:#333;
 	transition: all 0.2s ease;
+	text-align:center;
 }
 
 .mode-tab:not(.mode-tab-active):hover{
