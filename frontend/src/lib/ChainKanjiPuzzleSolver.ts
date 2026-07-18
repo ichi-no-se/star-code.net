@@ -42,10 +42,6 @@ export default function* solveChainKanjiPuzzle(kanjiPairs: [string, string][], p
             if (puzzleGrid[r][c].type === "disabled") {
                 continue;
             }
-            const directions = [
-                [r + 1, c],
-                [r, c + 1],
-            ];
             for (const [nr, nc] of [[r + 1, c], [r, c + 1]]) {
                 if (nr < rows && nc < cols && puzzleGrid[nr][nc].type !== "disabled") {
                     const neighborIndex = coordToIndex(nr, nc);
@@ -55,14 +51,55 @@ export default function* solveChainKanjiPuzzle(kanjiPairs: [string, string][], p
             }
         }
     }
+    const puzzleGridFlat: CellType[] = puzzleGrid.flat();
 
-    const candidates: number[][] = Array.from({ length: numCells }, () => []);
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            if (puzzleGrid[r][c].type === "free") {
-                const cellIndex = coordToIndex(r, c);
-                
+    const cellKanjis: (number | null)[] = Array(numCells).fill(null);
+    const candidates: number[][] = Array.from({ length: numCells }, (_, i) => {
+        if (puzzleGridFlat[i].type === "disabled" || puzzleGridFlat[i].type === "fixed") {
+            return [];
+        }
+        return Array.from({ length: kanjiList.length }, (_, j) => j);
+    });
+    for (let i = 0; i < numCells; i++) {
+        const cell = puzzleGridFlat[i];
+        if (cell.type === "free") {
+            continue;
+        }
+        else if (cell.type === "fixed") {
+            candidates[i] = [];
+            const kanjiIndex = kanjiMap.get(cell.kanji)!;
+            cellKanjis[i] = kanjiIndex;
+            for (let j = 0; j < numCells; j++) {
+                candidates[j] = candidates[j].filter(k => k !== kanjiIndex);
+            }
+            for (const neighborIndex of cellEdges[i]) {
+                const neighborCandidates = [];
+                for (const candidate of candidates[neighborIndex]) {
+                    if (kanjiEdges[kanjiIndex].includes(candidate)) {
+                        neighborCandidates.push(candidate);
+                    }
+                }
+                candidates[neighborIndex] = neighborCandidates;
+            }
+            for (const neighborIndex of cellReverseEdges[i]) {
+                const neighborCandidates = [];
+                for (const candidate of candidates[neighborIndex]) {
+                    if (kanjiReverseEdges[kanjiIndex].includes(candidate)) {
+                        neighborCandidates.push(candidate);
+                    }
+                }
+                candidates[neighborIndex] = neighborCandidates;
             }
         }
+        else {
+            candidates[i] = [];
+            cellKanjis[i] = null; // disabled
+        }
     }
+
+}
+
+function* findResultDfs(
+
+) {
 }
