@@ -1,0 +1,328 @@
+.license {
+	margin-top: 1rem;
+	font-size: 1rem;
+	text-align: center;
+}
+
+.license ul {
+	list-style-type: none;
+	padding: 0;
+	margin: 0;
+}
+
+.license li {
+	margin-top: 0.5rem;
+	font-size: 0.8rem;
+}
+
+.license a {
+	color: #007bff;
+	text-decoration: none;
+}
+
+.license a:hover {
+	text-decoration: underline;
+}
+
+.license strong {
+	font-weight: bold;
+	font-size: 0.9rem;
+}
+
+.main-layout {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	gap: 3rem;
+	max-width: 900px;
+	margin: 2rem auto;
+	width: 100%;
+}
+
+.input-panel-wrapper,
+.output-panel-wrapper {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 400px;
+}
+
+.input-panel-title,
+.output-panel-title {
+	font-size: 1.5rem;
+	font-weight: bold;
+	margin-bottom: 0.5rem;
+}
+
+.input-grid,
+.output-grid {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	border: 1px solid #ccc;
+	padding: 1rem;
+	border-radius: 0.5rem;
+	background-color: #f9f9f9;
+}
+
+.input-row,
+.output-row {
+	display: flex;
+	justify-content: center;
+}
+
+.input-row>div,
+.output-row>div {
+	display: flex;
+	align-items: center;
+}
+
+.input-cell,
+.output-cell,
+.down-arrow {
+	width: 1.8rem;
+	height: 1.8rem;
+	margin: 0.1rem;
+}
+
+.input-cell,
+.output-cell {
+	font-size: 1.2rem;
+	text-align: center;
+	background-color: white;
+	border: 1px solid black;
+}
+
+.input-cell.disabled,
+.output-cell.disabled {
+	background-color: #f0f0f0;
+	border-color: #ccc;
+}
+
+
+.output-cell.free,
+.output-cell.fixed {
+	background-color: #ffffff;
+	color: #333;
+}
+
+.output-cell.free {
+	font-weight: bold;
+}
+
+.right-arrow,
+.down-arrow-spacer {
+	width: 1.8rem;
+	text-align: center;
+	font-size: 1.2rem;
+	color: #888;
+	user-select: none;
+}
+
+.arrow-column-wrapper {
+	display: flex;
+	align-items: center;
+}
+
+.down-arrow {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
+	font-size: 1.2rem;
+	color: #888;
+	user-select: none;
+}
+
+.input-row-arrows,
+.output-row-arrows {
+	display: flex;
+	align-items: center;
+	height: 1.8rem;
+}
+
+
+.grid-size-inputs,
+.output-spacer {
+	display: flex;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	margin-top: 1rem;
+	height: 3rem;
+}
+
+.grid-size-inputs input {
+	width: 2.5rem;
+	padding: 0.2rem;
+	text-align: center;
+	background-color: #fff;
+	border: 1px solid #ccc;
+}
+
+.input-controls {
+	margin-top: 1.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 1.2rem;
+	background-color: #f9f9f9;
+	padding: 1rem;
+	border-radius: 0.5rem;
+}
+
+.input-controls p {
+	font-weight: bold;
+}
+
+.vocabulary-options {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+}
+
+.vocabulary-options label {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 1rem;
+}
+
+.ng-ok-list-container {
+	display: flex;
+	justify-content: space-between;
+	gap: 1rem;
+	width: 100%;
+}
+
+.ng-ok-list {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+
+
+.ng-ok-list {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	width: auto;
+}
+
+.ng-ok-list p {
+	font-weight: bold;
+	font-size: 0.9rem;
+	margin-bottom: 0.2rem;
+}
+
+.ng-ok-list input {
+	width: 100%;
+	box-sizing: border-box;
+	border: 1px solid #ccc;
+	background-color: #fff;
+}
+
+.list-buttons {
+	display: flex;
+	gap: 0.3rem;
+	margin-top: 0.2rem;
+}
+
+.list-buttons button {
+	flex: 1;
+	padding: 0.2rem 0.4rem;
+	font-size: 0.8rem;
+	cursor: pointer;
+	border: 1px solid #ccc;
+	border-radius: 0.3rem;
+	text-align: center;
+}
+
+.add-button {
+	background-color: #3b3e97;
+	color: white;
+}
+
+.add-button:hover {
+	background-color: #2a2d77;
+}
+
+.delete-button {
+	background-color: #bf3f35;
+	color: white;
+}
+
+.delete-button:hover {
+	background-color: #9c2f25;
+}
+
+.search-button {
+	background-color: #4caf50;
+	color: white;
+	border: none;
+	border-radius: 0.25rem;
+	padding: 0.5rem 1rem;
+	cursor: pointer;
+	font-size: 1rem;
+	transition: background-color 0.3s ease;
+	font-size: 1.2rem;
+	margin: 1rem 0;
+}
+
+.search-button:hover {
+	background-color: #45a049;
+}
+
+.solution-navigation {
+	display: flex;
+	justify-content: center;
+	gap: 1rem;
+	margin-top: 1rem;
+}
+
+.solution-navigation button {
+	background-color: #5555cc;
+	color: white;
+	border: none;
+	border-radius: 0.25rem;
+	padding: 0.3rem 0.5rem;
+	cursor: pointer;
+	font-size: 1rem;
+	transition: background-color 0.3s ease;
+	font-size: 1.2rem;
+	font-weight: bold;
+}
+
+.solution-navigation button:hover {
+	background-color: #4444aa;
+}
+
+.output-message {
+	margin-top: 1rem;
+	font-size: 1rem;
+	text-align: center;
+	font-style: italic;
+}
+
+@media (max-width: 800px) {
+	.main-layout {
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.input-panel-wrapper,
+	.output-panel-wrapper {
+		width: 100%;
+	}
+
+	.output-spacer {
+		display: none;
+	}
+
+	.input-panel-title,
+	.output-panel-title {
+		font-size: 1.2rem;
+		margin-bottom: 0.2rem;
+	}
+}

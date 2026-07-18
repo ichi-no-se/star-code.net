@@ -82,6 +82,7 @@ export default function KanjiPuzzlePage() {
 			<div className="introduction">
 				漢字熟語パズル．<br />
 				矢印の向きをクリックで切り替え可能．<br />
+				関連記事は<Link href="/blog/kanji-puzzle">こちら</Link>から．<br />
 			</div>
 			<div className="main-layout">
 				<div className="puzzle-area">

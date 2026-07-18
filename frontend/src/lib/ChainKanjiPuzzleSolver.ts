@@ -93,13 +93,138 @@ export default function* solveChainKanjiPuzzle(kanjiPairs: [string, string][], p
         }
         else {
             candidates[i] = [];
-            cellKanjis[i] = null; // disabled
+            cellKanjis[i] = -1; // disabled
         }
     }
-
+    yield* findResultDfs(
+        kanjiList.length,
+        kanjiEdges,
+        kanjiReverseEdges,
+        cellEdges,
+        cellReverseEdges,
+        cellKanjis,
+        candidates,
+        kanjiList,
+        rows,
+        cols
+    );
 }
 
 function* findResultDfs(
+    numKanjis: number,
+    kanjiEdges: number[][],
+    kanjiReverseEdges: number[][],
+    cellEdges: number[][],
+    cellReverseEdges: number[][],
+    cellKanjis: (number | null)[],
+    candidates: number[][],
+    kanjiList: string[],
+    rows: number,
+    cols: number
+): Generator<string[][], void, void> {
+    // 最も候補が少ないセルを選ぶ
+    let minCandidateCount = Infinity;
+    let minCandidateCellIndex = null;
+    for (let i = 0; i < cellKanjis.length; i++) {
+        if (cellKanjis[i] !== null) {
+            continue;
+        }
+        const candidateCount = candidates[i].length;
+        if (candidateCount === 0) {
+            // 候補がないセルがある場合探索を打ち切る
+            return;
+        }
+        if (candidateCount < minCandidateCount) {
+            minCandidateCount = candidateCount;
+            minCandidateCellIndex = i;
+        }
+    }
+    if (minCandidateCellIndex === null) {
+        // すべてのセルが埋まった場合、結果を返す
+        const result: string[][] = [];
+        for (let r = 0; r < rows; r++) {
+            const row: string[] = [];
+            for (let c = 0; c < cols; c++) {
+                const cellIndex = r * cols + c;
+                if (cellKanjis[cellIndex] === -1) {
+                    row.push(""); // disabled
+                } else {
+                    row.push(kanjiList[cellKanjis[cellIndex]!]);
+                }
+            }
+            result.push(row);
+        }
+        yield result;
+        return;
+    }
 
-) {
+    const cellIndex = minCandidateCellIndex;
+    for (const kanjiIndex of candidates[cellIndex]) {
+        // 現在のセルに漢字を割り当てる
+        const newCellKanjis = [...cellKanjis];
+        newCellKanjis[cellIndex] = kanjiIndex;
+        const newCandidates = candidates.map(c => [...c]);
+        newCandidates[cellIndex] = [];
+        let valid = true;
+        // 全体からこの候補を削除する
+        for (let i = 0; i < newCandidates.length; i++) {
+            newCandidates[i] = newCandidates[i].filter(k => k !== kanjiIndex);
+            if (newCandidates[i].length === 0 && newCellKanjis[i] === null) {
+                valid = false;
+                break;
+            }
+        }
+        if (valid === false) {
+            continue;
+        }
+        // 隣接セルの候補を更新する
+        for (const neighborIndex of cellEdges[cellIndex]) {
+            if (newCellKanjis[neighborIndex] === null) {
+                const neighborCandidates = [];
+                for (const candidate of newCandidates[neighborIndex]) {
+                    if (kanjiEdges[kanjiIndex].includes(candidate)) {
+                        neighborCandidates.push(candidate);
+                    }
+                }
+                newCandidates[neighborIndex] = neighborCandidates;
+                if (neighborCandidates.length === 0) {
+                    valid = false;
+                    break;
+                }
+            }
+        }
+        if (valid === false) {
+            continue;
+        }
+        for (const neighborIndex of cellReverseEdges[cellIndex]) {
+            if (newCellKanjis[neighborIndex] === null) {
+                const neighborCandidates = [];
+                for (const candidate of newCandidates[neighborIndex]) {
+                    if (kanjiReverseEdges[kanjiIndex].includes(candidate)) {
+                        neighborCandidates.push(candidate);
+                    }
+                }
+                newCandidates[neighborIndex] = neighborCandidates;
+                if (neighborCandidates.length === 0) {
+                    valid = false;
+                    break;
+                }
+            }
+        }
+        if (valid === false) {
+            continue;
+        }
+        yield* findResultDfs(
+            numKanjis,
+            kanjiEdges,
+            kanjiReverseEdges,
+            cellEdges,
+            cellReverseEdges,
+            newCellKanjis,
+            newCandidates,
+            kanjiList,
+            rows,
+            cols
+        );
+    }
 }
