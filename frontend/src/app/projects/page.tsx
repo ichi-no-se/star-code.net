@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/weak-password" className="post-box">
+					<div>
+						<h2 className="post-title">ありそうなパスワード生成器</h2>
+						<p className="post-date">2026-08-02</p>
+						<p className="post-description">password123</p>
+					</div>
+				</Link>
 				<Link href="/projects/kanji-puzzle-2" className="post-box">
 					<div>
 						<h2 className="post-title">スーパー和同開珎ソルバー</h2>
