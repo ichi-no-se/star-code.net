@@ -199,7 +199,7 @@ export default function KanjiPuzzle2Page() {
             <h1 className="title">スーパー和同開珎ソルバー</h1>
             <div className="introduction">
                 和同開珎を繋げたスーパー和同開珎のソルバーです．<br />
-                関連記事は <Link href="/blog/kanji-puzzle">こちら</Link>から．<br />
+                関連記事は<Link href="/blog/kanji-puzzle">こちら</Link>から．<br />
                 ダブルクリックでセルを無効化できます．
             </div>
             <div className="main-layout">
