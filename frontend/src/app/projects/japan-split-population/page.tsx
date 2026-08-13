@@ -248,7 +248,7 @@ export default function JapanSplitPopulationPage() {
 			<div className="result-container">
 				<div className="result-item">
 					<span className="red-box"></span>
-					<span className="red-result-text" style={{ minWidth: "9rem", textAlign: "right" }}>
+					<span className="red-result-text">
 						{populationA !== null ? populationA.toLocaleString() : "---"} 人
 					</span>
 					<span className="percent-text">
@@ -258,7 +258,7 @@ export default function JapanSplitPopulationPage() {
 
 				<div className="result-item">
 					<span className="blue-box"></span>
-					<span className="blue-result-text" style={{ minWidth: "9rem", textAlign: "right" }}>
+					<span className="blue-result-text">
 						{populationB !== null ? populationB.toLocaleString() : "---"} 人
 					</span>
 					<span className="percent-text">
