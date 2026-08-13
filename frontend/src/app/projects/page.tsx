@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/japan-split-population" className="post-box">
+					<div>
+						<h2 className="post-title">日本分割（人口）</h2>
+						<p className="post-date">2026-08-13</p>
+						<p className="post-description">日本を線で分割した時のそれぞれの人口を計算．</p>
+					</div>
+				</Link>
 				<Link href="/projects/weak-password" className="post-box">
 					<div>
 						<h2 className="post-title">ありそうなパスワード生成器</h2>
