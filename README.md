@@ -101,6 +101,10 @@ fastText の学習済みモデル（Japanese，bin）を加工して使用．
 
 元データおよび派生成果物の規約に基づき，本プロジェクト上で使用・配布される熟語リスト（[`frontend/public/kanji-puzzle/kanji_pairs_all.json`](./frontend/public/kanji-puzzle/kanji_pairs_all.json)，[`frontend/public/kanji-puzzle/kanji_pairs_common.json`](./frontend/public/kanji-puzzle/kanji_pairs_common.json)）についても，同ライセンス（[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)）を継承します．
 
+### 日本分割（人口）
+
+国土交通省国土数値情報ダウンロードサイトの[行政区域データ](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2026.html)（令和 8 年）および，[1kmメッシュ別将来推計人口データ（R6国政局推計）](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-mesh1000r6.html)を加工して使用．
+
 ## ライセンス
 
 上に示していないコンテンツ（コード，記事，画像など）についてのライセンスについては現在検討中です．

@@ -278,7 +278,7 @@ export default function JapanSplitPopulationPage() {
 			</div>
 
 			<div className="license">
-				本 Web アプリでは，国土交通省国土数値情報ダウンロードサイトの<Link href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2026.html">御製区域データ</Link>（令和 8 年）および，<Link href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-mesh1000r6.html">1kmメッシュ別将来推計人口データ（R6国政局推計）</Link>を加工して使用しています．<br />
+				本 Web アプリでは，国土交通省国土数値情報ダウンロードサイトの<Link href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2026.html">行政区域データ</Link>（令和 8 年）および，<Link href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-mesh1000r6.html">1kmメッシュ別将来推計人口データ（R6国政局推計）</Link>を加工して使用しています．<br />
 			</div>
 		</>
 	)
