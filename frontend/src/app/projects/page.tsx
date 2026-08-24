@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/grid-replace" className="post-box">
+					<div>
+						<h2 className="post-title">グリッド置換</h2>
+						<p className="post-date">2026-08-25</p>
+						<p className="post-description">グリッド上で文字を置換</p>
+					</div>
+				</Link>
 				<Link href="/projects/japan-split-population-lasso" className="post-box">
 					<div>
 						<h2 className="post-title">日本分割（人口）（投げ縄選択）</h2>
