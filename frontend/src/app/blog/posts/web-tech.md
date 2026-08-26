@@ -12,7 +12,7 @@ order: 1
 
 ## ブログについて
 
-`ReactMarkdown` を用いて Markdown から自動で記事を作成しています．
+`ReactMarkdown` を用いて Markdown から自動で記事を作成しています（2026 年 8 月 27 日追記：`MDXRemote` に変更して `MDX` に対応しました（[記事](/blog/mdx)））．
 
 *斜体* **太字** ***斜体太字*** ~~打ち消し~~
 

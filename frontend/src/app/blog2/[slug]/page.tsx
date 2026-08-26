@@ -1,6 +1,6 @@
 import { getPostSlugs, getPostData } from '../../../lib/blogLoader';
 import path from 'path';
-import ReactMarkdown from 'react-markdown';
+import { MDXRemote } from 'next-mdx-remote/rsc';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -12,6 +12,28 @@ import Link from 'next/link';
 type BlogProps = {
 	params: Promise<{ slug: string }>;
 }
+
+const components = {
+	Link,
+	Text: ({ size, color, bold, children }: { size?: string; color?: string; bold?: boolean; children: React.ReactNode }) => (
+		<span style={{ fontSize: size, color: color, fontWeight: bold ? 'bold' : 'normal' }}>
+			{children}
+		</span>
+	),
+	Space: ({ h, w }: { h?: string | number; w?: string | number }) => {
+		const height = typeof h === 'number' ? `${h}px` : h;
+		const width = typeof w === 'number' ? `${w}px` : w;
+		return (
+			<span
+				style={{
+					display: w ? 'inline-block' : 'block',
+					height: height || (w ? 'auto' : '1rem'),
+					width: width || 'auto',
+				}}
+			/>
+		);
+	},
+};
 
 export default async function BlogPost({ params }: BlogProps) {
 	const postsDirectory = path.join(process.cwd(), 'src', 'app', 'blog2', 'posts');
@@ -35,7 +57,7 @@ export default async function BlogPost({ params }: BlogProps) {
 				<h1 className="article-title">{title}</h1>
 				<p className="article-date">{date}</p>
 				<div className="article-content">
-					<ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} >{content}</ReactMarkdown>
+					<MDXRemote source={content} components={components} options={{ mdxOptions: { remarkPlugins: [remarkGfm, remarkMath], rehypePlugins: [rehypeKatex] } }} />
 				</div>
 			</div>
 			<nav className="article-navigation">
