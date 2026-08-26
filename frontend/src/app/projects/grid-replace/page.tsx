@@ -40,6 +40,7 @@ interface RuleCardProps {
 	maxCols: number;
 	onChange: (newRule: ReplaceRule) => void;
 	onDelete: () => void;
+	onDuplicate: () => void;
 	onMoveUp: () => void;
 	onMoveDown: () => void;
 }
@@ -190,7 +191,7 @@ function RuleGridEditor({ grid, onCellChange, readOnly, colorRules }: RuleGridEd
 	);
 }
 
-function RuleCard({ rule, isFirst, isLast, readOnly, highlightType, colorRules, maxRows, maxCols, onChange, onDelete, onMoveUp, onMoveDown }: RuleCardProps) {
+function RuleCard({ rule, isFirst, isLast, readOnly, highlightType, colorRules, maxRows, maxCols, onChange, onDelete, onDuplicate, onMoveUp, onMoveDown }: RuleCardProps) {
 	const [rowsInput, setRowsInput] = useState<string>(rule.find.length.toString());
 	const [colsInput, setColsInput] = useState<string>(rule.find[0].length.toString());
 
@@ -279,6 +280,7 @@ function RuleCard({ rule, isFirst, isLast, readOnly, highlightType, colorRules, 
 				</details>
 				<div className="rule-card-buttons">
 					<button className="rule-card-button" onClick={onMoveUp} disabled={readOnly || isFirst}>上へ</button>
+					<button className="rule-card-button" onClick={onDuplicate} disabled={readOnly}>複製</button>
 					<button className="rule-card-button delete-button" onClick={onDelete} disabled={readOnly}>削除</button>
 					<button className="rule-card-button" onClick={onMoveDown} disabled={readOnly || isLast}>下へ</button>
 				</div>
@@ -486,6 +488,17 @@ export default function GridReplacePage() {
 		setRules(newRules);
 	};
 
+	const handleDuplicateRule = (index: number) => {
+		const newRule: ReplaceRule = {
+			id: crypto.randomUUID(),
+			find: rules[index].find.map(row => [...row]),
+			replace: rules[index].replace.map(row => [...row])
+		};
+		const newRules = [...rules];
+		newRules.splice(index + 1, 0, newRule);
+		setRules(newRules);
+	};
+
 	const handleMoveRuleUp = (index: number) => {
 		if (index === 0) return;
 		const newRules = [...rules];
@@ -503,6 +516,8 @@ export default function GridReplacePage() {
 		newRules[index] = temp;
 		setRules(newRules);
 	};
+
+
 
 
 	const handleStartSimulation = () => {
@@ -933,6 +948,7 @@ export default function GridReplacePage() {
 								colorRules={colorRules}
 								onChange={(newRule) => handleChangeRule(index, newRule)}
 								onDelete={() => handleDeleteRule(index)}
+								onDuplicate={() => handleDuplicateRule(index)}
 								onMoveUp={() => handleMoveRuleUp(index)}
 								onMoveDown={() => handleMoveRuleDown(index)}
 							/>
