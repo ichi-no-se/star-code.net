@@ -7,7 +7,7 @@ export default function ProjectsPage() {
 			<ol className="post-list">
 				<Link href="/projects/grid-replace" className="post-box">
 					<div>
-						<h2 className="post-title">グリッド置換</h2>
+						<h2 className="post-title">グリッド置換器</h2>
 						<p className="post-date">2026-08-25</p>
 						<p className="post-description">グリッド上で文字を置換</p>
 					</div>
