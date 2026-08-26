@@ -28,7 +28,6 @@ interface RuleGridEditorProps {
 	colorRules: ColorRule[];
 }
 
-
 interface RuleCardProps {
 	index: number;
 	rule: ReplaceRule;
@@ -191,7 +190,7 @@ function RuleGridEditor({ grid, onCellChange, readOnly, colorRules }: RuleGridEd
 	);
 }
 
-function RuleCard({ index, rule, isFirst, isLast, readOnly, highlightType, colorRules, maxRows, maxCols, onChange, onDelete, onMoveUp, onMoveDown }: RuleCardProps) {
+function RuleCard({ rule, isFirst, isLast, readOnly, highlightType, colorRules, maxRows, maxCols, onChange, onDelete, onMoveUp, onMoveDown }: RuleCardProps) {
 	const [rowsInput, setRowsInput] = useState<string>(rule.find.length.toString());
 	const [colsInput, setColsInput] = useState<string>(rule.find[0].length.toString());
 
