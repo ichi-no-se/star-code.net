@@ -857,7 +857,7 @@ export default function GridReplacePage() {
 			<h1 className="title">グリッド置換器</h1>
 			<div className="introduction">
 				グリッド上で文字を置換．<br />
-				使い方，作例，関連記事は<Link href="/blog/grid-replace">こちら</Link>から．
+				関連記事（使い方，作例など）は<Link href="/blog/grid-replace">こちら</Link>から．
 			</div>
 			<div className="grid-replace-container" style={{ "--current-highlight-color": currentHighlightColor, "--next-highlight-color": nextHighlightColor } as React.CSSProperties}>
 				<div className="main-grid-container">

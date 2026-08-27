@@ -29,7 +29,7 @@
 	margin: 0 auto;
 
 	--max-width: 45vw;
-	--max-height: 70vh;
+	--max-height: 65vh;
 	--cell-size: min(calc(var(--max-width) / var(--cols)), calc(var(--max-height) / var(--rows)));
 	--cell-font-size: calc(var(--cell-size) * 0.5);
 }
@@ -81,7 +81,7 @@
 
 .rules-container {
 	flex: 1;
-	max-height: 70vh;
+	max-height: 65vh;
 	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
