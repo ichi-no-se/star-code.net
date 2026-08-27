@@ -6,11 +6,12 @@ order: 0
 
 ## 管理人情報
 
-- GitHub: [ichi-no-se](https://github.com/ichi-no-se)
-- mixi2: [一之瀬このみ](https://mixi.social/@1_no_se)
-- pixiv: [一之瀬このみ](https://www.pixiv.net/users/73996425)
-- AtCoder: [1_no_se](https://atcoder.jp/users/1_no_se)
-- Email: 1ichi1nose あっと gmail ドット com（適切に置換してください）
+- GitHub：[ichi-no-se](https://github.com/ichi-no-se)
+- mixi2：[一之瀬このみ](https://mixi.social/@1_no_se)
+- misskey.io：[一之瀬このみ](https://misskey.io/@1_no_se)
+- pixiv：[一之瀬このみ](https://www.pixiv.net/users/73996425)
+- ニコニコ動画：[一之瀬このみ](https://www.nicovideo.jp/user/50502081)
+- Email：1ichi1nose あっと gmail ドット com（適切に置換してください）
 
 好きなものを好きと言える人が好きです．
 

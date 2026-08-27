@@ -1,0 +1,447 @@
+{
+  "version": 1,
+  "mainGrid": [
+    [
+      "A",
+      "0",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "B",
+      "0",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "B",
+      "0",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "B",
+      "0",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "0",
+      "0",
+      "0",
+      "0",
+      "0"
+    ]
+  ],
+  "rules": [
+    {
+      "id": "a635c514-a1b3-49d1-8587-1753d17eaf12",
+      "find": [
+        [
+          "B",
+          "W"
+        ]
+      ],
+      "replace": [
+        [
+          "W",
+          "B"
+        ]
+      ]
+    },
+    {
+      "id": "d0223e45-b5cc-42bc-ac6a-f97d9bea65a7",
+      "find": [
+        [
+          "W"
+        ],
+        [
+          "B"
+        ]
+      ],
+      "replace": [
+        [
+          "B"
+        ],
+        [
+          "S"
+        ]
+      ]
+    },
+    {
+      "id": "027d16d2-d49c-4521-bbab-2d8203dd9cbd",
+      "find": [
+        [
+          "S"
+        ],
+        [
+          "B"
+        ]
+      ],
+      "replace": [
+        [
+          "B"
+        ],
+        [
+          "S"
+        ]
+      ]
+    },
+    {
+      "id": "8beaf2f4-084c-4671-a893-b93fda1a161d",
+      "find": [
+        [
+          "S",
+          "B"
+        ]
+      ],
+      "replace": [
+        [
+          "B",
+          "S"
+        ]
+      ]
+    },
+    {
+      "id": "d6f7ea79-e62f-415f-b91f-0bb362d79fae",
+      "find": [
+        [
+          "E",
+          "B"
+        ]
+      ],
+      "replace": [
+        [
+          "B",
+          "E"
+        ]
+      ]
+    },
+    {
+      "id": "a088050b-b4a0-4d33-addb-42de033d1fa8",
+      "find": [
+        [
+          "B"
+        ],
+        [
+          "E"
+        ]
+      ],
+      "replace": [
+        [
+          "N"
+        ],
+        [
+          "B"
+        ]
+      ]
+    },
+    {
+      "id": "b273c5be-c122-4513-854e-16ce5cabfed7",
+      "find": [
+        [
+          "B"
+        ],
+        [
+          "N"
+        ]
+      ],
+      "replace": [
+        [
+          "N"
+        ],
+        [
+          "B"
+        ]
+      ]
+    },
+    {
+      "id": "a0d6fd97-3de3-4c2d-a7c8-11865fe6065d",
+      "find": [
+        [
+          "B",
+          "N"
+        ]
+      ],
+      "replace": [
+        [
+          "W",
+          "B"
+        ]
+      ]
+    },
+    {
+      "id": "a9a5c5cb-794e-4f42-9707-a5e268d65ab3",
+      "find": [
+        [
+          "W"
+        ]
+      ],
+      "replace": [
+        [
+          "0"
+        ]
+      ]
+    },
+    {
+      "id": "f9b52537-179e-49ce-91f0-d431b443696d",
+      "find": [
+        [
+          "S"
+        ]
+      ],
+      "replace": [
+        [
+          "0"
+        ]
+      ]
+    },
+    {
+      "id": "3a2831fc-73ba-4ae5-b342-4d657be534f3",
+      "find": [
+        [
+          "E"
+        ]
+      ],
+      "replace": [
+        [
+          "0"
+        ]
+      ]
+    },
+    {
+      "id": "10246a17-4430-48ac-b142-8938e8574787",
+      "find": [
+        [
+          "N"
+        ]
+      ],
+      "replace": [
+        [
+          "0"
+        ]
+      ]
+    },
+    {
+      "id": "1cfdaba6-3b60-43c4-ab7b-91423fd6602a",
+      "find": [
+        [
+          "B",
+          "A",
+          "0"
+        ]
+      ],
+      "replace": [
+        [
+          "B",
+          "W",
+          "A"
+        ]
+      ]
+    },
+    {
+      "id": "31b897e6-a235-414f-a8b2-3fdbe2d4d57b",
+      "find": [
+        [
+          "B",
+          "A"
+        ],
+        [
+          "",
+          ""
+        ]
+      ],
+      "replace": [
+        [
+          "B",
+          "W"
+        ],
+        [
+          "",
+          "A"
+        ]
+      ]
+    },
+    {
+      "id": "661e14d8-47fa-4fed-bb08-b2c6b1e5e6b5",
+      "find": [
+        [
+          "0"
+        ],
+        [
+          "A"
+        ],
+        [
+          "B"
+        ]
+      ],
+      "replace": [
+        [
+          "A"
+        ],
+        [
+          "S"
+        ],
+        [
+          "B"
+        ]
+      ]
+    },
+    {
+      "id": "8246a99f-429a-440e-b067-a5ee4a0da8e7",
+      "find": [
+        [
+          "A",
+          ""
+        ],
+        [
+          "B",
+          ""
+        ]
+      ],
+      "replace": [
+        [
+          "S",
+          "A"
+        ],
+        [
+          "B",
+          ""
+        ]
+      ]
+    },
+    {
+      "id": "d73e81ff-227e-44be-8d17-391368e0ceb3",
+      "find": [
+        [
+          "0",
+          "A",
+          "B"
+        ]
+      ],
+      "replace": [
+        [
+          "A",
+          "E",
+          "B"
+        ]
+      ]
+    },
+    {
+      "id": "c38a2a65-22d0-4e95-89d1-432f1f4ef667",
+      "find": [
+        [
+          "",
+          ""
+        ],
+        [
+          "A",
+          "B"
+        ]
+      ],
+      "replace": [
+        [
+          "A",
+          ""
+        ],
+        [
+          "E",
+          "B"
+        ]
+      ]
+    },
+    {
+      "id": "aadfe9d9-baf2-49b5-b111-32f80feed636",
+      "find": [
+        [
+          "B"
+        ],
+        [
+          "A"
+        ],
+        [
+          "0"
+        ]
+      ],
+      "replace": [
+        [
+          "B"
+        ],
+        [
+          "N"
+        ],
+        [
+          "A"
+        ]
+      ]
+    },
+    {
+      "id": "6adefcc5-d644-4462-a283-48c0b5229332",
+      "find": [
+        [
+          "",
+          "B"
+        ],
+        [
+          "",
+          "A"
+        ]
+      ],
+      "replace": [
+        [
+          "",
+          "B"
+        ],
+        [
+          "A",
+          "N"
+        ]
+      ]
+    }
+  ],
+  "maxSteps": 300,
+  "playInterval": 10,
+  "colorRules": [
+    {
+      "char": "A",
+      "backgroundColor": "#fffb8a",
+      "textColor": "#000000"
+    },
+    {
+      "char": "B",
+      "backgroundColor": "#cfccff",
+      "textColor": "#000000"
+    },
+    {
+      "char": "0",
+      "backgroundColor": "#ffffff",
+      "textColor": "#ededed"
+    },
+    {
+      "char": "W",
+      "backgroundColor": "#cce9ff",
+      "textColor": "#000000"
+    },
+    {
+      "char": "S",
+      "backgroundColor": "#cce9ff",
+      "textColor": "#000000"
+    },
+    {
+      "char": "E",
+      "backgroundColor": "#cce9ff",
+      "textColor": "#000000"
+    },
+    {
+      "char": "N",
+      "backgroundColor": "#cce9ff",
+      "textColor": "#000000"
+    }
+  ],
+  "currentHighlightColor": "#eebb00",
+  "nextHighlightColor": "#00aaff"
+}

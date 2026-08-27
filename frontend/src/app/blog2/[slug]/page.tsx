@@ -8,6 +8,7 @@ import 'katex/dist/katex.min.css';
 import { notFound } from 'next/navigation';
 import '@styles/blog.css';
 import Link from 'next/link';
+import Image from 'next/image';
 
 type BlogProps = {
 	params: Promise<{ slug: string }>;
@@ -15,6 +16,7 @@ type BlogProps = {
 
 const components = {
 	Link,
+	Image,
 	Text: ({ size, color, bold, children }: { size?: string; color?: string; bold?: boolean; children: React.ReactNode }) => (
 		<span style={{ fontSize: size, color: color, fontWeight: bold ? 'bold' : 'normal' }}>
 			{children}

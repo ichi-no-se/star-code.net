@@ -605,7 +605,7 @@ export default function GridReplacePage() {
 		if (isNaN(num) || num <= 0) {
 			setGifIntervalInput("100");
 		}
-		else if (num < 10) { 
+		else if (num < 10) {
 			setGifIntervalInput("10");
 		}
 		else if (num > maxGifInterval) {
@@ -857,7 +857,7 @@ export default function GridReplacePage() {
 			<h1 className="title">グリッド置換器</h1>
 			<div className="introduction">
 				グリッド上で文字を置換．<br />
-				説明は<Link href="/blog/grid-replace">こちら</Link>から．開発記事は<Link href="/blog/grid-replace-2">こちら</Link>から．
+				使い方，作例，関連記事は<Link href="/blog/grid-replace">こちら</Link>から．
 			</div>
 			<div className="grid-replace-container" style={{ "--current-highlight-color": currentHighlightColor, "--next-highlight-color": nextHighlightColor } as React.CSSProperties}>
 				<div className="main-grid-container">
@@ -1038,7 +1038,6 @@ export default function GridReplacePage() {
 								</div>
 							</div>
 						</details>
-						<button onClick={handleEditInitial} className="edit-initial-button">編集モードへ</button>
 						<details className="output-gif-controls">
 							<summary>GIF 出力</summary>
 							<div className="output-gif-controls-container">
@@ -1074,6 +1073,8 @@ export default function GridReplacePage() {
 								</div>
 							</div>
 						</details>
+						<button onClick={handleEditInitial} className="edit-initial-button">編集モードへ</button>
+
 					</div>
 				)}
 				<details className="color-controls">
