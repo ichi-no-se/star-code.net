@@ -604,7 +604,11 @@ export default function GridReplacePage() {
 		const num = parseInt(gifIntervalInput, 10);
 		if (isNaN(num) || num <= 0) {
 			setGifIntervalInput("100");
-		} else if (num > maxGifInterval) {
+		}
+		else if (num < 10) { 
+			setGifIntervalInput("10");
+		}
+		else if (num > maxGifInterval) {
 			setGifIntervalInput(maxGifInterval.toString());
 		} else {
 			setGifIntervalInput(num.toString());
@@ -1054,7 +1058,8 @@ export default function GridReplacePage() {
 										フレーム間隔（ms）：
 										<input
 											type="number"
-											min="1"
+											min="10"
+											step="10"
 											max={maxGifInterval}
 											value={gifIntervalInput}
 											onChange={handleGifIntervalChange}
