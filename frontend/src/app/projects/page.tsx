@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/cheapest-route" className="post-box">
+					<div>
+						<h2 className="post-title">最安値ルート計算ツール</h2>
+						<p className="post-date">2026-09-05</p>
+						<p className="post-description">最安値ルートを計算するためのツールです．</p>
+					</div>
+				</Link>
 				<Link href="/projects/grid-replace" className="post-box">
 					<div>
 						<h2 className="post-title">グリッド置換器</h2>
