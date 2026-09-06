@@ -9,7 +9,7 @@ export default function ProjectsPage() {
 					<div>
 						<h2 className="post-title">最安値ルート計算ツール</h2>
 						<p className="post-date">2026-09-06</p>
-						<p className="post-description">最安値ルートを計算するためのツールです．</p>
+						<p className="post-description">最安値ルートを計算するためのツール．</p>
 					</div>
 				</Link>
 				<Link href="/projects/grid-replace" className="post-box">
