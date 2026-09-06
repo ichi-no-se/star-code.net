@@ -8,7 +8,7 @@ type Route = string[];
 interface BaseSpecialTicket {
     id: string;
     name: string;
-    price: number | "";
+    fare: number | "";
     memo: string;
 }
 
@@ -35,13 +35,13 @@ interface NormalTicket {
     from: string;
     to: string;
     direction: 'oneWay' | 'bidirectional';
-    price: number | "";
+    fare: number | "";
     memo: string;
 }
 
 type PartialRouteSegmentNormal = {
     kind: 'normal';
-    price: number;
+    fare: number;
 };
 
 type PartialRouteSegmentSpecial = {
@@ -58,14 +58,14 @@ type RouteSegment = {
 
 interface CalculatedRoute {
     segments: RouteSegment[];
-    totalPrice: number;
+    totalFare: number;
     usedSpecialTickets: SpecialTicket[];
 }
 
 export default function CheapestRoute() {
     const [route, setRoute] = useState<Route>(["", ""]);
-    const [specialTickets, setSpecialTickets] = useState<SpecialTicket[]>([{ id: crypto.randomUUID(), name: "", price: "", memo: "", type: "freePass", freeStations: [""] }]);
-    const [normalTickets, setNormalTickets] = useState<NormalTicket[]>([{ id: crypto.randomUUID(), from: "", to: "", direction: "bidirectional", price: "", memo: "" }]);
+    const [specialTickets, setSpecialTickets] = useState<SpecialTicket[]>([{ id: crypto.randomUUID(), name: "", fare: "", memo: "", type: "freePass", freeStations: [""] }]);
+    const [normalTickets, setNormalTickets] = useState<NormalTicket[]>([{ id: crypto.randomUUID(), from: "", to: "", direction: "bidirectional", fare: "", memo: "" }]);
     const [calculatedRoute, setCalculatedRoute] = useState<CalculatedRoute | null>(null);
     const MAX_SPECIAL_TICKETS = 8;
 
@@ -89,9 +89,9 @@ export default function CheapestRoute() {
     }, [route, specialTickets, normalTickets]);
 
     const calcRoute = () => {
-        const validSpecialTickets = structuredClone(specialTickets.filter(ticket => ticket.name.trim() !== "" && ticket.price !== "" && ticket.price >= 0));
-        const validNormalTickets = structuredClone(normalTickets.filter(ticket => ticket.from.trim() !== "" && ticket.to.trim() !== "" && ticket.price !== "" && ticket.price >= 0));
-        const cheapestRoute: CalculatedRoute = { segments: [], totalPrice: Infinity, usedSpecialTickets: [] };
+        const validSpecialTickets = structuredClone(specialTickets.filter(ticket => ticket.name.trim() !== "" && ticket.fare !== "" && ticket.fare >= 0));
+        const validNormalTickets = structuredClone(normalTickets.filter(ticket => ticket.from.trim() !== "" && ticket.to.trim() !== "" && ticket.fare !== "" && ticket.fare >= 0));
+        const cheapestRoute: CalculatedRoute = { segments: [], totalFare: Infinity, usedSpecialTickets: [] };
         for (let i = 0; i < (1 << validSpecialTickets.length); i++) {
             const currentSpecialTickets: SpecialTicket[] = [];
             for (let j = 0; j < validSpecialTickets.length; j++) {
@@ -142,7 +142,7 @@ export default function CheapestRoute() {
 
             interface NormalEdge {
                 to: number;
-                price: number;
+                fare: number;
                 memo: string;
             };
 
@@ -156,14 +156,14 @@ export default function CheapestRoute() {
                 }
                 const edge: NormalEdge = {
                     to: toIndex,
-                    price: ticket.price === "" ? 0 : ticket.price,
+                    fare: ticket.fare === "" ? 0 : ticket.fare,
                     memo: ticket.memo
                 };
                 normalEdges[fromIndex].push(edge);
                 if (ticket.direction === 'bidirectional') {
                     const reverseEdge: NormalEdge = {
                         to: fromIndex,
-                        price: ticket.price === "" ? 0 : ticket.price,
+                        fare: ticket.fare === "" ? 0 : ticket.fare,
                         memo: ticket.memo
                     };
                     normalEdges[toIndex].push(reverseEdge);
@@ -230,18 +230,18 @@ export default function CheapestRoute() {
             if (routeStationIndices.length < 2) {
                 continue;
             }
-            const nodes = new Map<number, { toralPrice: number, prevIndex: number | null, prevSegment: RouteSegment | null }>();
+            const nodes = new Map<number, { toralFare: number, prevIndex: number | null, prevSegment: RouteSegment | null }>();
             const startKey = toKey(0, routeStationIndices[0]!, 0);
-            nodes.set(startKey, { toralPrice: 0, prevIndex: null, prevSegment: null });
+            nodes.set(startKey, { toralFare: 0, prevIndex: null, prevSegment: null });
             const unconfermedKeys = new Set<number>();
             unconfermedKeys.add(startKey);
             while (unconfermedKeys.size > 0) {
                 let minKey: number | null = null;
-                let minPrice = Infinity;
+                let minFare = Infinity;
                 unconfermedKeys.forEach(key => {
                     const node = nodes.get(key);
-                    if (node && node.toralPrice < minPrice) {
-                        minPrice = node.toralPrice;
+                    if (node && node.toralFare < minFare) {
+                        minFare = node.toralFare;
                         minKey = key;
                     }
                 });
@@ -250,13 +250,13 @@ export default function CheapestRoute() {
                 }
                 unconfermedKeys.delete(minKey);
                 const { step, stationIndex, state } = fromKey(minKey);
-                const price = minPrice;
+                const fare = minFare;
 
-                const tryRelax = (nextStep: number, nextStationIndex: number, nextState: number, nextPrice: number, segment: RouteSegment | null) => {
+                const tryRelax = (nextStep: number, nextStationIndex: number, nextState: number, nextFare: number, segment: RouteSegment | null) => {
                     const nextKey = toKey(nextStep, nextStationIndex, nextState);
                     const nextNode = nodes.get(nextKey);
-                    if (!nextNode || nextNode.toralPrice > nextPrice) {
-                        nodes.set(nextKey, { toralPrice: nextPrice, prevIndex: minKey, prevSegment: segment });
+                    if (!nextNode || nextNode.toralFare > nextFare) {
+                        nodes.set(nextKey, { toralFare: nextFare, prevIndex: minKey, prevSegment: segment });
                         unconfermedKeys.add(nextKey);
                     }
                 };
@@ -265,17 +265,17 @@ export default function CheapestRoute() {
                     continue;
                 }
                 if (stationIndex === routeStationIndices[step + 1]) {
-                    tryRelax(step + 1, stationIndex, state, price, null);
+                    tryRelax(step + 1, stationIndex, state, fare, null);
                 }
                 normalEdges[stationIndex].forEach(edge => {
                     const segment: RouteSegment = {
                         kind: 'normal',
                         from: indexToStations[stationIndex],
                         to: indexToStations[edge.to],
-                        price: edge.price,
+                        fare: edge.fare,
                         memo: edge.memo
                     };
-                    tryRelax(step, edge.to, state, price + edge.price, segment);
+                    tryRelax(step, edge.to, state, fare + edge.fare, segment);
                 });
                 freeEdges[stationIndex].forEach(edge => {
                     const segment: RouteSegment = {
@@ -285,7 +285,7 @@ export default function CheapestRoute() {
                         ticketName: edge.ticketName,
                         memo: edge.memo
                     };
-                    tryRelax(step, edge.to, state, price, segment);
+                    tryRelax(step, edge.to, state, fare, segment);
                 });
                 approachEdges[stationIndex].forEach(edge => {
                     const bit = 1 << edge.approachIndex;
@@ -297,34 +297,34 @@ export default function CheapestRoute() {
                             ticketName: edge.ticketName,
                             memo: edge.memo
                         };
-                        tryRelax(step, edge.to, state | bit, price, segment);
+                        tryRelax(step, edge.to, state | bit, fare, segment);
                     }
                 });
             }
             const goalStep = routeStationIndices.length - 1;
             const goalStation = routeStationIndices[goalStep]!;
-            let endNode: { toralPrice: number; prevIndex: number | null; prevSegment: RouteSegment | null } | null = null;
+            let endNode: { toralFare: number; prevIndex: number | null; prevSegment: RouteSegment | null } | null = null;
             let bestGoalKey: number | null = null;
-            let minEndPrice = Infinity;
+            let minEndFare = Infinity;
 
             for (let s = 0; s < numStates; s++) {
                 const endKey = toKey(goalStep, goalStation, s);
                 const node = nodes.get(endKey);
-                if (node && node.toralPrice < minEndPrice) {
-                    minEndPrice = node.toralPrice;
+                if (node && node.toralFare < minEndFare) {
+                    minEndFare = node.toralFare;
                     endNode = node;
                     bestGoalKey = endKey;
                 }
             }
 
-            let specialTicketsPrice = 0;
+            let specialTicketsFare = 0;
             currentSpecialTickets.forEach(ticket => {
-                specialTicketsPrice += ticket.price === "" ? 0 : ticket.price;
+                specialTicketsFare += ticket.fare === "" ? 0 : ticket.fare;
             });
-            const totalPrice = (endNode?.toralPrice || 0) + specialTicketsPrice;
+            const totalFare = (endNode?.toralFare || 0) + specialTicketsFare;
 
-            if (endNode && totalPrice < cheapestRoute.totalPrice) {
-                cheapestRoute.totalPrice = totalPrice;
+            if (endNode && totalFare < cheapestRoute.totalFare) {
+                cheapestRoute.totalFare = totalFare;
                 const reverseSegments: RouteSegment[] = [];
                 let currentKey: number | null = bestGoalKey;
                 while (currentKey !== null) {
@@ -338,7 +338,7 @@ export default function CheapestRoute() {
                 cheapestRoute.usedSpecialTickets = currentSpecialTickets;
             }
         }
-        setCalculatedRoute(cheapestRoute.totalPrice === Infinity ? null : cheapestRoute);
+        setCalculatedRoute(cheapestRoute.totalFare === Infinity ? null : cheapestRoute);
     };
 
     return (
@@ -382,14 +382,14 @@ export default function CheapestRoute() {
             {calculatedRoute && (
                 <div className="calculated-route">
                     <span className="route-label">計算結果</span>
-                    <div className="route-total-price">合計運賃：{calculatedRoute.totalPrice}円</div>
+                    <div className="route-total-fare">合計運賃：{calculatedRoute.totalFare}円</div>
                     <div className="route-used-special-tickets">
                         <span className="used-tickets-label">使用した企画券</span>
                         {calculatedRoute.usedSpecialTickets.length > 0 ? (
                             <ul className="used-tickets-list">
                                 {calculatedRoute.usedSpecialTickets.map((ticket, index) => (
                                     <li key={index} className="used-ticket-item"><span className="used-ticket-name">{ticket.name}</span>
-                                        <span className="used-ticket-price">{ticket.price.toLocaleString()}円</span>
+                                        <span className="used-ticket-fare">{ticket.fare.toLocaleString()}円</span>
                                         {ticket.memo && <span className="used-ticket-memo">({ticket.memo})</span>}
                                     </li>
                                 ))}
@@ -410,8 +410,8 @@ export default function CheapestRoute() {
                                     </span>
                                     {segment.memo && <span className="segment-memo">({segment.memo})</span>}
                                 </div>
-                                <span className="segment-price">
-                                    {segment.kind === 'normal' ? `${segment.price.toLocaleString()}円` : '0円'}
+                                <span className="segment-fare">
+                                    {segment.kind === 'normal' ? `${segment.fare.toLocaleString()}円` : '0円'}
                                 </span>
                             </div>
                         ))}
@@ -441,11 +441,11 @@ export default function CheapestRoute() {
                                         const currentApproach = 'approach' in ticket ? ticket.approach : { from: "", to: "" };
                                         const currentFreeStations = 'freeStations' in ticket ? ticket.freeStations : [""];
                                         if (newType === 'roundTrip') {
-                                            newTickets[index] = { id: ticket.id, name: ticket.name, price: ticket.price, memo: ticket.memo, type: 'roundTrip', approach: currentApproach };
+                                            newTickets[index] = { id: ticket.id, name: ticket.name, fare: ticket.fare, memo: ticket.memo, type: 'roundTrip', approach: currentApproach };
                                         } else if (newType === 'freePass') {
-                                            newTickets[index] = { id: ticket.id, name: ticket.name, price: ticket.price, memo: ticket.memo, type: 'freePass', freeStations: currentFreeStations };
+                                            newTickets[index] = { id: ticket.id, name: ticket.name, fare: ticket.fare, memo: ticket.memo, type: 'freePass', freeStations: currentFreeStations };
                                         } else if (newType === 'hybrid') {
-                                            newTickets[index] = { id: ticket.id, name: ticket.name, price: ticket.price, memo: ticket.memo, type: 'hybrid', approach: currentApproach, freeStations: currentFreeStations };
+                                            newTickets[index] = { id: ticket.id, name: ticket.name, fare: ticket.fare, memo: ticket.memo, type: 'hybrid', approach: currentApproach, freeStations: currentFreeStations };
                                         }
                                         setSpecialTickets(newTickets);
                                     }}>
@@ -458,16 +458,16 @@ export default function CheapestRoute() {
                                     newTickets[index].name = e.target.value;
                                     setSpecialTickets(newTickets);
                                 }} />
-                                <input type="number" className="price-input-field" placeholder="運賃" value={ticket.price}
+                                <input type="number" className="fare-input-field" placeholder="運賃" value={ticket.fare}
                                     onChange={(e) => {
                                         const newTickets = [...specialTickets];
-                                        newTickets[index].price = e.target.value == "" ? "" : Math.max(parseInt(e.target.value) || 0, 0);
+                                        newTickets[index].fare = e.target.value == "" ? "" : Math.max(parseInt(e.target.value) || 0, 0);
                                         setSpecialTickets(newTickets);
                                     }}
                                     onBlur={(e) => {
                                         if (e.target.value === "") {
                                             const newTickets = [...specialTickets];
-                                            newTickets[index].price = 0;
+                                            newTickets[index].fare = 0;
                                             setSpecialTickets(newTickets);
                                         }
                                     }}
@@ -568,7 +568,7 @@ export default function CheapestRoute() {
                     ))}<button type="button" className="add-ticket-button"
                         onClick={() => {
                             if (specialTickets.length >= MAX_SPECIAL_TICKETS) return;
-                            setSpecialTickets([...specialTickets, { id: crypto.randomUUID(), name: "", price: "", memo: "", type: "freePass", freeStations: [] }]);
+                            setSpecialTickets([...specialTickets, { id: crypto.randomUUID(), name: "", fare: "", memo: "", type: "freePass", freeStations: [] }]);
                         }}
                         disabled={specialTickets.length >= MAX_SPECIAL_TICKETS}
                     >追加</button>
@@ -604,16 +604,16 @@ export default function CheapestRoute() {
                                 newTickets[index].to = e.target.value;
                                 setNormalTickets(newTickets);
                             }} />
-                            <input type="number" className="price-input-field" placeholder="運賃" value={ticket.price}
+                            <input type="number" className="fare-input-field" placeholder="運賃" value={ticket.fare}
                                 onChange={(e) => {
                                     const newTickets = [...normalTickets];
-                                    newTickets[index].price = e.target.value === "" ? "" : Math.max(parseInt(e.target.value) || 0, 0);
+                                    newTickets[index].fare = e.target.value === "" ? "" : Math.max(parseInt(e.target.value) || 0, 0);
                                     setNormalTickets(newTickets);
                                 }}
                                 onBlur={(e) => {
                                     const newTickets = [...normalTickets];
                                     if (e.target.value === "") {
-                                        newTickets[index].price = 0;
+                                        newTickets[index].fare = 0;
                                         setNormalTickets(newTickets);
                                     }
                                 }} />
@@ -636,7 +636,7 @@ export default function CheapestRoute() {
                     ))}
                     <button type="button" className="add-ticket-button"
                         onClick={() => {
-                            setNormalTickets([...normalTickets, { id: crypto.randomUUID(), from: "", to: "", direction: "bidirectional", price: "", memo: "" }]);
+                            setNormalTickets([...normalTickets, { id: crypto.randomUUID(), from: "", to: "", direction: "bidirectional", fare: "", memo: "" }]);
                         }}
                     >追加</button>
                 </div>

@@ -162,7 +162,7 @@
     width: 120px;
 }
 
-.price-input-field {
+.fare-input-field {
     width: 80px;
     text-align: right;
 }
@@ -416,13 +416,13 @@
 }
 
 /* 合計運賃 */
-.route-total-price {
+.route-total-fare {
     font-size: 1.2rem;
     font-weight: bold;
     margin-bottom: 0.75rem;
 }
 
-.total-price-value {
+.total-fare-value {
     color: #05e;
 }
 
@@ -540,7 +540,7 @@
     font-size: 0.8rem;
 }
 
-.segment-price {
+.segment-fare {
     text-align: right;
     font-weight: bold;
 }
