@@ -1,0 +1,546 @@
+.route-input {
+    width: fit-content;
+    border: 1px solid #ccc;
+    background-color: white;
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin: 0.5rem auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.route-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.route-stations {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stations-input-container {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.station-input {
+    display: inline-flex;
+    align-items: center;
+}
+
+.station-input-field {
+    padding: 0.5rem;
+    width: 120px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.route-separator {
+    margin: 0 0.5rem;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.route-stations-buttons {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.add-station-button,
+.remove-station-button {
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    width: 5rem;
+    height: 2rem;
+    cursor: pointer;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+    margin: 1rem;
+    user-select: none;
+}
+
+.add-station-button {
+    background-color: #05e;
+    color: white;
+}
+
+.remove-station-button {
+    background-color: #c20;
+    color: white;
+}
+
+.add-station-button:hover{
+    background-color: #04a;
+}
+
+.remove-station-button:hover {
+    background-color: #a00;
+}
+
+.add-station-button:disabled,
+.remove-station-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.tickets-input {
+    width: fit-content;
+    max-width: 100%;
+    border: 1px solid #ccc;
+    background-color: white;
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin: 2rem auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.ticket-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.normal-ticket-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.normal-ticket-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.special-ticket-item {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+.normal-ticket-item input[type="text"],
+.normal-ticket-item input[type="number"],
+.special-ticket-item input[type="text"],
+.special-ticket-item input[type="number"] {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+}
+
+.station-input-field {
+    width: 120px;
+}
+
+.price-input-field {
+    width: 80px;
+    text-align: right;
+}
+
+.memo-input-field {
+    width: 200px;
+}
+
+.direction-toggle-button {
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #05e;
+    color: white;
+    cursor: pointer;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+}
+
+.direction-toggle-button:hover {
+    background-color: #04a;
+}
+
+.remove-ticket-button {
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #c20;
+    color: white;
+    cursor: pointer;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+}
+
+.remove-ticket-button:hover {
+    background-color: #a00;
+}
+
+.remove-ticket-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.add-ticket-button {
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #05e;
+    color: white;
+    cursor: pointer;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+}
+
+.add-ticket-button:hover {
+    background-color: #04a;
+}
+
+.add-ticket-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.special-ticket-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.special-ticket-item {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.special-ticket-main-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 100%;
+}
+
+.special-ticket-item select {
+    font-weight: bold;
+    border: 1px solid #ccc;
+    background-color: white;
+    border-radius: 4px;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    height: 2.2rem;
+    box-sizing: border-box;
+}
+
+.ticket-name-input-field {
+    width: 140px;
+}
+
+.special-ticket-approach,
+.special-ticket-free-stations {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #f9f9f9;
+    padding: 0.5rem;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.special-ticket-label {
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.special-ticket-approach-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.free-station-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+}
+
+.free-station-input {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.free-station-buttons {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+.add-free-station-button,
+.remove-free-station-button {
+    width: 3rem;
+    height: 1.4rem;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+    user-select: none;
+}
+
+.add-free-station-button {
+    background-color: #05e;
+    color: white;
+}
+
+.add-free-station-button:hover {
+    background-color: #04a;
+}
+
+/* 削除ボタン（赤） */
+.remove-free-station-button {
+    background-color: #c20;
+    color: white;
+}
+
+.remove-free-station-button:hover {
+    background-color: #a00;
+}
+
+.remove-free-station-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.calculate-button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0.5rem auto;
+}
+
+.calculate-button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #0a5;
+    color: white;
+    cursor: pointer;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.calculate-button:hover {
+    background-color: #084;
+}
+
+.calculate-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* 計算結果カード全体 */
+.calculated-route {
+    width: fit-content;
+    max-width: 100%;
+    border: 1px solid #ccc;
+    background-color: white;
+    border-radius: 4px;
+    padding: 0.75rem;
+    margin: 0.5rem auto 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+/* 合計運賃 */
+.route-total-price {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 0.75rem;
+}
+
+.total-price-value {
+    color: #05e;
+}
+
+/* 使用企画券エリア */
+.route-used-special-tickets {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.used-tickets-label {
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.used-tickets-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.used-ticket-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 0.85rem;
+}
+
+.used-ticket-name {
+    font-weight: bold;
+}
+
+.used-ticket-memo,
+.no-tickets {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.route-segments {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.route-segment {
+    display: grid;
+    grid-template-columns: 5rem 1.5rem 5rem 1fr 5rem;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.3rem;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    box-sizing: border-box;
+    font-size: 0.9rem;
+    width: max-content;
+    min-width: 100%;
+}
+
+.segment-station-from {
+    text-align: right;
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.segment-arrow {
+    text-align: center;
+    font-weight: bold;
+    color: #666;
+    user-select: none;
+}
+
+.segment-station-to {
+    text-align: left;
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.segment-ticket-info {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.segment-ticket-name {
+    font-weight: 500;
+}
+
+.segment-memo {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.segment-price {
+    text-align: right;
+    font-weight: bold;
+}

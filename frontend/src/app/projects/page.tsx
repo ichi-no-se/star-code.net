@@ -8,7 +8,7 @@ export default function ProjectsPage() {
 				<Link href="/projects/cheapest-route" className="post-box">
 					<div>
 						<h2 className="post-title">最安値ルート計算ツール</h2>
-						<p className="post-date">2026-09-05</p>
+						<p className="post-date">2026-09-06</p>
 						<p className="post-description">最安値ルートを計算するためのツールです．</p>
 					</div>
 				</Link>
