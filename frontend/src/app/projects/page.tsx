@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/image-blend" className="post-box">
+					<div>
+						<h2 className="post-title">画像ブレンド</h2>
+						<p className="post-date">2026-09-08</p>
+						<p className="post-description">2 枚の画像を RGB か HSV の比率を指定してまぜまぜ．</p>
+					</div>
+				</Link>
 				<Link href="/projects/cheapest-route" className="post-box">
 					<div>
 						<h2 className="post-title">最安値ルート計算ツール</h2>
