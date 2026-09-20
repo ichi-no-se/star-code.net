@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/life-expectancy-timer" className="post-box">
+					<div>
+						<h2 className="post-title">平均余命カウントダウン</h2>
+						<p className="post-date">2026-09-20</p>
+						<p className="post-description">一分一秒を大切に．</p>
+					</div>
+				</Link>
 				<Link href="/projects/image-blend" className="post-box">
 					<div>
 						<h2 className="post-title">画像ブレンド</h2>
