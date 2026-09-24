@@ -259,6 +259,8 @@ const lifeExpectancyFemaleData: LifeExpectancyData[] = [
     { age: 114, expectancy: 0.92 }
 ]
 
+const STORAGE_KEY = "life-expectancy-timer";
+
 export default function LifeExpectancyTimer() {
     const [birthYear, setBirthYear] = useState<number>(2002);
     const [birthMonth, setBirthMonth] = useState<number>(4);
@@ -267,6 +269,41 @@ export default function LifeExpectancyTimer() {
     const [viewMode, setViewMode] = useState<"years" | "days" | "hours" | "minutes" | "seconds">("years");
 
     const [currentTime, setCurrentTime] = useState<number | null>(null);
+    const [isLoaded, setIsLoaded] = useState<boolean>(false);
+
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const data = JSON.parse(saved);
+                if (typeof data.birthYear === "number") setBirthYear(data.birthYear);
+                if (typeof data.birthMonth === "number") setBirthMonth(data.birthMonth);
+                if (typeof data.birthDay === "number") setBirthDay(data.birthDay);
+                if (data.gender === "male" || data.gender === "female") setGender(data.gender);
+                if (["years", "days", "hours", "minutes", "seconds"].includes(data.viewMode)) setViewMode(data.viewMode);
+            }
+        } catch (error) {
+            console.error("Error loading saved data:", error);
+        } finally {
+            setIsLoaded(true);
+        }
+    }, []);
+
+    useEffect(()=>{
+        if(!isLoaded) return;
+        const dataToSave = {
+            birthYear,
+            birthMonth,
+            birthDay,
+            gender,
+            viewMode
+        };
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+        } catch (error) {
+            console.error("Error saving data:", error);
+        }
+    },[birthYear, birthMonth, birthDay, gender, viewMode, isLoaded]);
 
     useEffect(() => {
         setCurrentTime(Date.now());
