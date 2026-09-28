@@ -1,4 +1,4 @@
-import { getPostSlugs, getPostData } from '../../../lib/blogLoader';
+import { getPostSlugs, getPostData } from '../../../lib/BlogLoader';
 import path from 'path';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import remarkGfm from 'remark-gfm';

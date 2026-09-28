@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import path from 'path';
-import { getPostSlugs, getPostData } from '@/lib/blogLoader';
+import { getPostSlugs, getPostData } from 'src/lib/BlogLoader';
 import '@styles/blog.css';
 
 export default function BlogPage() {

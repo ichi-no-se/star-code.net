@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/autostereogram-generator" className="post-box">
+					<div>
+						<h2 className="post-title">画像から裸眼立体視生成</h2>
+						<p className="post-date">2026-09-27</p>
+						<p className="post-description">画像一枚から深度を自動判別して裸眼立体視（オートステレオグラム）画像を生成．</p>
+					</div>
+				</Link>
 				<Link href="/projects/life-expectancy-timer" className="post-box">
 					<div>
 						<h2 className="post-title">平均余命カウントダウン</h2>
