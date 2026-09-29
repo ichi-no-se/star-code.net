@@ -1,6 +1,8 @@
 import { pipeline, env, RawImage, DepthEstimationPipeline, ProgressCallback, DepthEstimationOutput } from "@huggingface/transformers";
 
-env.allowLocalModels = false;
+env.localModelPath = "/models";
+env.allowLocalModels = true;
+env.allowRemoteModels = false;
 
 if (env.backends?.onnx?.wasm) {
     env.backends.onnx.wasm.numThreads = 1;
@@ -14,14 +16,14 @@ export class DepthEstimator {
         return DepthEstimator.model !== null;
     }
 
-    public static async loadModel(progressCallback?: ProgressCallback): Promise<void> {
+    public static async loadModel(): Promise<void> {
         if (this.model) return;
         if (this.loadingPromise) return this.loadingPromise;
         this.loadingPromise = (async () => {
             try {
                 const hasWebGPU = typeof navigator !== "undefined" && "gpu" in navigator;
                 const device = hasWebGPU ? "webgpu" : "wasm";
-                this.model = await pipeline("depth-estimation", "onnx-community/depth-anything-v2-small", { device, progress_callback: progressCallback });
+                this.model = await pipeline("depth-estimation", "depth-anything-v2-small-ONNX", { device, dtype: "q8" });
             }
             finally {
                 this.loadingPromise = null;
@@ -50,8 +52,8 @@ export class DepthEstimator {
     }
 }
 
-export function rawImageToImageData(raw:RawImage): ImageData {
-    const {width, height, data} = raw;
+export function rawImageToImageData(raw: RawImage): ImageData {
+    const { width, height, data } = raw;
     const totalPixels = width * height;
     const imageDataArray = new Uint8ClampedArray(totalPixels * 4);
     for (let i = 0; i < totalPixels; i++) {

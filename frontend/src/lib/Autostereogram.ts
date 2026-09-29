@@ -57,7 +57,7 @@ export default function generateRandomDotAutostereogram(depthMap: RawImage, patt
             }
         }
         for (let x = 0; x < outputWidth; x++) {
-            const colorValue = Math.floor(Math.random() * 256);
+            const colorValue = Math.round(Math.random()) * 255;
             outputData[(y * outputWidth + x) * 4] = colorValue;
             outputData[(y * outputWidth + x) * 4 + 1] = colorValue;
             outputData[(y * outputWidth + x) * 4 + 2] = colorValue;
@@ -74,7 +74,52 @@ export default function generateRandomDotAutostereogram(depthMap: RawImage, patt
         }
     }
     if (addGuideDots) {
-        
+        const centerX = Math.floor(outputWidth / 2);
+        const y = Math.floor(height / 20);
+        const dotOuterRadius = Math.floor(height / 120);
+        const dotInnerRadius = Math.floor(height / 180);
+        const leftX = centerX - Math.floor(patternWidth / 2);
+        const rightX = centerX + Math.floor(patternWidth / 2);
+        for (let dy = -dotOuterRadius; dy <= dotOuterRadius; dy++) {
+            for (let dx = -dotOuterRadius; dx <= dotOuterRadius; dx++) {
+                if (dx * dx + dy * dy <= dotOuterRadius * dotOuterRadius) {
+                    if (leftX + dx >= 0 && leftX + dx < outputWidth && y + dy >= 0 && y + dy < height) {
+                        const index = ((y + dy) * outputWidth + (leftX + dx)) * 4;
+                        outputData[index] = 255;
+                        outputData[index + 1] = 255;
+                        outputData[index + 2] = 255;
+                        outputData[index + 3] = 255;
+                    }
+                    if (rightX + dx >= 0 && rightX + dx < outputWidth && y + dy >= 0 && y + dy < height) {
+                        const index = ((y + dy) * outputWidth + (rightX + dx)) * 4;
+                        outputData[index] = 255;
+                        outputData[index + 1] = 255;
+                        outputData[index + 2] = 255;
+                        outputData[index + 3] = 255;
+                    }
+                }
+            }
+        }
+        for (let dy = -dotInnerRadius; dy <= dotInnerRadius; dy++) {
+            for (let dx = -dotInnerRadius; dx <= dotInnerRadius; dx++) {
+                if (dx * dx + dy * dy <= dotInnerRadius * dotInnerRadius) {
+                    if (leftX + dx >= 0 && leftX + dx < outputWidth && y + dy >= 0 && y + dy < height) {
+                        const index = ((y + dy) * outputWidth + (leftX + dx)) * 4;
+                        outputData[index] = 0;
+                        outputData[index + 1] = 0;
+                        outputData[index + 2] = 0;
+                        outputData[index + 3] = 255;
+                    }
+                    if (rightX + dx >= 0 && rightX + dx < outputWidth && y + dy >= 0 && y + dy < height) {
+                        const index = ((y + dy) * outputWidth + (rightX + dx)) * 4;
+                        outputData[index] = 0;
+                        outputData[index + 1] = 0;
+                        outputData[index + 2] = 0;
+                        outputData[index + 3] = 255;
+                    }
+                }
+            }
+        }
     }
     return output;
 }

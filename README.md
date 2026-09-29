@@ -105,6 +105,12 @@ fastText の学習済みモデル（Japanese，bin）を加工して使用．
 
 国土交通省国土数値情報ダウンロードサイトの[行政区域データ](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2026.html)（令和 8 年）および，[1kmメッシュ別将来推計人口データ（R6国政局推計）](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-mesh1000r6.html)を加工して使用．
 
+### 画像から裸眼立体視生成
+
+深度推定モデルとして，[depth-anything-v2-small-ONNX](https://huggingface.co/onnx-community/depth-anything-v2-small-ONNX) を使用しています．
+
+ライセンス：[Apache License 2.0](https://choosealicense.com/licenses/apache-2.0/)
+
 ## ライセンス
 
 上に示していないコンテンツ（コード，記事，画像など）についてのライセンスについては現在検討中です．
