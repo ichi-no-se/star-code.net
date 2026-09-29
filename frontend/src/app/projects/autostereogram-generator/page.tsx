@@ -2,26 +2,56 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { DepthEstimator, rawImageToImageData } from "@/lib/DepthEstimation";
+import generateAutostereogram, { ViewMode } from "@/lib/Autostereogram";
 import ImageUploader from "@/components/ImageUploader";
 import CanvasOutput from "@/components/CanvasOutput";
 import "@styles/image-processor.css";
 
+const DualInput = ({ label, value, onChange, min, sliderMax, limitMax, disabled }: {
+    label: string, value: number, onChange: (value: number) => void, min: number, sliderMax: number, limitMax: number, disabled: boolean
+}) => (
+    <fieldset className="dual-input-fieldset">
+        <legend>{label}</legend>
+        <div className="dual-inputs">
+            <input type="range" min={min} max={sliderMax} value={value} onChange={(e) => onChange(Number(e.target.value))} className="dual-input-range" disabled={disabled} />
+            <input type="number" min={min} max={limitMax} value={value} onChange={(e) => {
+                let val = Number(e.target.value)
+                if (val > limitMax) {
+                    val = limitMax
+                }
+                if (val < min) {
+                    val = min
+                }
+                onChange(val)
+            }} className="dual-input-number"
+                disabled={disabled} />
+        </div>
+    </fieldset>
+);
+
 export default function AutostereogramGeneratorPage() {
     const [inputImage, setInputImage] = useState<HTMLImageElement | null>(null);
-    const [outputImage, setOutputImage] = useState<ImageData | null>(null);
+    const [outputAutostereogramImage, setOutputAutostereogramImage] = useState<ImageData | null>(null);
+    const [patternWidth, setPatternWidth] = useState<number>(10);
+    const [maxShiftRatio, setMaxShiftRatio] = useState<number>(0.3);
+    const [paddingWidth, setPaddingWidth] = useState<number>(0);
+    const [viewMode, setViewMode] = useState<ViewMode>("parallel");
+    const [isProcessing, setIsProcessing] = useState<boolean>(false);
+    const [isModelLoaded, setIsModelLoaded] = useState<boolean>(false);
+
     useEffect(() => {
         DepthEstimator.loadModel();
     }, []);
     const handleGenerate = async () => {
         if (!inputImage) return;
-        if(!DepthEstimator.isLoaded()) {
+        if (!DepthEstimator.isLoaded()) {
             alert("Depth estimation model is not loaded yet. Please wait.");
             return;
         }
-        setOutputImage(null);
         const depthMap = await DepthEstimator.estimate(inputImage);
-        const outputImageData = rawImageToImageData(depthMap);
-        setOutputImage(outputImageData);
+        // const outputAutostereogramImageData = generateAutostereogram(depthMap, patternWidth, maxShiftRatio, paddingWidth, viewMode);
+        const outputAutostereogramImageData = generateAutostereogram(depthMap);
+        setOutputAutostereogramImage(outputAutostereogramImageData);
     };
     return (
         <>
@@ -31,6 +61,15 @@ export default function AutostereogramGeneratorPage() {
                 技術情報は<Link href="/blog/autostereogram-generator">こちら</Link>から．<br />
                 画像はブラウザ上で処理されます．サーバーに送信されることはありません．
             </h2>
+            <div className="settings-form">
+                <DualInput label="繰り返し幅（px）" value={patternWidth} onChange={setPatternWidth} min={1} sliderMax={inputImage ? Math.floor(inputImage.naturalWidth / 5) : 100} limitMax={inputImage ? Math.floor(inputImage.naturalWidth / 2) : 100} disabled={!inputImage} />
+                <DualInput label="深度の強さ" value={maxShiftRatio} onChange={setMaxShiftRatio} min={0.1} sliderMax={1.0} limitMax={1.0} disabled={!inputImage} />
+                <DualInput label="余白幅（px）" value={paddingWidth} onChange={setPaddingWidth} min={0} sliderMax={patternWidth} limitMax={patternWidth} disabled={!inputImage} />
+                <fieldset >
+                    <legend>表示モード</legend>
+
+                </fieldset>
+            </div>
             <div className="canvas-container">
                 <div className="canvas-button-wrapper">
                     <div className="image-uploader">
@@ -56,9 +95,9 @@ export default function AutostereogramGeneratorPage() {
             </div>
             <div className="canvas-container">
                 <div className="canvas-wrapper">
-                    <CanvasOutput image={outputImage} />
+                    <CanvasOutput image={outputAutostereogramImage} />
                 </div>
-                <p>出力画像</p>
+                <p>出力</p>
             </div>
         </>
     )
