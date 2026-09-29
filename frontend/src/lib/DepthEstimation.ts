@@ -8,7 +8,7 @@ if (env.backends?.onnx?.wasm) {
     env.backends.onnx.wasm.numThreads = 1;
 }
 
-export class DepthEstimator {
+export default class DepthEstimator {
     private static model: DepthEstimationPipeline | null = null;
     private static loadingPromise: Promise<void> | null = null;
 
@@ -50,18 +50,4 @@ export class DepthEstimator {
         const depthMap = result.depth;
         return depthMap;
     }
-}
-
-export function rawImageToImageData(raw: RawImage): ImageData {
-    const { width, height, data } = raw;
-    const totalPixels = width * height;
-    const imageDataArray = new Uint8ClampedArray(totalPixels * 4);
-    for (let i = 0; i < totalPixels; i++) {
-        const depthValue = data[i];
-        imageDataArray[i * 4] = depthValue;
-        imageDataArray[i * 4 + 1] = depthValue;
-        imageDataArray[i * 4 + 2] = depthValue;
-        imageDataArray[i * 4 + 3] = 255;
-    }
-    return new ImageData(imageDataArray, width, height);
 }

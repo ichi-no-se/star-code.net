@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { DepthEstimator } from "@/lib/DepthEstimation";
+import DepthEstimator from "@/lib/DepthEstimation";
 import { downloadImageData } from "@/lib/ImageUtils";
 import generateAutostereogram, { ViewMode } from "@/lib/Autostereogram";
 import ImageUploader from "@/components/ImageUploader";
@@ -35,7 +35,7 @@ export default function AutostereogramGeneratorPage() {
     const [inputImage, setInputImage] = useState<HTMLImageElement | null>(null);
     const [outputImage, setOutputImage] = useState<ImageData | null>(null);
     const [patternWidth, setPatternWidth] = useState<number>(10);
-    const [maxShiftRatio, setMaxShiftRatio] = useState<number>(0.3);
+    const [maxShiftRatio, setMaxShiftRatio] = useState<number>(0.4);
     const [paddingWidth, setPaddingWidth] = useState<number>(0);
     const [viewMode, setViewMode] = useState<ViewMode>("parallel");
     const [addGuideDots, setAddGuideDots] = useState<boolean>(false);
