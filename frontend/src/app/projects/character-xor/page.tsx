@@ -49,12 +49,18 @@ export default function CharacterXorPage() {
         const fontSize = BASE_CANVAS_SIZE * (fontScale / 100);
         offCtx.font = `${fontSize}px ${FONTS[fontType].font.style.fontFamily}`;
         offCtx.textAlign = "center";
-        offCtx.textBaseline = "middle";
+        offCtx.textBaseline = "alphabetic";
         offCtx.fillStyle = "#ffffff";
 
         for (const char of inputText) {
             offCtx.clearRect(0, 0, width, height);
-            offCtx.fillText(char, width / 2, height / 2);
+
+            const metrics = offCtx.measureText(char);
+            const ascent = metrics.actualBoundingBoxAscent;
+            const descent = metrics.actualBoundingBoxDescent;
+            const correctedY = (height + ascent - descent) / 2;
+            offCtx.fillText(char, width / 2, Math.round(correctedY));
+
             const charData = offCtx.getImageData(0, 0, width, height).data;
             for (let i = 0; i < mask.length; i++) {
                 if (charData[i * 4 + 3] >= 128) {
