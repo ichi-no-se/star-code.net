@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/character-xor" className="post-box">
+					<div>
+						<h2 className="post-title">文字 XOR</h2>
+						<p className="post-date">2026-10-07</p>
+						<p className="post-description">文字の XOR をとってみる．</p>
+					</div>
+				</Link>
 				<Link href="/projects/autostereogram-generator" className="post-box">
 					<div>
 						<h2 className="post-title">画像からオートステレオグラム（裸眼立体視）生成</h2>

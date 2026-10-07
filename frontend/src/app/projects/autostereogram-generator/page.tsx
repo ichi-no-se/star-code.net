@@ -112,7 +112,7 @@ export default function AutostereogramGeneratorPage() {
                 <DualInput label="繰り返し幅（px）" value={patternWidth} onChange={setPatternWidth} min={1} sliderMax={inputImage ? Math.floor(inputImage.naturalWidth / 5) : 100} limitMax={inputImage ? Math.floor(inputImage.naturalWidth / 2) : 100} step={1} disabled={!inputImage || isProcessing} />
                 <DualInput label="深度の強さ" value={maxShiftRatio} onChange={setMaxShiftRatio} min={0.1} sliderMax={1.0} limitMax={1.0} step={0.05} disabled={!inputImage || isProcessing} />
                 <DualInput label="余白幅（px）" value={paddingWidth} onChange={setPaddingWidth} min={0} sliderMax={patternWidth} limitMax={patternWidth} step={1} disabled={!inputImage || isProcessing} />
-                <fieldset >
+                <fieldset>
                     <legend>描画モード</legend>
                     <label className="option-label">
                         <input
