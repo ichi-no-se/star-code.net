@@ -133,8 +133,8 @@ export default function CharacterXorPage() {
                     <button onClick={handleDraw} className="update-button">描画を更新</button>
                 </div>
             </div>
-            <div className="canvas-container">
-                <canvas ref={canvasRef} width={BASE_CANVAS_SIZE} height={BASE_CANVAS_SIZE} />
+            <div className="xor-canvas-container">
+                <canvas className="xor-canvas" ref={canvasRef} width={BASE_CANVAS_SIZE} height={BASE_CANVAS_SIZE} />
             </div>
             <div className="button-wrapper">
                 <button
