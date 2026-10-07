@@ -9,7 +9,7 @@ export default function ProjectsPage() {
 					<div>
 						<h2 className="post-title">文字 XOR</h2>
 						<p className="post-date">2026-10-07</p>
-						<p className="post-description">文字の XOR をとってみる．</p>
+						<p className="post-description">文字を XOR して画像生成．</p>
 					</div>
 				</Link>
 				<Link href="/projects/autostereogram-generator" className="post-box">
