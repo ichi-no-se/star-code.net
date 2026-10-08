@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/word2vec-association" className="post-box">
+					<div>
+						<h2 className="post-title">自動連想ゲーム</h2>
+						<p className="post-date">2026-10-08</p>
+						<p className="post-description">2 つの単語の間を自動で連想して繋ぐ．</p>
+					</div>
+				</Link>
 				<Link href="/projects/character-xor" className="post-box">
 					<div>
 						<h2 className="post-title">文字 XOR</h2>

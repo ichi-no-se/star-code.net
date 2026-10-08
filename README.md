@@ -111,6 +111,28 @@ fastText の学習済みモデル（Japanese，bin）を加工して使用．
 
 ライセンス：[Apache License 2.0](https://choosealicense.com/licenses/apache-2.0/)
 
+### 自動連想ゲーム
+
+本プロジェクトで使用・配布しているデータは，以下のリソースを元に加工・作成されています．
+
+#### 語彙リスト
+
+本プロジェクト上で使用・配布される語彙リスト（[`frontend/public/word2vec-common-japanese/words.txt`](./frontend/public/word2vec-common-japanese/words.txt)）は，[Electronic Dictionary Research and Development Group (EDRDG)](https://www.edrdg.org/edrdg/index.html) の [JMdict プロジェクト](https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project) が提供するデータ（[jmdict-simplified](https://github.com/scriptin/jmdict-simplified) 経由）の `common` タグ等の語彙と，後述の単語ベクトルモデル [chiVe](https://github.com/WorksApplications/chiVe)（`v1.3 mc90`）に含まれる語彙との積集合を取り，品詞情報等を元に抽出・フィルタリングして作成したものです．
+
+* **元データのライセンス**: [EDRDG Licence](https://www.edrdg.org/edrdg/licence.html)（CC BY-SA）
+* **配布ライセンス**: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+  * JMdict の派生成果物としての規約（Share-Alike）に基づき本ライセンスを継承します．なお，語彙選定において chiVe（Apache License 2.0）を参照・フィルタリングしています．
+
+#### 単語ベクトル
+
+本プロジェクト上で使用・配布される単語ベクトル（[`frontend/public/word2vec-common-japanese/word_vecs.bin`](./frontend/public/word2vec-common-japanese/word_vecs.bin)）は，上記の語彙リスト（`words.txt`）に対応するベクトルデータを以下のモデルから抽出・加工したバイナリデータです．
+
+* **元データ（モデル）**: [chiVe: Sudachi による日本語単語ベクトル](https://github.com/WorksApplications/chiVe) (`v1.3 mc90`)
+* **提供元**: [株式会社ワークスアプリケーションズ](https://www.worksap.co.jp)
+* **元データのライセンス**: [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+* **配布ライセンス**: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+  * 本ファイルは，Apache 2.0 の下で配布されている chiVe の数値ベクトルを抽出し，CC BY-SA 4.0 に基づく語彙リストの構成順に一体化させた派生成果物です．原著作物（chiVe）のライセンス条項（著作権表示および免責事項）を遵守した上で，派生成果物全体として CC BY-SA 4.0 を適用して配布します．
+
 ## ライセンス
 
 上に示していないコンテンツ（コード，記事，画像など）についてのライセンスについては現在検討中です．
