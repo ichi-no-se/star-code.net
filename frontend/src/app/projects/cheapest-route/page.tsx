@@ -344,7 +344,7 @@ export default function CheapestRoute() {
     return (
         <>
             <h1 className="title">最安値ルート計算ツール</h1>
-            <h2 className="introduction">最安値ルートを計算するためのツール．</h2>
+            <div className="introduction">最安値ルートを計算するためのツール．</div>
             <datalist id="known-stations">
                 {knownStations.map((station) => (
                     <option key={station} value={station} />

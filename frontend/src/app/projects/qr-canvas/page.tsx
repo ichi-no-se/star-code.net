@@ -124,7 +124,7 @@ export default function QRCanvas() {
     return (
         <>
             <h1 className="title">QR Canvas</h1>
-            <h2 className="introduction">
+            <div className="introduction">
                 QRコードのロバスト性の実験．<br />
                 クリックして黒白を反転させることができます．<br />
                 画像保存機能もあります．<br />
@@ -132,7 +132,7 @@ export default function QRCanvas() {
                 <div style={{ fontSize: '0.6em', color: 'gray' }}>
                     QRコードは株式会社デンソーウェーブの登録商標です
                 </div>
-            </h2>
+            </div>
             <div className="control-panel">
                 <span>Text to Encode</span>
                 <input type="text" value={inputText} onChange={e => setInputText(e.target.value)} placeholder="Enter text to encode" className="input-field" />

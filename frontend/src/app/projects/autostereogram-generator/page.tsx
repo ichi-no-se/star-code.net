@@ -88,11 +88,11 @@ export default function AutostereogramGeneratorPage() {
     return (
         <>
             <h1 className="title">画像からオートステレオグラム（裸眼立体視）生成</h1>
-            <h2 className="introduction">
+            <div className="introduction">
                 画像から深度を自動判別してオートステレオグラムを自動生成．<br />
                 技術情報は<Link href="/blog/autostereogram-generator">こちら</Link>から．<br />
                 画像はブラウザ上で処理されます．サーバーに送信されることはありません．
-            </h2>
+            </div>
 
             <div className="canvas-container">
                 <div className="canvas-button-wrapper">

@@ -126,10 +126,10 @@ export default function ImageBlendPage() {
     return (
         <>
             <h1 className="title">画像ブレンド</h1>
-            <h2 className="introduction">
+            <div className="introduction">
                 2 枚の画像を RGB か HSV の比率を指定してまぜまぜ．<br />
                 画像はブラウザ上で処理されます．サーバーに送信されることはありません．
-            </h2>
+            </div>
 
             <div className="settings-form">
                 <fieldset>

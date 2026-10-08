@@ -79,11 +79,11 @@ export default function CircleSplatting() {
     return (
         <>
             <h1 className="title">図形による画像近似</h1>
-            <h2 className="introduction">
+            <div className="introduction">
                 たくさんの色付き図形を配置して，元の画像を再構築します．<br />
                 ブラウザ上で計算を行います．サーバーに画像が送信されることはありません．<br />
                 作成した画像は自由にお使いください．クレジット表記等は不要です．
-            </h2>
+            </div>
             <div className="settings-form">
                 <fieldset style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
                     <legend>図形の種類</legend>

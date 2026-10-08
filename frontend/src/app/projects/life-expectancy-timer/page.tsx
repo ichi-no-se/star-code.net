@@ -375,11 +375,11 @@ export default function LifeExpectancyTimer() {
     return (
         <>
             <h1 className="title">平均余命カウントダウン</h1>
-            <h2 className="introduction">
+            <div className="introduction">
                 一分一秒を大切に．<br />
                 仕様，詳細は<Link href="/blog/life-expectancy-timer">こちら</Link>から．<br />
                 男性 113 歳以上，女性 114 歳以上は対応していません．
-            </h2>
+            </div>
             <div className="result-container">
                 <h3 className="result-title">
                     平均余命まで残り

@@ -54,7 +54,7 @@ export default function KaleidoscopePage() {
     return (
         <>
             <h1 className="title">万華鏡風画像作成（正三角形）</h1>
-            <h2 className="introduction">
+            <div className="introduction">
                 画像から万華鏡風の画像を作成します．<br />
                 三角形はドラッグで移動，変形が可能です．<br />
                 <small>
@@ -62,7 +62,7 @@ export default function KaleidoscopePage() {
                     作成した画像はご自由にお使いください．クレジット表記等は不要です．
                 </small>
 
-            </h2>
+            </div>
             <div className="settings-form kaleidoscope-settings">
                 <legend>出力サイズ</legend>
                 <div className="setting-group">

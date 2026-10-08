@@ -104,7 +104,7 @@ export default function CharacterXorPage() {
     return (
         <>
             <h1 className="title">文字 XOR</h1>
-            <h2 className="introduction">文字を XOR して画像生成．<br />フォントの読み込みが間に合わず，デフォルトのフォントで表示される場合は「描画を更新」をクリックしてください．</h2>
+            <div className="introduction">文字を XOR して画像生成．<br />フォントの読み込みが間に合わず，デフォルトのフォントで表示される場合は「描画を更新」をクリックしてください．</div>
             <div className="settings-form">
                 <fieldset>
                     <legend>背景色</legend>

@@ -187,13 +187,13 @@ export default function RailSilhouettePage() {
 	return (
 		<>
 			<h1 className="title">鉄道路線クイズ</h1>
-			<h2 className="introduction">
+			<div className="introduction">
 				鉄道路線の形から，どこの路線か当てるクイズです．
 				<br />
 				北が上になるように表示されます．
 				<br />
 				開発記事・プリセットは<Link href="/blog/rail-silhouette/">こちら</Link>から．
-			</h2>
+			</div>
 			{!lineInfoList && !error && <p>データを読み込み中...</p>}
 			{error && <p className="error">エラー: {error}</p>}
 			{lineInfoList && (

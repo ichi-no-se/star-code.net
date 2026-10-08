@@ -75,9 +75,9 @@ export default function Chat() {
 	return (
 		<>
 			<h1 className="title">15 秒チャット </h1>
-			<h2 className="introduction">
+			<div className="introduction">
 				15 秒でメッセージが消えるチャット，詳細は<Link href="/blog/15sec-chat">こちら</Link>から
-			</h2>
+			</div>
 			<div className="user-count">
 				<p>現在のユーザー数: {userCount}</p>
 			</div>

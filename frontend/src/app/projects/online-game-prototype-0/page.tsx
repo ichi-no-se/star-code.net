@@ -10,9 +10,9 @@ export default function OnlineGamePrototype0() {
 	return (
 		<>
 			<h1 className="title">オンラインゲームプロトタイプ 0</h1>
-			<h2 className="introduction">
+			<div className="introduction">
 				矢印キーもしくは WASD で操作できます．
-			</h2>
+			</div>
 
 			<GameContainer />
 

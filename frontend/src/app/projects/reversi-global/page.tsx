@@ -79,11 +79,11 @@ export default function ReversiGlobalPage() {
 	return (
 		<>
 			<h1 className="title">全世界同期リバーシ</h1>
-			<h2 className="introduction">
+			<div className="introduction">
 				この盤面は全ての閲覧者とリアルタイムで共有されています．<br />
 
 				関連記事は<Link href="/blog/reversi-global">こちら</Link>から．
-			</h2>
+			</div>
 			<div className={`online-status ${isConnected ? 'connected' : 'disconnected'}`}>
 				{isConnected ? `⚫︎Online` : `⚫︎Offline (Connecting...)`}
 			</div>

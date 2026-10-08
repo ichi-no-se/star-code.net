@@ -210,10 +210,10 @@ export default function ShinyPokemon() {
 	return (
 		<>
 			<h1 className="title">ポケモン色違い抽選シミュレーター</h1>
-			<h2 className="introduction">
+			<div className="introduction">
 				4096 分の 1 の奇跡．<br />
 				関連記事は<Link href="/blog/shiny-pokemon">こちら</Link>から．
-			</h2>
+			</div>
 			<div className="layout-container">
 				<div className="side-panel">
 					<label className="title-label">

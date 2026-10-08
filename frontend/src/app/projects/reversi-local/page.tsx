@@ -94,10 +94,10 @@ export default function ReversiLocalPage() {
 	return (
 		<>
 			<h1 className="title">リバーシ（シンプル）</h1>
-			<h2 className="introduction">
+			<div className="introduction">
 				ブラウザ上で動作するシンプルなリバーシ盤面．<br />
 				一人二役もよし，誰かと同じ PC で対戦もよし．<br />
-			</h2>
+			</div>
 			<div className="game-container">
 				<div className="board-container">
 					<ReversiBoard board={board} validMoves={validMoves} nextTurn={gameStatus} lastMoveIndex={lastMoveIndex} onCellClick={handleCellClick} />
