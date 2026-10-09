@@ -1,0 +1,54 @@
+.load-model-button {
+    font-size: 1.2rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: #28E;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    cursor: pointer;
+}
+
+.load-model-button:hover {
+    background-color: #17D;
+}
+
+.load-model-button:disabled {
+    background-color: #e0e0e0;
+    color: #888;
+    cursor: not-allowed;
+}
+
+.input-container {
+    font-size: 1.1rem;
+}
+
+.input-area {
+	width: 15rem;
+	border: 1px solid #ccc;
+	border-radius: 0.5rem;
+	padding: 0.2rem;
+}
+
+.word-result-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 800px;
+    margin: 2rem auto;
+    justify-content:center;
+}
+
+.result-item{
+    width: fit-content;
+    flex-shrink: 0;
+    padding: 0.3rem;
+}
+
+.result-word{
+    font-size:1.2rem;
+    font-weight:bold;
+    white-space: nowrap;
+}
