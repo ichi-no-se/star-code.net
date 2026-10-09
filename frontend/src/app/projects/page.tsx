@@ -7,7 +7,7 @@ export default function ProjectsPage() {
 			<ol className="post-list">
 				<Link href="/projects/word2vec-calculator" className="post-box">
 					<div>
-						<h2 className="post-title">Word2Vec 計算機</h2>
+						<h2 className="post-title">単語ベクトル計算機</h2>
 						<p className="post-date">2026-10-10</p>
 						<p className="post-description">フランス - (イギリス + ドイツ) / 2.0 = ?</p>
 					</div>
