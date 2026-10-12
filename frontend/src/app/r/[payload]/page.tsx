@@ -10,11 +10,10 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
     let targetUrl: string | null = null;
 
     try {
-
         const rawPayload = decodeURIComponent(payload);
         targetUrl = decode(rawPayload);
         if (targetUrl === null) {
-            return <p>無効な短縮 URL です</p>;
+            redirect("/projects/url-lengthener?error=failed");
         }
         if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
             targetUrl = `https://${targetUrl}`;
@@ -26,5 +25,5 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
     if (targetUrl) {
         redirect(targetUrl);
     }
-    return <p>リダイレクトに失敗</p>;
+    redirect("/projects/url-lengthener?error=failed");
 }

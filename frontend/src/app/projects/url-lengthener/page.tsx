@@ -1,12 +1,17 @@
 "use client";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { encode } from "@/lib/URLLengthener";
 import "@styles/oblate.css";
+import "@styles/url-lengthener.css";
 
 export default function UrlLengthenerPage() {
     const [inputUrl, setInputUrl] = useState("");
     const [shortenedUrl, setShortenedUrl] = useState("");
     const [copied, setCopied] = useState(false);
+
+    const searchParams = useSearchParams();
+    const isError = searchParams.has("error");
 
     const generateShortenedUrl = () => {
         const payload = encode(inputUrl);
@@ -24,6 +29,11 @@ export default function UrlLengthenerPage() {
     return (
         <>
             <h1 className="title">逆短縮 URL</h1>
+            {isError && (
+                <div className="error-message">
+                    <p>リダイレクトに失敗しました．</p>
+                </div>
+            )}
             <div className="container">
                 <div className="input-container">
                     <input type="text"
