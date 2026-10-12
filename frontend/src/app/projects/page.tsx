@@ -5,6 +5,13 @@ export default function ProjectsPage() {
 		<>
 			<h1 className="title">Projects</h1>
 			<ol className="post-list">
+				<Link href="/projects/url-lengthener" className="post-box">
+					<div>
+						<h2 className="post-title">逆短縮 URL</h2>
+						<p className="post-date">2026-10-12</p>
+						<p className="post-description">http://star-code.net/r/🎾🌱🍨😋🏆🌱🍎🚚🍌🔭🤗😀🐔🌟🌞🔭🍌🎮🍔🔑🎹🌟🎀💰🏀👾🎨😋🍌😡⌛🔭🏀😎💍👻🎸😡🍨😀🍌😡🎨🔭🏀✨😍💦🎹🎮🚆💊🐔🌟🐱👻🏀👾🎨🔭</p>
+					</div>
+				</Link>
 				<Link href="/projects/word2vec-calculator" className="post-box">
 					<div>
 						<h2 className="post-title">単語ベクトル計算機</h2>
