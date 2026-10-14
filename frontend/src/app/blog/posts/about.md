@@ -11,6 +11,7 @@ order: 0
 - misskey.io：[一之瀬このみ](https://misskey.io/@1_no_se)
 - pixiv：[一之瀬このみ](https://www.pixiv.net/users/73996425)
 - ニコニコ動画：[一之瀬このみ](https://www.nicovideo.jp/user/50502081)
+- ニコニコ静画：[一之瀬このみ](https://seiga.nicovideo.jp/user/illust/50502081)
 - Email：1ichi1nose あっと gmail ドット com（適切に置換してください）
 
 好きなものを好きと言える人が好きです．
