@@ -55,8 +55,8 @@ export default function UrlLengthenerPage() {
                 <div className="output-container">
                     {shortenedUrl && (
                         <>
-                            <div className="output-text">
-                                <a href={shortenedUrl} target="_blank" rel="noopener noreferrer">{shortenedUrl}</a>
+                            <div className="output-text-container">
+                                <a href={shortenedUrl} target="_blank" rel="noopener noreferrer" className="output-text">{shortenedUrl}</a>
                             </div>
                             <button onClick={handleCopy} className="output-button">{copied ? "コピーしました" : "コピーする"}</button>
                         </>

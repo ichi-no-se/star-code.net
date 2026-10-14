@@ -38,8 +38,14 @@
 }
 
 .output-text{
-	white-space: nowrap;
-	overflow-x: auto;
+	color: #1a73e8;
+	text-decoration: none;
+	overflow-wrap: break-word;
+}
+
+.output-text:hover{
+	text-decoration: underline;
+	cursor: pointer;
 }
 
 .input-area {
