@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc && tsc-alias",
     "start": "node dist/backend/src/index.js",
-    "dev":"nodemon --exec tsx src/index.ts"
+    "dev": "nodemon --exec tsx src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -17,12 +17,12 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "socket.io": "^4.8.3",
-    "tsc-alias": "^1.9.4"
+    "socket.io": "^4.8.3"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "nodemon": "^3.1.14",
+    "tsc-alias": "^1.9.8",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
