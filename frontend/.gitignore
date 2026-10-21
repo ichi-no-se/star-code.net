@@ -45,5 +45,3 @@ next-env.d.ts
 /public/robots.txt
 /public/sitemap.xml
 /public/sitemap-*.xml
-
-package-lock.json
